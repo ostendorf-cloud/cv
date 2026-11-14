@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cv
+description: Serves Simon Ostendorf's curriculum vitae over HTTP, inside the cluster.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Local secrets for docker compose; see .env.example.
+.env*
+!.env.example
+
+# Agents
+.claude/settings.local.json
+.claude/.cc-writes/
+.claude/worktrees/
+
+# Go
+*.exe
+*.test
+*.out
+*.prof
+coverage.out
+bin/
+
+# Task's scratch directory. `task test:helm` builds a helm plugin directory here
+# rather than relying on helm's own, which a cached tool install never populates.
+.task/

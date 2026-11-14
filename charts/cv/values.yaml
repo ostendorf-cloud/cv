@@ -1,0 +1,123 @@
+# Default values for cv.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ostendorf-cloud/cv
+  # Defaults to .Chart.AppVersion when left empty.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # No RBAC is created: cvd makes no Kubernetes API calls of its own.
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Matches the Dockerfile's distroless "nonroot" base image, uid/gid 65532.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  # Also used as the container port and for the probes: must match the port
+  # encoded in config.addr (default ":8080" for both). This is the only port
+  # the chart's own Ingress or HTTPRoute ever routes to.
+  port: 8080
+  # govue's admin listener: health, readiness and metrics, never routed by
+  # this chart's own Ingress or HTTPRoute (templates/ingress.yaml and
+  # templates/httproute.yaml only ever reference service.port above).
+  # Reached only from inside the cluster, by a kubelet's probe or a
+  # Prometheus ServiceMonitor/PodMonitor (not part of this chart). Must
+  # match the port encoded in config.adminAddr (default ":8081" for both).
+  adminPort: 8081
+
+# Ingress and httpRoute below are two ways to reach this chart's own Service
+# externally, chosen by their own enabled flag. Mutually exclusive (see
+# templates/deployment.yaml's own fail guard): an install never renders both
+# for the same hostname. Both default to false, so a default install renders
+# no external route at all until one of the two is chosen.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: cv.ostendorf.cloud
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Gateway API alternative to ingress above; see that block's own comment for
+# the mutual-exclusion rule.
+#
+# The HTTPRoute and Gateway kinds are Gateway API CRDs. This chart never
+# ships them and never creates the Gateway itself: both the CRDs and a
+# running Gateway with a listener that allows this release's namespace are
+# prerequisites, provisioned once per cluster, not by this chart.
+httpRoute:
+  enabled: false
+  hostnames: []
+  annotations: {}
+  parentRefs:
+    name: ""
+    namespace: ""
+    sectionName: ""
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    # No CPU limit: answering a small JSON document is bursty on a request,
+    # not broken for being briefly busy. A memory limit stays in place as a
+    # safety net against a genuine leak.
+    memory: 64Mi
+
+startupProbe:
+  enabled: false
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  failureThreshold: 30
+
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Plain, non-secret configuration; cvd has no secret-shaped setting yet.
+config:
+  addr: ":8080"
+  adminAddr: ":8081"
+  logLevel: "info"

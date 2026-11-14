@@ -1,0 +1,147 @@
+version: "3"
+
+tasks:
+  setup:
+    desc: Install the pinned toolchain
+    cmds:
+      - mise trust
+      - mise install
+
+  lint:fmt:
+    desc: Go format check through golangci-lint
+    cmds:
+      - golangci-lint fmt --diff
+
+  lint:golangci-config:
+    desc: golangci-lint configuration check
+    cmds:
+      - golangci-lint config verify
+
+  lint:vet:
+    desc: Go vet
+    cmds:
+      - go vet ./...
+
+  lint:golangci:
+    desc: golangci-lint run
+    cmds:
+      - golangci-lint run ./...
+
+  lint:markdown:
+    desc: Markdown lint
+    cmds:
+      - markdownlint-cli2 "**/*.md"
+
+  lint:yaml:
+    desc: YAML lint
+    cmds:
+      - yamllint .
+
+  lint:actions:
+    desc: GitHub Actions workflow lint
+    cmds:
+      - actionlint
+
+  lint:secrets:
+    desc: Secret scan over the git history
+    cmds:
+      - gitleaks git --no-banner --redact
+
+  lint:docker:
+    desc: Dockerfile lint
+    cmds:
+      - hadolint Dockerfile
+
+  lint:shell:
+    desc: Shell lint and format check over scripts/
+    cmds:
+      - shellcheck scripts/*.sh
+      - shfmt --diff --indent 2 --case-indent scripts/*.sh
+
+  lint:goreleaser:
+    desc: goreleaser configuration lint
+    cmds:
+      - goreleaser check
+
+  lint:helm:
+    desc: Helm chart lint
+    cmds:
+      - helm lint charts/cv
+
+  validate:kubeconform:
+    desc: Schema validation of the rendered Helm chart
+    cmds:
+      - helm template charts/cv | kubeconform -strict -summary
+
+  # helm-unittest is a Helm plugin, and helm only finds a plugin inside HELM_PLUGINS.
+  # The mise entry's postinstall copies it into helm's own plugin directory, but that
+  # hook runs only on a fresh install: a cached tool skips it. This builds a plugin
+  # directory holding exactly one entry, pointing at whatever mise resolved, so the
+  # target no longer depends on the hook having run.
+  helm:plugins:
+    desc: Link helm-unittest into a plugin directory helm can read
+    internal: true
+    run: once
+    cmds:
+      - rm -rf .task/helm-plugins
+      - mkdir -p .task/helm-plugins
+      - ln -s "$(mise where 'github:helm-unittest/helm-unittest')" .task/helm-plugins/unittest
+
+  test:helm:
+    desc: Helm chart unit tests
+    deps: [helm:plugins]
+    env:
+      HELM_PLUGINS: .task/helm-plugins
+    cmds:
+      - helm unittest charts/cv
+
+  build:cv:
+    desc: Compile the cv binary
+    cmds:
+      - go build -o bin/cv ./cmd/cv
+
+  build:cvd:
+    desc: Compile the cvd binary
+    cmds:
+      - go build -o bin/cvd ./cmd/cvd
+
+  build:release:
+    desc: Build a local snapshot release of cv with goreleaser
+    cmds:
+      - goreleaser release --snapshot --clean
+
+  run:cv:
+    desc: Run the cv CLI from source, arguments after --
+    cmds:
+      - go run ./cmd/cv {{.CLI_ARGS}}
+
+  test:go:
+    desc: Go test with the race detector
+    cmds:
+      - go test -race -count=1 ./...
+
+  check:
+    desc: Every check, one after another
+    cmds:
+      - task: lint:fmt
+      - task: lint:golangci-config
+      - task: lint:vet
+      - task: lint:golangci
+      - task: lint:markdown
+      - task: lint:yaml
+      - task: lint:actions
+      - task: lint:secrets
+      - task: lint:docker
+      - task: lint:shell
+      - task: lint:goreleaser
+      - task: lint:helm
+      - task: validate:kubeconform
+      - task: test:helm
+      - task: build:cv
+      - task: build:cvd
+      - task: test:go
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - golangci-lint fmt
