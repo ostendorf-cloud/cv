@@ -46,8 +46,6 @@ tracked as later milestones:
   not cut one yet. Repoint at `v0` once it exists.
 - No CodeQL workflow. Code scanning on a private repository needs GitHub Advanced
   Security, which this account does not have.
-- Every job runs on `blacksmith-2vcpu-ubuntu-2404`, never on a GitHub hosted runner: this
-  repository is private, so its minutes are billed.
 - `helm-unittest` is pinned in `mise.toml` through mise's generic `github:` backend with a
   `postinstall` hook, not a plain registry entry: it is not in the mise registry, and
   `helm plugin install <url>` is forbidden by the baseline regardless of Helm version.
