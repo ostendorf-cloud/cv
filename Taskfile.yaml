@@ -73,6 +73,11 @@ tasks:
     cmds:
       - helm template charts/cv | kubeconform -strict -summary
 
+  validate:cv:
+    desc: Validate data/cv.de.yaml and data/cv.en.yaml against the data model
+    cmds:
+      - go run ./cmd/cv validate
+
   # helm-unittest is a Helm plugin, and helm only finds a plugin inside HELM_PLUGINS.
   # The mise entry's postinstall copies it into helm's own plugin directory, but that
   # hook runs only on a fresh install: a cached tool skips it. This builds a plugin
@@ -136,6 +141,7 @@ tasks:
       - task: lint:goreleaser
       - task: lint:helm
       - task: validate:kubeconform
+      - task: validate:cv
       - task: test:helm
       - task: build:cv
       - task: build:cvd

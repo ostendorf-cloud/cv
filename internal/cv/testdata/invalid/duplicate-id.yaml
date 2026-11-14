@@ -1,0 +1,11 @@
+skills:
+  - id: kubernetes
+    name: Kubernetes
+    level: expert
+    visibility: public
+  - id: kubernetes
+    name: Kubernetes, again
+    level: working
+    visibility: public
+contact:
+  email: contact@example.com

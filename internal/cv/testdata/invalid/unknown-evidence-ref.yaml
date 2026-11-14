@@ -1,0 +1,10 @@
+skills:
+  - id: kubernetes
+    name: Kubernetes
+    level: expert
+    visibility: public
+    evidence:
+      - type: project
+        ref: no-such-project
+contact:
+  email: contact@example.com

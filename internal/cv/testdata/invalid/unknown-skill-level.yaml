@@ -1,0 +1,7 @@
+skills:
+  - id: kubernetes
+    name: Kubernetes
+    level: guru
+    visibility: public
+contact:
+  email: contact@example.com

@@ -1,0 +1,80 @@
+# Placeholder data. Every entry in this file is an example, not a fact
+# about Simon Ostendorf's career. It only stands in for the real entry that
+# will replace it, and shows which fields each section expects. ids are
+# shared with data/cv.de.yaml: adding, removing or renaming an entry keeps
+# both files in step, or `cv validate` reports the drift.
+experience:
+  - id: example-experience-1
+    employer: Example Employer GmbH
+    title: Placeholder Title
+    start: "2020-01"
+    end: null
+    visibility: public
+    summary: >
+      Placeholder text for this entry's role description.
+
+education:
+  - id: example-education-1
+    institution: Example University
+    degree: Placeholder Degree
+    start: "2015-10"
+    end: "2019-06"
+    visibility: public
+    summary: >
+      Placeholder text for this programme's description.
+
+certificates:
+  - id: example-certificate-1
+    name: Placeholder Certificate
+    issuer: Example Certification Body
+    issued: "2023-01"
+    valid_until: "2026-01"
+    visibility: public
+
+skills:
+  - id: example-skill-1
+    name: Placeholder Skill
+    level: working
+    visibility: public
+    evidence:
+      - type: experience
+        ref: example-experience-1
+      - type: certificate
+        ref: example-certificate-1
+      - type: project
+        ref: example-project-1
+
+projects:
+  - id: example-project-1
+    github_repo: ostendorf-cloud/example-project
+    description: >
+      Placeholder text for this project's description.
+    visibility: public
+
+references:
+  - id: example-reference-1
+    name: Placeholder Name
+    role: Placeholder Role
+    visibility: cv-only
+
+languages:
+  - id: german
+    name: German
+    level: expert
+    visibility: public
+  - id: english
+    name: English
+    level: working
+    visibility: public
+
+contact:
+  email: contact@example.com
+  address:
+    visibility: cv-only
+    street: Placeholder Street 1
+    city: Placeholder City
+  profiles:
+    - id: github
+      platform: GitHub
+      url: https://github.com/example
+      visibility: public

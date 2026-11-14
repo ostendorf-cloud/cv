@@ -1,0 +1,9 @@
+experience:
+  - id: 2022-nebulon-platform-engineer
+    employer: Nebulon GmbH
+    title: Platform Engineer
+    start: "2022-03"
+    visibility: public
+    seniority: senior
+contact:
+  email: contact@example.com
