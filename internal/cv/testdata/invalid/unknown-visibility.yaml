@@ -1,0 +1,7 @@
+skills:
+  - id: kubernetes
+    name: Kubernetes
+    level: expert
+    visibility: internal-only
+contact:
+  email: contact@example.com
