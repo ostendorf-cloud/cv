@@ -6,10 +6,10 @@ func TestDrift(t *testing.T) {
 	t.Parallel()
 
 	skill := func(id string) SkillEntry {
-		return SkillEntry{ID: id, Name: id, Level: LevelExpert, Visibility: VisibilityPublic}
+		return SkillEntry{ID: id, Name: id, Level: LevelExpert}
 	}
 	profile := func(id string) Profile {
-		return Profile{ID: id, Platform: id, URL: "https://example.com/" + id, Visibility: VisibilityPublic}
+		return Profile{ID: id, Platform: id, URL: "https://example.com/" + id}
 	}
 
 	tests := map[string]struct {
@@ -28,8 +28,8 @@ func TestDrift(t *testing.T) {
 			},
 		},
 		"differing wording on a matching id has no drift": {
-			de: Document{Skills: []SkillEntry{{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic}}},
-			en: Document{Skills: []SkillEntry{{ID: "kubernetes", Name: "Kubernetes orchestration", Level: LevelExpert, Visibility: VisibilityPublic}}},
+			de: Document{Skills: []SkillEntry{{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert}}},
+			en: Document{Skills: []SkillEntry{{ID: "kubernetes", Name: "Kubernetes orchestration", Level: LevelExpert}}},
 		},
 		"an id only in the German file is drift": {
 			de:      Document{Skills: []SkillEntry{skill("kubernetes"), skill("terraform")}},
@@ -48,7 +48,7 @@ func TestDrift(t *testing.T) {
 		},
 		"an id present in one section but not another section does not confuse sections": {
 			de: Document{Skills: []SkillEntry{skill("shared")}},
-			en: Document{Experience: []ExperienceEntry{{ID: "shared", Employer: "Acme", Title: "Engineer", Start: "2020-01", Visibility: VisibilityPublic}}},
+			en: Document{Experience: []ExperienceEntry{{ID: "shared", Employer: "Acme", Title: "Engineer", Start: "2020-01"}}},
 			// "shared" is missing from skills on the English side and
 			// missing from experience on the German side: drift in both
 			// sections, independently.
@@ -77,12 +77,12 @@ func TestDriftNamesEveryMissingID(t *testing.T) {
 	t.Parallel()
 
 	de := Document{Skills: []SkillEntry{
-		{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic},
-		{ID: "terraform", Name: "Terraform", Level: LevelWorking, Visibility: VisibilityPublic},
+		{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert},
+		{ID: "terraform", Name: "Terraform", Level: LevelWorking},
 	}}
 	en := Document{Skills: []SkillEntry{
-		{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic},
-		{ID: "ansible", Name: "Ansible", Level: LevelFamiliar, Visibility: VisibilityPublic},
+		{ID: "kubernetes", Name: "Kubernetes", Level: LevelExpert},
+		{ID: "ansible", Name: "Ansible", Level: LevelFamiliar},
 	}}
 
 	err := Drift(de, en)

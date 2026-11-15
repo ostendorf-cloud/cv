@@ -24,10 +24,10 @@ func (v *validator) err() error {
 }
 
 // Validate checks doc against every rule docs/concepts/cv.md states: the
-// required fields per section, the four skill levels, the two visibility
-// levels, a duplicate id within a section, and a skill's evidence against
-// the project, experience and certificate ids that actually exist. source
-// names the file doc came from, for the error messages only.
+// required fields per section, the four skill levels, a duplicate id within
+// a section, and a skill's evidence against the project, experience and
+// certificate ids that actually exist. source names the file doc came from,
+// for the error messages only.
 //
 // Every problem Validate finds is reported together in the returned error;
 // it never stops at the first one.
@@ -40,7 +40,6 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "employer", e.Employer)
 		v.required(ref, "title", e.Title)
 		v.required(ref, "start", e.Start)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.Education {
 		ref := entryRef("education", i, e.ID)
@@ -48,7 +47,6 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "institution", e.Institution)
 		v.required(ref, "degree", e.Degree)
 		v.required(ref, "start", e.Start)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.Certificates {
 		ref := entryRef("certificates", i, e.ID)
@@ -57,47 +55,38 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "issuer", e.Issuer)
 		v.required(ref, "issued", e.Issued)
 		v.required(ref, "valid_until", e.ValidUntil)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.Skills {
 		ref := entryRef("skills", i, e.ID)
 		v.required(ref, "id", e.ID)
 		v.required(ref, "name", e.Name)
 		v.level(ref, e.Level)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.Projects {
 		ref := entryRef("projects", i, e.ID)
 		v.required(ref, "id", e.ID)
 		v.required(ref, "github_repo", e.GithubRepo)
 		v.required(ref, "description", e.Description)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.References {
 		ref := entryRef("references", i, e.ID)
 		v.required(ref, "id", e.ID)
 		v.required(ref, "name", e.Name)
 		v.required(ref, "role", e.Role)
-		v.visibility(ref, e.Visibility)
 	}
 	for i, e := range doc.Languages {
 		ref := entryRef("languages", i, e.ID)
 		v.required(ref, "id", e.ID)
 		v.required(ref, "name", e.Name)
 		v.level(ref, e.Level)
-		v.visibility(ref, e.Visibility)
 	}
 
 	v.required("contact", "email", doc.Contact.Email)
-	if doc.Contact.Address != nil {
-		v.visibility("contact.address", doc.Contact.Address.Visibility)
-	}
 	for i, p := range doc.Contact.Profiles {
 		ref := entryRef("contact.profiles", i, p.ID)
 		v.required(ref, "id", p.ID)
 		v.required(ref, "platform", p.Platform)
 		v.required(ref, "url", p.URL)
-		v.visibility(ref, p.Visibility)
 	}
 
 	for _, section := range sectionNames {
@@ -116,22 +105,6 @@ func (v *validator) required(ref, field, value string) {
 	if value == "" {
 		v.fail(ref, "%s: is required", field)
 	}
-}
-
-// visibility fails ref when value is set but is neither of the two levels
-// docs/concepts/cv.md defines. An empty value is reported once, by
-// required, not twice.
-func (v *validator) visibility(ref string, value Visibility) {
-	if value == "" {
-		v.fail(ref, "visibility: is required")
-		return
-	}
-	for _, allowed := range visibilities {
-		if value == allowed {
-			return
-		}
-	}
-	v.fail(ref, "visibility: unknown value %q", value)
 }
 
 // level fails ref when value is set but is none of the four levels

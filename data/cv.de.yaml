@@ -10,7 +10,6 @@ experience:
     title: Platzhaltertitel
     start: "2020-01"
     end: null
-    visibility: public
     summary: >
       Platzhaltertext für die Tätigkeitsbeschreibung dieses Eintrags.
 
@@ -20,7 +19,6 @@ education:
     degree: Platzhalterabschluss
     start: "2015-10"
     end: "2019-06"
-    visibility: public
     summary: >
       Platzhaltertext für die Beschreibung dieses Bildungswegs.
 
@@ -30,13 +28,11 @@ certificates:
     issuer: Example Certification Body
     issued: "2023-01"
     valid_until: "2026-01"
-    visibility: public
 
 skills:
   - id: example-skill-1
     name: Platzhalterfähigkeit
     level: working
-    visibility: public
     evidence:
       - type: experience
         ref: example-experience-1
@@ -50,32 +46,26 @@ projects:
     github_repo: ostendorf-cloud/example-project
     description: >
       Platzhaltertext für die Projektbeschreibung dieses Eintrags.
-    visibility: public
 
 references:
   - id: example-reference-1
     name: Platzhaltername
     role: Platzhalterrolle
-    visibility: cv-only
 
 languages:
   - id: german
     name: Deutsch
     level: expert
-    visibility: public
   - id: english
     name: Englisch
     level: working
-    visibility: public
 
 contact:
   email: contact@example.com
   address:
-    visibility: cv-only
     street: Platzhalterstraße 1
     city: Platzhalterstadt
   profiles:
     - id: github
       platform: GitHub
       url: https://github.com/example
-      visibility: public

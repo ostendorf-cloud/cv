@@ -19,8 +19,9 @@
 - One checked in source every artefact renders from; no fact is hand copied into a second place.
 - A German/English drift, an entry added to one data file and not the other, is reported, not
   shipped silently.
-- Every sink, the PDF, the JSON release artefact, the README block and `cvd`'s own API, shows
-  exactly the entries its own visibility rule allows and nothing else.
+- Every sink, the PDF, the JSON release artefact, the README block and `cvd`'s own API, may show
+  every entry: the repository holds only data that is already public, so no sink needs to filter
+  anything.
 - The GitHub profile README reflects this data and is reviewed before it reaches the public
   profile.
 - A project's hand written description is enriched with what GitHub already knows about that
@@ -39,6 +40,8 @@
   at build time instead, a decision their own concept docs already made.
 - Rewriting the committed data files automatically. A detected GitHub fact becomes a suggestion
   for the owner, never a silent edit.
+- A second, private source for an entry that may not belong on the open web: a real need, and
+  its own decision. See "No visibility: the repository itself is the only gate" below.
 
 ## Approach
 
@@ -49,29 +52,27 @@
 - Every entry, in every section, carries a required `id`: a stable, hand assigned slug, never
   derived from translatable text and never reused once assigned.
 - `id` is what makes an entry the same entry in both files. Its title, summary or degree name is
-  expected to differ in wording; its `id`, its dates and its visibility are not.
+  expected to differ in wording; its `id` and its dates are not.
 - `cv validate` compares the two files' `id` sets per section and reports any `id` present on one
   side and absent on the other. It is a presence check, not a text diff: the two files
   disagreeing in wording is normal, disagreeing in which entries exist is the bug.
 
 ### Four areas, eight top level sections
 
-- `experience`, career entries. Required: `id`, `employer`, `title`, `start`, `visibility`.
-- `education`, degrees and programmes. Required: `id`, `institution`, `degree`, `start`,
-  `visibility`.
+- `experience`, career entries. Required: `id`, `employer`, `title`, `start`.
+- `education`, degrees and programmes. Required: `id`, `institution`, `degree`, `start`.
 - `certificates`, issued credentials, the one section with a validity window. Required: `id`,
-  `name`, `issuer`, `issued`, `valid_until`, `visibility`.
-- `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`, `visibility`.
-  `level` is one of `familiar`, `working`, `proficient`, `expert`. `evidence` links back to a
-  `project`, `experience` or `certificate` id, which is how the GitHub loop below feeds skills.
+  `name`, `issuer`, `issued`, `valid_until`.
+- `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`. `level` is one
+  of `familiar`, `working`, `proficient`, `expert`. `evidence` links back to a `project`,
+  `experience` or `certificate` id, which is how the GitHub loop below feeds skills.
 - `projects`, a hand written description plus a GitHub repository to enrich from. Required:
-  `id`, `github_repo`, `description`, `visibility`. `languages`, `stars` and `latest_release` are
-  never stored here; they are merged in at render time.
-- `references`, people who can vouch, almost always PDF only. Required: `id`, `name`, `role`,
-  `visibility`.
-- `languages`, spoken languages. Required: `id`, `name`, `level`, `visibility`.
+  `id`, `github_repo`, `description`. `languages`, `stars` and `latest_release` are never stored
+  here; they are merged in at render time.
+- `references`, people who can vouch. Required: `id`, `name`, `role`.
+- `languages`, spoken languages. Required: `id`, `name`, `level`.
 - `contact`, a flat set of contact fields plus a `profiles` list. Required on each profile:
-  `id`, `platform`, `url`, `visibility`.
+  `id`, `platform`, `url`.
 
 ```yaml
 # data/cv.en.yaml, excerpts, one entry per section
@@ -81,7 +82,6 @@ experience:
     title: Platform Engineer
     start: "2022-03"
     end: null
-    visibility: public
     summary: >
       Builds and runs the Kubernetes platform the company's product ships on.
 
@@ -91,13 +91,11 @@ certificates:
     issuer: Linux Foundation
     issued: "2024-05"
     valid_until: "2027-05"
-    visibility: public
 
 skills:
   - id: kubernetes
     name: Kubernetes
     level: expert
-    visibility: public
     evidence:
       - { type: certificate, ref: ckad-2024 }
       - { type: project, ref: cv }
@@ -107,46 +105,54 @@ projects:
     github_repo: ostendorf-cloud/cv
     description: >
       The one source for this CV: a CLI that renders it, a service that serves it.
-    visibility: public
 
 contact:
   email: contact@example.com
   address:
-    visibility: cv-only
     street: Example Street 1
     city: Berlin
   profiles:
     - id: github
       platform: GitHub
       url: https://github.com/example
-      visibility: public
 ```
 
-### Visibility: two levels, one rule
+### No visibility: the repository itself is the only gate
 
-- `public`: the PDF, the JSON release artefact, the README block and `cvd`'s API may all show
+- The repository is public, so `data/cv.de.yaml` and `data/cv.en.yaml` are readable by anyone
+  the moment they are committed. A level that only filtered which rendered artefact an entry
+  reached protected nothing: the source was already open regardless of what any renderer later
+  did with it, and a field that reads as a privacy control while providing none is worse than no
+  field at all.
+- The model therefore carries no visibility field, on any section or on `contact.address`.
+  Every entry that exists under `data/` is data the owner has decided belongs in a public
+  repository, so every sink, the PDF, the JSON release artefact, the README block and `cvd`'s
+  own API, may show every entry unfiltered.
+- This settles the open question both sibling concept docs left open, the same way an earlier,
+  two-level version of this model once claimed to, but for the opposite reason:
+  `ostendorf.dev`, `simon-ostendorf.de` and every other consumer of the JSON release artefact
+  never have to filter anything themselves, not because this repository filters it upstream for
+  them, but because there is nothing left to filter.
+- Consequence: the PDF can no longer carry a postal address, a reference's personal contact
+  details or an NDA bound client project, since nothing here keeps such an entry off the JSON
+  artefact, the README block or `cvd`'s API either. An application that needs a postal address
+  gets it from somewhere other than this repository. A second, private source for data that
+  genuinely may not be public is a real need and its own decision; this model does not reopen
   it.
-- `cv-only`: the PDF alone. A postal address, a reference's personal contact details, an
-  NDA-bound client project: real, worth keeping, never on the open web or in a machine readable
-  feed.
-- Filtering happens once, in `internal/cv`'s renderer, before any artefact is written. This
-  settles the open question both sibling concept docs left open: the JSON release artefact, the
-  README block and `cvd`'s own response already exclude every `cv-only` entry; no site downstream
-  has to filter anything itself.
 
 ### Four renderers, no fifth
 
 - `cv render pdf`, `cv render json` and `cv render readme` each read both data files, merge in
-  GitHub project data, filter to `public` where the sink needs it, and write one artefact. No
-  `cv render linkedin`: dropped per the non goals above.
+  GitHub project data, and write one artefact. No `cv render linkedin`: dropped per the non
+  goals above.
 - The README block is never committed directly to the profile repository. `cv render readme`
   writes the block; the release pipeline opens a pull request against the profile repository with
   it, so the owner reads it before it is public.
 
 ### `cvd` serves the same document in cluster, for whatever shows up next
 
-- `cvd` answers `GET /api/v1/cv` with the same filtered, public document the JSON release
-  artefact carries, read through `internal/cv` instead of today's empty placeholder.
+- `cvd` answers `GET /api/v1/cv` with the same document the JSON release artefact carries, read
+  through `internal/cv` instead of today's empty placeholder.
 - Neither sibling site calls it: both pull the JSON release artefact at build time instead, a
   decision their own concept docs already settled and this one does not reopen.
 - What it is still for, given that: a later in-cluster consumer that wants current data without
@@ -188,9 +194,8 @@ contact:
 
 ### PDF production: typst, through mise
 
-- `cv render pdf` fills a typst template with the filtered data and shells out to
-  `typst compile`. `typst` is in the mise registry and gets pinned in `mise.toml` like every
-  other tool here.
+- `cv render pdf` fills a typst template with the data and shells out to `typst compile`. `typst`
+  is in the mise registry and gets pinned in `mise.toml` like every other tool here.
 - The cost: a second template language next to the Go code that fills it, and a shelled out
   process rather than a pure Go call. Weighed against a pure Go PDF library hand laying out every
   page, typst buys real typesetting, pagination, headings, tables, for a one time template cost
@@ -217,9 +222,11 @@ contact:
   employer plus start date. Dropped: an entry's content is exactly what is allowed to differ, so
   building identity out of content guesses wrong the moment wording or ordering changes. A
   stable, deliberately assigned id is the smaller thing to get wrong.
-- Visibility as a per-sink allow list (`shown_on: [pdf, json]`) instead of one ordered level.
-  Dropped: a fifth sink later would mean revisiting every entry instead of one rule in the
-  renderer.
+- A visibility level, either one ordered level or a per-sink allow list (`shown_on: [pdf, json]`),
+  filtering which artefact an entry reaches. Dropped: this repository is public, so every entry
+  is readable in `data/*.yaml` the moment it is committed regardless of what any renderer does
+  with it afterwards. A field that filters a rendered artefact while leaving the source open
+  protects nothing; it would have read as a privacy control the model does not actually provide.
 - Rendering the PDF through a headless browser against the same HTML the websites would render.
   Dropped alongside every other HTML-to-PDF option: no headless browser is in the mise registry,
   and running one is an OS dependency this repository's CI image does not carry today.
@@ -241,9 +248,12 @@ contact:
   Owner: whoever implements `cv render pdf`.
 - Whether `cvd`'s API ever gets an actual consumer, and if not, when to drop it. Owner: revisit
   once both sibling sites have shipped against the JSON release artefact for a while.
+- Where an entry that may not belong on the open web, a postal address, a reference's personal
+  contact details, an NDA bound client project, lives instead, now that this repository holds
+  only publishable data. Owner: whoever specs that second, private source, if the need turns out
+  to be real.
 
 ## Related ADRs
 
-- None yet. The two-file split and the two visibility levels are both candidates once either is
-  contested or an implementation finds the model wrong in practice; neither is written now on the
-  strength of a concept doc alone.
+- None yet. The two-file split is a candidate once it is contested or an implementation finds
+  the model wrong in practice; it is not written now on the strength of a concept doc alone.
