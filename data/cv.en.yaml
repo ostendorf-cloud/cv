@@ -9,7 +9,6 @@ experience:
     title: Placeholder Title
     start: "2020-01"
     end: null
-    visibility: public
     summary: >
       Placeholder text for this entry's role description.
 
@@ -19,7 +18,6 @@ education:
     degree: Placeholder Degree
     start: "2015-10"
     end: "2019-06"
-    visibility: public
     summary: >
       Placeholder text for this programme's description.
 
@@ -29,13 +27,11 @@ certificates:
     issuer: Example Certification Body
     issued: "2023-01"
     valid_until: "2026-01"
-    visibility: public
 
 skills:
   - id: example-skill-1
     name: Placeholder Skill
     level: working
-    visibility: public
     evidence:
       - type: experience
         ref: example-experience-1
@@ -49,32 +45,26 @@ projects:
     github_repo: ostendorf-cloud/example-project
     description: >
       Placeholder text for this project's description.
-    visibility: public
 
 references:
   - id: example-reference-1
     name: Placeholder Name
     role: Placeholder Role
-    visibility: cv-only
 
 languages:
   - id: german
     name: German
     level: expert
-    visibility: public
   - id: english
     name: English
     level: working
-    visibility: public
 
 contact:
   email: contact@example.com
   address:
-    visibility: cv-only
     street: Placeholder Street 1
     city: Placeholder City
   profiles:
     - id: github
       platform: GitHub
       url: https://github.com/example
-      visibility: public

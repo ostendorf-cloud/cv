@@ -1,10 +1,11 @@
 skills:
   - id: kubernetes
     level: guru
-    visibility: public
   - id: kubernetes
     name: Kubernetes
     level: expert
-    visibility: internal-only
+    evidence:
+      - type: project
+        ref: no-such-project
 contact:
   email: contact@example.com

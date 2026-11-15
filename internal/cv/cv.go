@@ -11,22 +11,6 @@
 // files goes through.
 package cv
 
-// Visibility decides which sinks an entry may appear in. The concept
-// document defines exactly two levels and settles that filtering happens
-// once, in the renderer that reads this package's output.
-type Visibility string
-
-// The two visibility levels docs/concepts/cv.md defines. Public may appear
-// in every sink; cv-only is for the PDF alone.
-const (
-	VisibilityPublic Visibility = "public"
-	VisibilityCVOnly Visibility = "cv-only"
-)
-
-// visibilities is every value Visibility accepts, used to validate a loaded
-// value and to report an unknown one by name.
-var visibilities = []Visibility{VisibilityPublic, VisibilityCVOnly}
-
 // Level is a proficiency level. docs/concepts/cv.md defines exactly one
 // four-step scale, under the skills section, and does not define a separate
 // scale for languages. This package reuses the same scale for skills and
@@ -72,46 +56,43 @@ type Document struct {
 	Contact      Contact            `yaml:"contact"`
 }
 
-// ExperienceEntry is one career entry. Required: ID, Employer, Title, Start,
-// Visibility. End and Summary are optional, matching
-// docs/concepts/cv.md's own example: an ongoing role has no End.
+// ExperienceEntry is one career entry. Required: ID, Employer, Title, Start.
+// End and Summary are optional, matching docs/concepts/cv.md's own example:
+// an ongoing role has no End.
 type ExperienceEntry struct {
-	ID         string     `yaml:"id"`
-	Employer   string     `yaml:"employer"`
-	Title      string     `yaml:"title"`
-	Start      string     `yaml:"start"`
-	End        string     `yaml:"end,omitempty"`
-	Visibility Visibility `yaml:"visibility"`
-	Summary    string     `yaml:"summary,omitempty"`
+	ID       string `yaml:"id"`
+	Employer string `yaml:"employer"`
+	Title    string `yaml:"title"`
+	Start    string `yaml:"start"`
+	End      string `yaml:"end,omitempty"`
+	Summary  string `yaml:"summary,omitempty"`
 }
 
 func (e ExperienceEntry) identity() string { return e.ID }
 
 // EducationEntry is one degree or programme. Required: ID, Institution,
-// Degree, Start, Visibility. End and Summary are optional, for the same
-// reason as ExperienceEntry's: a programme still in progress has no End.
+// Degree, Start. End and Summary are optional, for the same reason as
+// ExperienceEntry's: a programme still in progress has no End.
 type EducationEntry struct {
-	ID          string     `yaml:"id"`
-	Institution string     `yaml:"institution"`
-	Degree      string     `yaml:"degree"`
-	Start       string     `yaml:"start"`
-	End         string     `yaml:"end,omitempty"`
-	Visibility  Visibility `yaml:"visibility"`
-	Summary     string     `yaml:"summary,omitempty"`
+	ID          string `yaml:"id"`
+	Institution string `yaml:"institution"`
+	Degree      string `yaml:"degree"`
+	Start       string `yaml:"start"`
+	End         string `yaml:"end,omitempty"`
+	Summary     string `yaml:"summary,omitempty"`
 }
 
 func (e EducationEntry) identity() string { return e.ID }
 
 // CertificateEntry is one issued credential. Required: ID, Name, Issuer,
-// Issued, ValidUntil, Visibility. The validity window is why this is its own
-// section rather than folded into Skills' evidence.
+// Issued, ValidUntil. The validity window is why this is its own section
+// rather than folded into Skills' evidence.
 type CertificateEntry struct {
-	ID         string     `yaml:"id"`
-	Name       string     `yaml:"name"`
-	Issuer     string     `yaml:"issuer"`
-	Issued     string     `yaml:"issued"`
-	ValidUntil string     `yaml:"valid_until"`
-	Visibility Visibility `yaml:"visibility"`
+	ID         string `yaml:"id"`
+	Name       string `yaml:"name"`
+	Issuer     string `yaml:"issuer"`
+	Issued     string `yaml:"issued"`
+	ValidUntil string `yaml:"valid_until"`
 }
 
 func (e CertificateEntry) identity() string { return e.ID }
@@ -123,80 +104,74 @@ type Evidence struct {
 	Ref  string       `yaml:"ref"`
 }
 
-// SkillEntry is one claimed skill. Required: ID, Name, Level, Visibility.
-// Evidence is optional; when present, every entry's Ref is checked against
-// the ids that actually exist in the matching section.
+// SkillEntry is one claimed skill. Required: ID, Name, Level. Evidence is
+// optional; when present, every entry's Ref is checked against the ids that
+// actually exist in the matching section.
 type SkillEntry struct {
-	ID         string     `yaml:"id"`
-	Name       string     `yaml:"name"`
-	Level      Level      `yaml:"level"`
-	Visibility Visibility `yaml:"visibility"`
-	Evidence   []Evidence `yaml:"evidence,omitempty"`
+	ID       string     `yaml:"id"`
+	Name     string     `yaml:"name"`
+	Level    Level      `yaml:"level"`
+	Evidence []Evidence `yaml:"evidence,omitempty"`
 }
 
 func (e SkillEntry) identity() string { return e.ID }
 
 // ProjectEntry is a hand written project description plus the GitHub
-// repository it enriches from. Required: ID, GithubRepo, Description,
-// Visibility. docs/concepts/cv.md is explicit that languages, stars and
-// latest_release are never stored here; they are merged in at render time,
-// so this type carries no field for any of the three, and the strict YAML
-// decoder in Parse rejects a data file that tries to set one anyway.
+// repository it enriches from. Required: ID, GithubRepo, Description.
+// docs/concepts/cv.md is explicit that languages, stars and latest_release
+// are never stored here; they are merged in at render time, so this type
+// carries no field for any of the three, and the strict YAML decoder in
+// Parse rejects a data file that tries to set one anyway.
 type ProjectEntry struct {
-	ID          string     `yaml:"id"`
-	GithubRepo  string     `yaml:"github_repo"`
-	Description string     `yaml:"description"`
-	Visibility  Visibility `yaml:"visibility"`
+	ID          string `yaml:"id"`
+	GithubRepo  string `yaml:"github_repo"`
+	Description string `yaml:"description"`
 }
 
 func (e ProjectEntry) identity() string { return e.ID }
 
-// ReferenceEntry is one person who can vouch, almost always cv-only.
-// Required: ID, Name, Role, Visibility.
+// ReferenceEntry is one person who can vouch. Required: ID, Name, Role.
 type ReferenceEntry struct {
-	ID         string     `yaml:"id"`
-	Name       string     `yaml:"name"`
-	Role       string     `yaml:"role"`
-	Visibility Visibility `yaml:"visibility"`
+	ID   string `yaml:"id"`
+	Name string `yaml:"name"`
+	Role string `yaml:"role"`
 }
 
 func (e ReferenceEntry) identity() string { return e.ID }
 
-// LanguageEntry is one spoken language. Required: ID, Name, Level,
-// Visibility. Level reuses the same four-step scale Skills uses; see Level's
-// own doc comment for why.
+// LanguageEntry is one spoken language. Required: ID, Name, Level. Level
+// reuses the same four-step scale Skills uses; see Level's own doc comment
+// for why.
 type LanguageEntry struct {
-	ID         string     `yaml:"id"`
-	Name       string     `yaml:"name"`
-	Level      Level      `yaml:"level"`
-	Visibility Visibility `yaml:"visibility"`
+	ID    string `yaml:"id"`
+	Name  string `yaml:"name"`
+	Level Level  `yaml:"level"`
 }
 
 func (e LanguageEntry) identity() string { return e.ID }
 
-// Address is the contact section's optional postal address, almost always
-// cv-only: docs/concepts/cv.md names it directly as the example of content
-// that belongs on the PDF and nowhere else.
+// Address is the contact section's optional postal address. Street and City
+// are both optional; nothing in this package, and no sink that reads its
+// output, filters an address out, so a committed address is as public as
+// every other field here.
 type Address struct {
-	Visibility Visibility `yaml:"visibility"`
-	Street     string     `yaml:"street,omitempty"`
-	City       string     `yaml:"city,omitempty"`
+	Street string `yaml:"street,omitempty"`
+	City   string `yaml:"city,omitempty"`
 }
 
 // Profile is one entry in Contact's Profiles list: a link to a social or
-// professional profile. Required: ID, Platform, URL, Visibility.
+// professional profile. Required: ID, Platform, URL.
 type Profile struct {
-	ID         string     `yaml:"id"`
-	Platform   string     `yaml:"platform"`
-	URL        string     `yaml:"url"`
-	Visibility Visibility `yaml:"visibility"`
+	ID       string `yaml:"id"`
+	Platform string `yaml:"platform"`
+	URL      string `yaml:"url"`
 }
 
 func (p Profile) identity() string { return p.ID }
 
 // Contact is the flat set of contact fields plus the Profiles list.
 // Required: Email. Address is optional; Profiles may be empty, but every
-// entry in it is required to carry its own four fields, checked the same
+// entry in it is required to carry its own three fields, checked the same
 // way every other section's entries are.
 type Contact struct {
 	Email    string    `yaml:"email"`

@@ -12,16 +12,16 @@ func TestValidate(t *testing.T) {
 		"a fully populated document passes": {
 			doc: Document{
 				Experience: []ExperienceEntry{{
-					ID: "exp-1", Employer: "Acme", Title: "Engineer", Start: "2020-01", Visibility: VisibilityPublic,
+					ID: "exp-1", Employer: "Acme", Title: "Engineer", Start: "2020-01",
 				}},
 				Education: []EducationEntry{{
-					ID: "edu-1", Institution: "University", Degree: "BSc", Start: "2016-10", Visibility: VisibilityPublic,
+					ID: "edu-1", Institution: "University", Degree: "BSc", Start: "2016-10",
 				}},
 				Certificates: []CertificateEntry{{
-					ID: "cert-1", Name: "CKAD", Issuer: "Linux Foundation", Issued: "2024-05", ValidUntil: "2027-05", Visibility: VisibilityPublic,
+					ID: "cert-1", Name: "CKAD", Issuer: "Linux Foundation", Issued: "2024-05", ValidUntil: "2027-05",
 				}},
 				Skills: []SkillEntry{{
-					ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic,
+					ID: "skill-1", Name: "Kubernetes", Level: LevelExpert,
 					Evidence: []Evidence{
 						{Type: EvidenceTypeProject, Ref: "proj-1"},
 						{Type: EvidenceTypeExperience, Ref: "exp-1"},
@@ -29,18 +29,18 @@ func TestValidate(t *testing.T) {
 					},
 				}},
 				Projects: []ProjectEntry{{
-					ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV", Visibility: VisibilityPublic,
+					ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV",
 				}},
 				References: []ReferenceEntry{{
-					ID: "ref-1", Name: "Jane Doe", Role: "Manager", Visibility: VisibilityCVOnly,
+					ID: "ref-1", Name: "Jane Doe", Role: "Manager",
 				}},
 				Languages: []LanguageEntry{{
-					ID: "lang-1", Name: "German", Level: LevelExpert, Visibility: VisibilityPublic,
+					ID: "lang-1", Name: "German", Level: LevelExpert,
 				}},
 				Contact: Contact{
 					Email: "contact@example.com",
 					Profiles: []Profile{{
-						ID: "github", Platform: "GitHub", URL: "https://github.com/example", Visibility: VisibilityPublic,
+						ID: "github", Platform: "GitHub", URL: "https://github.com/example",
 					}},
 				},
 			},
@@ -54,57 +54,37 @@ func TestValidate(t *testing.T) {
 		},
 		"a missing required field fails": {
 			doc: Document{
-				Experience: []ExperienceEntry{{ID: "exp-1", Start: "2020-01", Visibility: VisibilityPublic}},
+				Experience: []ExperienceEntry{{ID: "exp-1", Start: "2020-01"}},
 				Contact:    Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"a missing id fails": {
 			doc: Document{
-				Experience: []ExperienceEntry{{Employer: "Acme", Title: "Engineer", Start: "2020-01", Visibility: VisibilityPublic}},
+				Experience: []ExperienceEntry{{Employer: "Acme", Title: "Engineer", Start: "2020-01"}},
 				Contact:    Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"an unknown skill level fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: "guru", Visibility: VisibilityPublic}},
+				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: "guru"}},
 				Contact: Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"an unknown language level fails": {
 			doc: Document{
-				Languages: []LanguageEntry{{ID: "lang-1", Name: "German", Level: "native-ish", Visibility: VisibilityPublic}},
+				Languages: []LanguageEntry{{ID: "lang-1", Name: "German", Level: "native-ish"}},
 				Contact:   Contact{Email: "contact@example.com"},
-			},
-			wantErr: true,
-		},
-		"an unknown visibility fails": {
-			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: "internal-only"}},
-				Contact: Contact{Email: "contact@example.com"},
-			},
-			wantErr: true,
-		},
-		"a missing visibility fails": {
-			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert}},
-				Contact: Contact{Email: "contact@example.com"},
-			},
-			wantErr: true,
-		},
-		"an address with an unknown visibility fails": {
-			doc: Document{
-				Contact: Contact{Email: "contact@example.com", Address: &Address{Visibility: "secret"}},
 			},
 			wantErr: true,
 		},
 		"a duplicate id within a section fails": {
 			doc: Document{
 				Skills: []SkillEntry{
-					{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic},
-					{ID: "skill-1", Name: "Kubernetes, again", Level: LevelWorking, Visibility: VisibilityPublic},
+					{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert},
+					{ID: "skill-1", Name: "Kubernetes, again", Level: LevelWorking},
 				},
 				Contact: Contact{Email: "contact@example.com"},
 			},
@@ -112,8 +92,8 @@ func TestValidate(t *testing.T) {
 		},
 		"a duplicate id across different sections passes": {
 			doc: Document{
-				Skills:   []SkillEntry{{ID: "shared", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic}},
-				Projects: []ProjectEntry{{ID: "shared", GithubRepo: "acme/cv", Description: "A CV", Visibility: VisibilityPublic}},
+				Skills:   []SkillEntry{{ID: "shared", Name: "Kubernetes", Level: LevelExpert}},
+				Projects: []ProjectEntry{{ID: "shared", GithubRepo: "acme/cv", Description: "A CV"}},
 				Contact:  Contact{Email: "contact@example.com"},
 			},
 		},
@@ -122,8 +102,8 @@ func TestValidate(t *testing.T) {
 				Contact: Contact{
 					Email: "contact@example.com",
 					Profiles: []Profile{
-						{ID: "github", Platform: "GitHub", URL: "https://github.com/a", Visibility: VisibilityPublic},
-						{ID: "github", Platform: "GitHub", URL: "https://github.com/b", Visibility: VisibilityPublic},
+						{ID: "github", Platform: "GitHub", URL: "https://github.com/a"},
+						{ID: "github", Platform: "GitHub", URL: "https://github.com/b"},
 					},
 				},
 			},
@@ -131,28 +111,28 @@ func TestValidate(t *testing.T) {
 		},
 		"skill evidence against a project id that exists passes": {
 			doc: Document{
-				Skills:   []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "proj-1"}}}},
-				Projects: []ProjectEntry{{ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV", Visibility: VisibilityPublic}},
+				Skills:   []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "proj-1"}}}},
+				Projects: []ProjectEntry{{ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV"}},
 				Contact:  Contact{Email: "contact@example.com"},
 			},
 		},
 		"skill evidence against a project id that does not exist fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "no-such-project"}}}},
+				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "no-such-project"}}}},
 				Contact: Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"skill evidence of an unknown type fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic, Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}}},
+				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}}},
 				Contact: Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"skill evidence with no ref fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: VisibilityPublic, Evidence: []Evidence{{Type: EvidenceTypeProject}}}},
+				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject}}}},
 				Contact: Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
@@ -182,8 +162,8 @@ func TestValidateReportsEveryProblemTogether(t *testing.T) {
 
 	doc := Document{
 		Skills: []SkillEntry{
-			{ID: "skill-1", Level: "guru", Visibility: VisibilityPublic},
-			{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Visibility: "internal-only"},
+			{ID: "skill-1", Level: "guru"},
+			{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}},
 		},
 		Contact: Contact{Email: "contact@example.com"},
 	}
@@ -199,8 +179,8 @@ func TestValidateReportsEveryProblemTogether(t *testing.T) {
 	}
 	problems := joined.Unwrap()
 
-	// name missing on skills[0], level unknown on skills[0], visibility
-	// unknown on skills[1], and the duplicate id across both: four
+	// name missing on skills[0], level unknown on skills[0], the evidence
+	// type unknown on skills[1], and the duplicate id across both: four
 	// distinct problems, all present.
 	if len(problems) < 4 {
 		t.Fatalf("Validate() reported %d problems, want at least 4: %v", len(problems), problems)

@@ -25,8 +25,12 @@ func TestParse(t *testing.T) {
 			input:   "contact:\n  email: contact@example.com\n  fax: \"0000\"\n",
 			wantErr: true,
 		},
+		"an entry carrying a visibility field fails": {
+			input:   "skills:\n  - id: skill-1\n    name: Kubernetes\n    level: expert\n    visibility: public\ncontact:\n  email: contact@example.com\n",
+			wantErr: true,
+		},
 		"a missing required field fails": {
-			input:   "experience:\n  - id: exp-1\n    employer: Acme\n    start: \"2020-01\"\n    visibility: public\ncontact:\n  email: contact@example.com\n",
+			input:   "experience:\n  - id: exp-1\n    employer: Acme\n    start: \"2020-01\"\ncontact:\n  email: contact@example.com\n",
 			wantErr: true,
 		},
 	}
@@ -46,6 +50,24 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// TestParseRejectsAVisibilityFieldAsUnknown proves that an entry still
+// carrying the removed visibility field is rejected by the strict decoder
+// naming that exact field, not silently ignored and not confused with some
+// other problem.
+func TestParseRejectsAVisibilityFieldAsUnknown(t *testing.T) {
+	t.Parallel()
+
+	input := "skills:\n  - id: skill-1\n    name: Kubernetes\n    level: expert\n    visibility: public\ncontact:\n  email: contact@example.com\n"
+	_, err := Parse("test", []byte(input))
+	if err == nil {
+		t.Fatal("Parse() error = nil, want an error")
+	}
+
+	if !strings.Contains(err.Error(), "field visibility not found") {
+		t.Fatalf("Parse() error = %q, want it to name the removed visibility field as unknown", err)
+	}
+}
+
 // TestParseReportsDecodeAndValidationProblemsTogether proves that an
 // unknown field (caught while decoding) and a missing required field
 // (caught while validating) both surface from the same Parse call, rather
@@ -57,7 +79,6 @@ func TestParseReportsDecodeAndValidationProblemsTogether(t *testing.T) {
 skills:
   - id: skill-1
     level: expert
-    visibility: public
     bogus: true
 `
 	_, err := Parse("test", []byte(input))
@@ -132,13 +153,14 @@ func TestLoadMultipleProblemsFixtureNamesEveryProblem(t *testing.T) {
 		t.Fatal("Load() error = nil, want an error")
 	}
 
-	// A missing name and an unknown level on the first skill, an unknown
-	// visibility on the second, and the id the two share reported as a
-	// duplicate: four distinct problems, all present in one error.
+	// A missing name and an unknown level on the first skill, a reference to
+	// a project id that does not exist on the second, and the id the two
+	// share reported as a duplicate: four distinct problems, all present in
+	// one error.
 	want := []string{
 		`skills[0] (id=kubernetes): name: is required`,
 		`skills[0] (id=kubernetes): level: unknown value "guru"`,
-		`skills[1] (id=kubernetes): visibility: unknown value "internal-only"`,
+		`skills[1] (id=kubernetes).evidence[0]: ref: no project with id "no-such-project" exists`,
 		`skills: duplicate id "kubernetes"`,
 	}
 	got := err.Error()
@@ -182,7 +204,7 @@ func TestLoadPairReportsBothFilesTogether(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	broken := "skills:\n  - id: skill-1\n    level: guru\n    visibility: public\ncontact:\n  email: a@example.com\n"
+	broken := "skills:\n  - id: skill-1\n    level: guru\ncontact:\n  email: a@example.com\n"
 	if err := os.WriteFile(filepath.Join(dir, "de.yaml"), []byte(broken), 0o600); err != nil {
 		t.Fatalf("os.WriteFile() error = %v", err)
 	}

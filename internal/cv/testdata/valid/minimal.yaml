@@ -3,7 +3,6 @@ experience:
     employer: Nebulon GmbH
     title: Platform Engineer
     start: "2022-03"
-    visibility: public
     summary: >
       Builds and runs the Kubernetes platform the company's product ships on.
 
@@ -13,7 +12,6 @@ education:
     degree: BSc Computer Science
     start: "2016-10"
     end: "2020-06"
-    visibility: public
 
 certificates:
   - id: ckad-2024
@@ -21,13 +19,11 @@ certificates:
     issuer: Linux Foundation
     issued: "2024-05"
     valid_until: "2027-05"
-    visibility: public
 
 skills:
   - id: kubernetes
     name: Kubernetes
     level: expert
-    visibility: public
     evidence:
       - type: certificate
         ref: ckad-2024
@@ -41,28 +37,23 @@ projects:
     github_repo: ostendorf-cloud/cv
     description: >
       The one source for this CV: a CLI that renders it, a service that serves it.
-    visibility: public
 
 references:
   - id: jane-doe
     name: Jane Doe
     role: Former manager at Nebulon GmbH
-    visibility: cv-only
 
 languages:
   - id: german
     name: German
     level: expert
-    visibility: public
 
 contact:
   email: contact@example.com
   address:
-    visibility: cv-only
     street: Example Street 1
     city: Berlin
   profiles:
     - id: github
       platform: GitHub
       url: https://github.com/example
-      visibility: public
