@@ -52,10 +52,6 @@ Left out, tracked as later milestones:
   one person's own curriculum vitae, and reusing it would misidentify whose career it
   describes. No per-file licence header for the same reason; the single `LICENSE`
   carries it. `NOTICE` records what `LICENSE` does not cover.
-- `.github/workflows/dco.yaml`, `renovate.yaml` and the `renovate-config` job in
-  `checks.yaml` pin `ostendorf-cloud/workflows`'s reusable workflows at `v0.2.2`, the
-  latest tag that exists, not a floating `v0` major tag: `ostendorf-cloud/workflows` has
-  not cut one yet. Repoint at `v0` once it exists.
 - `helm-unittest` is pinned in `mise.toml` through mise's generic `github:` backend with a
   `postinstall` hook, not a plain registry entry: it is not in the mise registry, and
   `helm plugin install <url>` is forbidden by the baseline regardless of Helm version.
