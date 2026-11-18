@@ -27,7 +27,8 @@ service that serves it. The baseline rules apply and are not repeated here.
 - `internal/cvd/`: builds the two HTTP handlers `cmd/cvd` serves: the public one with the
   API routes, and the one govue's admin listener serves, health, readiness and metrics.
   `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
-  the bytes; the handler serves them.
+  the bytes; the handler serves them. Startup logs problems with positions, ids and
+  enumerated values; free text excerpts of YAML type errors are redacted, best effort.
 - `charts/cv/`: the Helm chart, for `cvd` only. `cv` ships as a release artefact, not a
   container image.
 

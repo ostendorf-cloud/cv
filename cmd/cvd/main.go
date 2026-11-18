@@ -38,7 +38,8 @@ func run() error {
 
 	// Read once, before anything listens: invalid data stops the start, so
 	// a half document is never served. The problems are logged one by one,
-	// without field values; see cvd.Problems.
+	// with positions, ids and enumerated values, and free text excerpts
+	// redacted on a best effort basis; see cvd.Problems.
 	if err := app.Load(cfg.DataDir); err != nil {
 		for _, problem := range cvd.Problems(err) {
 			logger.Error("cv data is invalid", "problem", problem)

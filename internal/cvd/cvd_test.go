@@ -1,6 +1,8 @@
 package cvd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -170,6 +172,13 @@ func TestETag(t *testing.T) {
 	if again := etagOf("/api/v1/cv?lang=de"); again != de {
 		t.Errorf("ETag changed between requests: %q then %q", de, again)
 	}
+	for lang, body := range expected(t) {
+		sum := sha256.Sum256(body)
+		want := `"` + hex.EncodeToString(sum[:]) + `"`
+		if got := etagOf("/api/v1/cv?lang=" + lang); got != want {
+			t.Errorf("ETag for %s = %q, want the strong sha256 of the body %q", lang, got, want)
+		}
+	}
 	other := loaded(t)
 	if got := get(t, other, http.MethodGet, "/api/v1/cv?lang=de", nil).Header().Get("ETag"); got != de {
 		t.Errorf("ETag differs between two loads of the same data: %q and %q", de, got)
@@ -184,6 +193,7 @@ func TestETag(t *testing.T) {
 		{"weak form of the tag", "W/" + de, http.StatusNotModified},
 		{"one of a list", `"other", ` + de, http.StatusNotModified},
 		{"wildcard", "*", http.StatusNotModified},
+		{"weak wildcard is invalid syntax", "W/*", http.StatusOK},
 		{"the other language's tag", en, http.StatusOK},
 		{"unknown tag", `"nope"`, http.StatusOK},
 	}
@@ -204,6 +214,51 @@ func TestETag(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestETagChangesWithTheData(t *testing.T) {
+	t.Parallel()
+
+	other := t.TempDir()
+	for _, lang := range cv.Languages {
+		data, err := os.ReadFile(filepath.Join("../cv/testdata/pairs/matched", lang+".yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(other, "cv."+lang+".yaml"), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	changed := New(discardLogger())
+	if err := changed.Load(other); err != nil {
+		t.Fatal(err)
+	}
+	base := loaded(t)
+
+	for _, lang := range cv.Languages {
+		a := get(t, base, http.MethodGet, "/api/v1/cv?lang="+lang, nil).Header().Get("ETag")
+		b := get(t, changed, http.MethodGet, "/api/v1/cv?lang="+lang, nil).Header().Get("ETag")
+		if a == b {
+			t.Errorf("%s: different data share the ETag %q", lang, a)
+		}
+		// A client holding the old tag must get the new document, not a 304.
+		rec := get(t, changed, http.MethodGet, "/api/v1/cv?lang="+lang, http.Header{"If-None-Match": {a}})
+		if rec.Code != http.StatusOK {
+			t.Errorf("%s: old tag answered %d after the data changed, want 200", lang, rec.Code)
+		}
+	}
+}
+
+func TestIfNoneMatchLinesAreOneList(t *testing.T) {
+	t.Parallel()
+
+	app := loaded(t)
+	etag := get(t, app, http.MethodGet, "/api/v1/cv", nil).Header().Get("ETag")
+
+	rec := get(t, app, http.MethodGet, "/api/v1/cv", http.Header{"If-None-Match": {`"other"`, etag}})
+	if rec.Code != http.StatusNotModified {
+		t.Errorf("status = %d, want 304 for a tag on the second header line", rec.Code)
 	}
 }
 

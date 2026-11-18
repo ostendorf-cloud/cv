@@ -99,9 +99,10 @@ func (a *App) Load(dir string) error {
 var backticked = regexp.MustCompile("`[^`]*`")
 
 // Problems splits an error from Load into one message per problem, safe to
-// log: a value excerpt the YAML decoder quotes is replaced. Validation
-// messages name sections, positions and ids; they carry no field value
-// beyond an enumerated one such as a skill level.
+// log. The messages carry positions, ids, evidence refs, unknown YAML keys
+// and enumerated values such as a skill level: the data is public by design.
+// The free text excerpt the YAML decoder quotes in a type error is replaced,
+// best effort: a scalar that itself contains a backtick can get past it.
 func Problems(err error) []string {
 	var joined interface{ Unwrap() []error }
 	if !errors.As(err, &joined) {
@@ -175,8 +176,9 @@ func language(rawQuery string) (string, error) {
 // comparison is weak, as RFC 9110 requires for this header.
 func matches(header, etag string) bool {
 	for _, candidate := range strings.Split(header, ",") {
-		candidate = strings.TrimPrefix(strings.TrimSpace(candidate), "W/")
-		if candidate == "*" || candidate == etag {
+		candidate = strings.TrimSpace(candidate)
+		// "*" is a wildcard only on its own, never as "W/*".
+		if candidate == "*" || strings.TrimPrefix(candidate, "W/") == etag {
 			return true
 		}
 	}
@@ -213,7 +215,8 @@ func (a *App) getCV(w http.ResponseWriter, r *http.Request) error {
 	h.Set("Cache-Control", "no-cache")
 	h.Set("ETag", doc.etag)
 
-	if match := r.Header.Get("If-None-Match"); match != "" && matches(match, doc.etag) {
+	// Repeated header lines are one comma separated list (RFC 9110).
+	if match := strings.Join(r.Header.Values("If-None-Match"), ","); match != "" && matches(match, doc.etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return nil
 	}

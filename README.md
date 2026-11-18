@@ -52,8 +52,11 @@ bytes, so the same `schema_version`.
 - `Cache-Control: no-cache`: a client revalidates each time, so a restart with new data shows
   at once.
 - Only `GET` and `HEAD`. Any other method answers `405` with `Allow: GET, HEAD`.
-- The data is read once at start. `cvd` refuses to start when it is invalid, and logs every
-  problem without field values. Reading new data needs a restart.
+- `lang` is case sensitive and the name is too: `?LANG=de` is an unknown parameter and
+  serves the default. Unknown parameters are ignored.
+- The data is read once at start. `cvd` refuses to start when it is invalid, and logs
+  problems with positions, ids and enumerated values. Free text excerpts of YAML type
+  errors are redacted (best effort). Reading new data needs a restart.
 - Readiness is unready until the documents are loaded. Liveness does not depend on them.
 
 ## JSON release artefact
