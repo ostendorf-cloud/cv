@@ -18,6 +18,10 @@
 coverage.out
 bin/
 
+# `cv render json` output, attached to a release by goreleaser. dist/ is goreleaser's own.
+rendered/
+dist/
+
 # Task's scratch directory. `task test:helm` builds a helm plugin directory here
 # rather than relying on helm's own, which a cached tool install never populates.
 .task/

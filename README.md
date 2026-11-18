@@ -4,9 +4,8 @@ The one source for Simon Ostendorf's curriculum vitae.
 
 ## What it does
 
-- `cv`, a CLI that will render the CV data into a PDF, the website's JSON, a GitHub
-  profile README block and a LinkedIn export. This milestone ships only `cv version` and
-  its help text.
+- `cv`, a CLI that validates the CV data and renders the website's JSON. A PDF and a
+  GitHub profile README block follow.
 - `cvd`, a small service that will serve the same data at `GET /api/v1/cv` inside the
   cluster. This milestone answers that route with an empty placeholder document and
   serves health, readiness and metrics on govue's admin listener.
@@ -39,6 +38,32 @@ curl localhost:8080/api/v1/cv
 curl localhost:8081/healthz
 curl localhost:8081/readyz
 curl localhost:8081/metrics
+```
+
+## JSON release artefact
+
+`cv render json` validates both data files, then writes one document per language into
+`--out` (default `rendered/`). Every release carries both as assets.
+
+| Asset | Language |
+| --- | --- |
+| `cv.de.json` | German |
+| `cv.en.json` | English |
+
+- The current schema version is `1`. It is the integer `schema_version` at the top of every
+  document, and `SchemaVersion` in `internal/cv/render_json.go`.
+- `ostendorf.dev` and `simon-ostendorf.de` read these two names and this version. A consumer
+  refuses a document whose `schema_version` it does not know.
+- A rename, a removed key, a changed type or a changed meaning raises the version. A new key
+  that a consumer can ignore does not.
+- Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
+  `certificates`, `skills`, `projects`, `references`, `languages`, `contact`.
+- Lists are always present, empty rather than null. An unset optional value is `null`.
+- Two space indentation, one trailing newline, no timestamp: the same data yields the same bytes.
+- Nothing is filtered. The repository holds only public data, see `docs/concepts/cv.md`.
+
+```sh
+task render:json
 ```
 
 ## Configuration

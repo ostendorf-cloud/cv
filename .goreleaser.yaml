@@ -24,3 +24,18 @@ archives:
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+# release-me owns the tag, the release and its notes. goreleaser only attaches
+# the assets to the release that already exists for the tag.
+release:
+  mode: keep-existing
+  prerelease: auto
+  # `task render:json` writes both documents here ahead of goreleaser. The
+  # directory is not dist/, which `goreleaser --clean` empties. The file names
+  # are a contract with the consumer sites: see README.md.
+  extra_files:
+    - glob: rendered/cv.de.json
+    - glob: rendered/cv.en.json
+
+changelog:
+  disable: true
