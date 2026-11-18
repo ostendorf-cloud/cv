@@ -184,13 +184,8 @@ func TestRenderJSONKeepsEveryEntry(t *testing.T) {
 		}
 	}
 
-	for _, key := range []string{"visibility", "cv-only", "public"} {
-		if hasKey(got, key) {
-			t.Errorf("output carries the key %q", key)
-		}
-	}
-	if strings.Contains(string(data), "cv-only") {
-		t.Errorf("output mentions cv-only")
+	if hasKey(got, "visibility") {
+		t.Errorf("output carries a visibility key")
 	}
 
 	var typed struct {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // SchemaVersion is the version of the JSON document RenderJSON writes. It is
@@ -174,6 +175,7 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		})
 	}
 	for _, e := range doc.Projects {
+		e.Description = trimText(e.Description)
 		out.Projects = append(out.Projects, jsonProject(e))
 	}
 	for _, e := range doc.References {
@@ -199,8 +201,17 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// optional maps an unset optional string to nil, which encodes as null.
+// trimText drops trailing whitespace. YAML's folded `>` style keeps one
+// trailing newline, which is formatting of the data file, not content, so it
+// never reaches the contract. Leading and inner whitespace stay.
+func trimText(s string) string {
+	return strings.TrimRight(s, " \t\r\n")
+}
+
+// optional maps an unset optional string to nil, which encodes as null. It
+// trims first, so a value that is only whitespace counts as unset.
 func optional(s string) *string {
+	s = trimText(s)
 	if s == "" {
 		return nil
 	}

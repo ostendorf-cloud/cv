@@ -1,6 +1,20 @@
 initial-version: 0.1.0
 # Below 1.0.0 a breaking change bumps the minor, so the major stays a deliberate decision.
 bump-minor-pre-major: true
+# github-release-draft-until-assets-attach replaces the immediate publish with
+# a draft that release.yaml attaches assets to and publishes itself. GitHub's
+# immutable releases setting cannot be read back through the API, so this stays
+# on regardless of whether it is enabled for this repository; see release-me's
+# own docs/adr/0001-draft-releases-until-assets-attach.md.
+#
+# force-tag-creation is release-me's default, pinned here because
+# scripts/publish-release-assets.sh depends on it: the script adds a worktree
+# at the tag and goreleaser resolves it through GORELEASER_CURRENT_TAG, so both
+# need the tag to exist while the release is still a draft. With it off,
+# GitHub creates the tag only on publish and every release would fail at the
+# worktree add.
+github-release-draft-until-assets-attach: true
+force-tag-creation: true
 files:
   - path: charts/cv/Chart.yaml
     updater: helm

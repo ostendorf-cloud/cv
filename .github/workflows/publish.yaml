@@ -7,28 +7,6 @@ on:
 permissions: {}
 
 jobs:
-  assets:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          # goreleaser reads the tag and its history.
-          fetch-depth: 0
-
-      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785  # v5.2.8
-
-      # Validation runs inside the render and fails this job, so no asset is
-      # attached to a release whose data is invalid.
-      - name: Render the JSON documents
-        run: task render:json
-
-      - name: Attach the binaries and the JSON documents to the release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: goreleaser release --clean
-
   image:
     runs-on: ubuntu-latest
     permissions:

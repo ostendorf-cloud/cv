@@ -59,13 +59,15 @@ Left out, tracked as later milestones:
 - `helm-unittest` is pinned in `mise.toml` through mise's generic `github:` backend with a
   `postinstall` hook, not a plain registry entry: it is not in the mise registry, and
   `helm plugin install <url>` is forbidden by the baseline regardless of Helm version.
-- `publish.yaml`'s `assets` job renders the JSON documents with `task render:json`, which
-  validates first, then runs `goreleaser release --clean` in `keep-existing` mode: release-me
-  already created the release, goreleaser only attaches the binary archives and, through
-  `release.extra_files`, `rendered/cv.de.json` and `rendered/cv.en.json`. The release exists
-  before `publish.yaml` runs, so a failed render fails the job and leaves a release without
-  assets, it cannot stop the release itself. `task build:release` cannot show the JSON assets
-  in a snapshot, since goreleaser attaches `extra_files` only in the publish step.
+- Releases are drafts until their assets attach: `release-me.yaml` sets
+  `github-release-draft-until-assets-attach`, and `release.yaml` runs
+  `scripts/publish-release-assets.sh` after the release-me step. The script renders the JSON
+  documents in the tag's own worktree (`task render:json`, which validates first), builds the
+  archives with `goreleaser release --skip=announce,validate,publish`, uploads the archives,
+  the checksums and `rendered/cv.*.json` with `gh release upload`, then publishes with
+  `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
+  `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
+  `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.

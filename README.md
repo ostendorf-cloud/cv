@@ -60,10 +60,21 @@ curl localhost:8081/metrics
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`.
 - Lists are always present, empty rather than null. An unset optional value is `null`.
 - Two space indentation, one trailing newline, no timestamp: the same data yields the same bytes.
+- Text fields have trailing whitespace trimmed, so a folded YAML summary carries no trailing
+  newline. Inner newlines stay. A summary that is only whitespace is `null`.
+- The JSON is plain UTF-8 and not HTML escaped: `<`, `>` and `&` appear as they are. A site
+  that inlines it into a script tag escapes it itself.
 - Nothing is filtered. The repository holds only public data, see `docs/concepts/cv.md`.
 
 ```sh
 task render:json
+```
+
+`internal/cv/testdata/render/*.golden.json` pins the exact output. After a deliberate change
+to the shape, regenerate and review the diff:
+
+```sh
+go test ./internal/cv -run TestRenderJSONGolden -update
 ```
 
 ## Configuration
