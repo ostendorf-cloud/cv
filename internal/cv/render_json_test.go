@@ -137,6 +137,7 @@ func TestRenderJSONKeyOrder(t *testing.T) {
 	want := []string{
 		`"schema_version"`, `"language"`, `"experience"`, `"education"`, `"certificates"`,
 		`"skills"`, `"projects"`, `"references"`, `"languages"`, `"contact"`,
+		`"volunteering"`, `"awards"`, `"exam_results"`, `"courses"`, `"publications"`, `"patents"`, `"organisations"`,
 	}
 	last := -1
 	for _, key := range want {

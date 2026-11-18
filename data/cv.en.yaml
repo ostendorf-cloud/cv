@@ -11,6 +11,8 @@ experience:
     end: null
     summary: >
       Placeholder text for this entry's role description.
+    location: Placeholder City
+    employment_type: Full-time
 
 education:
   - id: example-education-1
@@ -20,6 +22,7 @@ education:
     end: "2019-06"
     summary: >
       Placeholder text for this programme's description.
+    grade: "0,0"
 
 certificates:
   - id: example-certificate-1
@@ -27,6 +30,10 @@ certificates:
     issuer: Example Certification Body
     issued: "2023-01"
     valid_until: "2026-01"
+  - id: example-certificate-2
+    name: Placeholder Certificate Without Expiry
+    issuer: Example Certification Body
+    issued: "2021-05"
 
 skills:
   - id: example-skill-1
@@ -68,3 +75,50 @@ contact:
     - id: github
       platform: GitHub
       url: https://github.com/example
+
+volunteering:
+  - id: example-volunteering-1
+    organisation: Example Association
+    role: Placeholder Role
+    cause: Placeholder Cause
+    start: "2019-03"
+    end: "2021-06"
+    summary: >
+      Placeholder text for this entry's description.
+
+awards:
+  - id: example-award-1
+    title: Placeholder Award
+    issuer: Example Awarding Body
+    date: "2020-11"
+
+exam_results:
+  - id: example-exam-result-1
+    name: Placeholder Thesis
+    score: "0,0"
+    date: "2019-06"
+
+courses:
+  - id: example-course-1
+    name: Placeholder Course
+    provider: Example Academy
+    date: "2022-02"
+
+publications:
+  - id: example-publication-1
+    title: Placeholder Article
+    publisher: Example Journal
+    date: "2021-09"
+    url: https://example.com/article
+
+patents:
+  - id: example-patent-1
+    title: Placeholder Patent
+    number: EX 0000000
+    date: "2020-05"
+
+organisations:
+  - id: example-organisation-1
+    name: Example Society
+    role: Member
+    start: "2018-01"

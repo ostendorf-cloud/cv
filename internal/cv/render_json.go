@@ -43,15 +43,27 @@ type jsonDocument struct {
 	References    []jsonReference   `json:"references"`
 	Languages     []jsonLanguage    `json:"languages"`
 	Contact       jsonContact       `json:"contact"`
+
+	// The sections below come after contact, so the keys above keep their
+	// order.
+	Volunteering  []jsonVolunteering `json:"volunteering"`
+	Awards        []jsonAward        `json:"awards"`
+	ExamResults   []jsonExamResult   `json:"exam_results"`
+	Courses       []jsonCourse       `json:"courses"`
+	Publications  []jsonPublication  `json:"publications"`
+	Patents       []jsonPatent       `json:"patents"`
+	Organisations []jsonOrganisation `json:"organisations"`
 }
 
 type jsonExperience struct {
-	ID       string  `json:"id"`
-	Employer string  `json:"employer"`
-	Title    string  `json:"title"`
-	Start    string  `json:"start"`
-	End      *string `json:"end"`
-	Summary  *string `json:"summary"`
+	ID             string  `json:"id"`
+	Employer       string  `json:"employer"`
+	Title          string  `json:"title"`
+	Start          string  `json:"start"`
+	End            *string `json:"end"`
+	Summary        *string `json:"summary"`
+	Location       *string `json:"location"`
+	EmploymentType *string `json:"employment_type"`
 }
 
 type jsonEducation struct {
@@ -61,14 +73,74 @@ type jsonEducation struct {
 	Start       string  `json:"start"`
 	End         *string `json:"end"`
 	Summary     *string `json:"summary"`
+	Grade       *string `json:"grade"`
+}
+
+type jsonVolunteering struct {
+	ID           string  `json:"id"`
+	Organisation string  `json:"organisation"`
+	Role         string  `json:"role"`
+	Cause        *string `json:"cause"`
+	Start        string  `json:"start"`
+	End          *string `json:"end"`
+	Summary      *string `json:"summary"`
+}
+
+type jsonAward struct {
+	ID      string  `json:"id"`
+	Title   string  `json:"title"`
+	Issuer  string  `json:"issuer"`
+	Date    string  `json:"date"`
+	Summary *string `json:"summary"`
+}
+
+type jsonExamResult struct {
+	ID      string  `json:"id"`
+	Name    string  `json:"name"`
+	Score   string  `json:"score"`
+	Date    string  `json:"date"`
+	Summary *string `json:"summary"`
+}
+
+type jsonCourse struct {
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Provider *string `json:"provider"`
+	Date     *string `json:"date"`
+}
+
+type jsonPublication struct {
+	ID        string  `json:"id"`
+	Title     string  `json:"title"`
+	Publisher *string `json:"publisher"`
+	Date      string  `json:"date"`
+	URL       *string `json:"url"`
+	Summary   *string `json:"summary"`
+}
+
+type jsonPatent struct {
+	ID      string  `json:"id"`
+	Title   string  `json:"title"`
+	Number  *string `json:"number"`
+	Date    string  `json:"date"`
+	URL     *string `json:"url"`
+	Summary *string `json:"summary"`
+}
+
+type jsonOrganisation struct {
+	ID    string  `json:"id"`
+	Name  string  `json:"name"`
+	Role  *string `json:"role"`
+	Start string  `json:"start"`
+	End   *string `json:"end"`
 }
 
 type jsonCertificate struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Issuer     string `json:"issuer"`
-	Issued     string `json:"issued"`
-	ValidUntil string `json:"valid_until"`
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	Issuer     string  `json:"issuer"`
+	Issued     string  `json:"issued"`
+	ValidUntil *string `json:"valid_until"`
 }
 
 type jsonEvidence struct {
@@ -149,22 +221,70 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 			Email:    doc.Contact.Email,
 			Profiles: make([]jsonProfile, 0, len(doc.Contact.Profiles)),
 		},
+		Volunteering:  make([]jsonVolunteering, 0, len(doc.Volunteering)),
+		Awards:        make([]jsonAward, 0, len(doc.Awards)),
+		ExamResults:   make([]jsonExamResult, 0, len(doc.ExamResults)),
+		Courses:       make([]jsonCourse, 0, len(doc.Courses)),
+		Publications:  make([]jsonPublication, 0, len(doc.Publications)),
+		Patents:       make([]jsonPatent, 0, len(doc.Patents)),
+		Organisations: make([]jsonOrganisation, 0, len(doc.Organisations)),
 	}
 
 	for _, e := range doc.Experience {
 		out.Experience = append(out.Experience, jsonExperience{
 			ID: e.ID, Employer: e.Employer, Title: e.Title, Start: e.Start,
 			End: optional(e.End), Summary: optional(e.Summary),
+			Location: optional(e.Location), EmploymentType: optional(e.EmploymentType),
 		})
 	}
 	for _, e := range doc.Education {
 		out.Education = append(out.Education, jsonEducation{
 			ID: e.ID, Institution: e.Institution, Degree: e.Degree, Start: e.Start,
-			End: optional(e.End), Summary: optional(e.Summary),
+			End: optional(e.End), Summary: optional(e.Summary), Grade: optional(e.Grade),
+		})
+	}
+	for _, e := range doc.Volunteering {
+		out.Volunteering = append(out.Volunteering, jsonVolunteering{
+			ID: e.ID, Organisation: e.Organisation, Role: e.Role, Cause: optional(e.Cause),
+			Start: e.Start, End: optional(e.End), Summary: optional(e.Summary),
+		})
+	}
+	for _, e := range doc.Awards {
+		out.Awards = append(out.Awards, jsonAward{
+			ID: e.ID, Title: e.Title, Issuer: e.Issuer, Date: e.Date, Summary: optional(e.Summary),
+		})
+	}
+	for _, e := range doc.ExamResults {
+		out.ExamResults = append(out.ExamResults, jsonExamResult{
+			ID: e.ID, Name: e.Name, Score: e.Score, Date: e.Date, Summary: optional(e.Summary),
+		})
+	}
+	for _, e := range doc.Courses {
+		out.Courses = append(out.Courses, jsonCourse{
+			ID: e.ID, Name: e.Name, Provider: optional(e.Provider), Date: optional(e.Date),
+		})
+	}
+	for _, e := range doc.Publications {
+		out.Publications = append(out.Publications, jsonPublication{
+			ID: e.ID, Title: e.Title, Publisher: optional(e.Publisher), Date: e.Date,
+			URL: optional(e.URL), Summary: optional(e.Summary),
+		})
+	}
+	for _, e := range doc.Patents {
+		out.Patents = append(out.Patents, jsonPatent{
+			ID: e.ID, Title: e.Title, Number: optional(e.Number), Date: e.Date,
+			URL: optional(e.URL), Summary: optional(e.Summary),
+		})
+	}
+	for _, e := range doc.Organisations {
+		out.Organisations = append(out.Organisations, jsonOrganisation{
+			ID: e.ID, Name: e.Name, Role: optional(e.Role), Start: e.Start, End: optional(e.End),
 		})
 	}
 	for _, e := range doc.Certificates {
-		out.Certificates = append(out.Certificates, jsonCertificate(e))
+		out.Certificates = append(out.Certificates, jsonCertificate{
+			ID: e.ID, Name: e.Name, Issuer: e.Issuer, Issued: e.Issued, ValidUntil: optional(e.ValidUntil),
+		})
 	}
 	for _, e := range doc.Skills {
 		evidence := make([]jsonEvidence, 0, len(e.Evidence))

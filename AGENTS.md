@@ -10,14 +10,18 @@ service that serves it. The baseline rules apply and are not repeated here.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
-  section, the four skill levels, a duplicate id within a section, a skill's evidence
+  section, the seven optional sections that hold what LinkedIn holds (`volunteering`,
+  `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`, with
+  `YYYY-MM` dates), the four skill levels, a duplicate id within a section, a skill's evidence
   checked against the project, experience and certificate ids that actually exist, and
   the two-file drift check between `data/cv.de.yaml` and `data/cv.en.yaml`. Every problem
   one load finds is aggregated into one error, the same way `internal/cvdconfig`
   aggregates `cvd`'s own configuration errors. `cmd/cv`'s `validate` command is the CLI
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
   instead of only through a renderer. `render_json.go` renders the public JSON document
-  for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`.
+  for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
+  model holds what LinkedIn holds, except recommendations (third party text) and interests
+  (not CV content).
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
   language, matched by each entry's `id`. Both currently hold placeholder entries only;
   see `docs/concepts/cv.md` for the model and the two files' own header comments for

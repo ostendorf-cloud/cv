@@ -62,7 +62,8 @@
 - `experience`, career entries. Required: `id`, `employer`, `title`, `start`.
 - `education`, degrees and programmes. Required: `id`, `institution`, `degree`, `start`.
 - `certificates`, issued credentials, the one section with a validity window. Required: `id`,
-  `name`, `issuer`, `issued`, `valid_until`.
+  `name`, `issuer`, `issued`. Optional: `valid_until`. A certificate without it has no expiry
+  and stays valid. Both dates are `YYYY-MM`, and `valid_until` is not before `issued`.
 - `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`. `level` is one
   of `familiar`, `working`, `proficient`, `expert`. `evidence` links back to a `project`,
   `experience` or `certificate` id, which is how the GitHub loop below feeds skills.
@@ -73,6 +74,32 @@
 - `languages`, spoken languages. Required: `id`, `name`, `level`.
 - `contact`, a flat set of contact fields plus a `profiles` list. Required on each profile:
   `id`, `platform`, `url`.
+
+### Seven optional sections, so the data files lose nothing a LinkedIn profile holds
+
+- The eight sections above are the core. Seven more are optional lists, absent means empty, and
+  each entry carries a required `id`, matched across the two files like every other section:
+  - `volunteering`. Required: `id`, `organisation`, `role`, `start`. Optional: `cause`, `end`,
+    `summary`.
+  - `awards`, honors and awards. Required: `id`, `title`, `issuer`, `date`. Optional: `summary`.
+  - `exam_results`, test scores such as a thesis grade. Required: `id`, `name`, `score`, `date`.
+    Optional: `summary`. `score` is free text, grading schemes differ.
+  - `courses`. Required: `id`, `name`. Optional: `provider`, `date`.
+  - `publications`. Required: `id`, `title`, `date`. Optional: `publisher`, `url`, `summary`.
+  - `patents`. Required: `id`, `title`, `date`. Optional: `number`, `url`, `summary`.
+  - `organisations`, memberships. Required: `id`, `name`, `start`. Optional: `role`, `end`.
+- Three optional free text fields join existing sections: `grade` on `education`, `location` and
+  `employment_type` on `experience`.
+- The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
+  and year only, so a full date is rejected. Certificates check `issued` and `valid_until` the
+  same way. The dates of the other older sections stay unchecked. An `end` is not before its
+  `start` in `volunteering` and `organisations`.
+- `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
+  value is `null`.
+- The JSON document carries the new sections after `contact`, so the older keys keep their order.
+- Left out on purpose: recommendations and interests. A recommendation is text a third party
+  wrote, and this repository holds only what the owner may publish as their own. Interests are
+  not curriculum vitae content.
 
 ```yaml
 # data/cv.en.yaml, excerpts, one entry per section

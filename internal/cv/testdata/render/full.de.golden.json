@@ -8,7 +8,9 @@
       "title": "Engineer de",
       "start": "2020-01",
       "end": "2022-01",
-      "summary": "Summary one de."
+      "summary": "Summary one de.",
+      "location": "Example City de",
+      "employment_type": "Full-time de"
     },
     {
       "id": "exp-2",
@@ -16,7 +18,9 @@
       "title": "Lead de",
       "start": "2022-02",
       "end": null,
-      "summary": null
+      "summary": null,
+      "location": null,
+      "employment_type": null
     }
   ],
   "education": [
@@ -26,7 +30,8 @@
       "degree": "Degree de",
       "start": "2015-10",
       "end": "2019-06",
-      "summary": "Degree summary de."
+      "summary": "Degree summary de.",
+      "grade": "0,0 de"
     },
     {
       "id": "edu-2",
@@ -34,7 +39,8 @@
       "degree": "Course de",
       "start": "2019-09",
       "end": null,
-      "summary": null
+      "summary": null,
+      "grade": null
     }
   ],
   "certificates": [
@@ -44,6 +50,13 @@
       "issuer": "Example Body de",
       "issued": "2023-01",
       "valid_until": "2026-01"
+    },
+    {
+      "id": "cert-2",
+      "name": "Lifetime Certificate de",
+      "issuer": "Other Body de",
+      "issued": "2021-05",
+      "valid_until": null
     }
   ],
   "skills": [
@@ -108,5 +121,123 @@
         "url": "https://github.com/example"
       }
     ]
-  }
+  },
+  "volunteering": [
+    {
+      "id": "vol-1",
+      "organisation": "Example Association de",
+      "role": "Helper de",
+      "cause": "Education de",
+      "start": "2019-03",
+      "end": "2021-06",
+      "summary": "Volunteer text de."
+    },
+    {
+      "id": "vol-2",
+      "organisation": "Other Association de",
+      "role": "Lead de",
+      "cause": null,
+      "start": "2021-07",
+      "end": null,
+      "summary": null
+    }
+  ],
+  "awards": [
+    {
+      "id": "award-1",
+      "title": "Award de",
+      "issuer": "Example Body de",
+      "date": "2020-11",
+      "summary": "Award text de."
+    },
+    {
+      "id": "award-2",
+      "title": "Other Award de",
+      "issuer": "Other Body de",
+      "date": "2021-12",
+      "summary": null
+    }
+  ],
+  "exam_results": [
+    {
+      "id": "exam-1",
+      "name": "Thesis de",
+      "score": "0,0",
+      "date": "2019-06",
+      "summary": "Exam text de."
+    },
+    {
+      "id": "exam-2",
+      "name": "Test de",
+      "score": "passed",
+      "date": "2018-02",
+      "summary": null
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-1",
+      "name": "Course de",
+      "provider": "Example Academy de",
+      "date": "2022-02"
+    },
+    {
+      "id": "course-2",
+      "name": "Other Course de",
+      "provider": null,
+      "date": null
+    }
+  ],
+  "publications": [
+    {
+      "id": "pub-1",
+      "title": "Article de",
+      "publisher": "Example Journal de",
+      "date": "2021-09",
+      "url": "https://example.com/article",
+      "summary": "Article text de."
+    },
+    {
+      "id": "pub-2",
+      "title": "Other Article de",
+      "publisher": null,
+      "date": "2022-10",
+      "url": null,
+      "summary": null
+    }
+  ],
+  "patents": [
+    {
+      "id": "patent-1",
+      "title": "Patent de",
+      "number": "EX 0000000",
+      "date": "2020-05",
+      "url": "https://example.com/patent",
+      "summary": "Patent text de."
+    },
+    {
+      "id": "patent-2",
+      "title": "Other Patent de",
+      "number": null,
+      "date": "2020-06",
+      "url": null,
+      "summary": null
+    }
+  ],
+  "organisations": [
+    {
+      "id": "org-1",
+      "name": "Example Society de",
+      "role": "Member de",
+      "start": "2018-01",
+      "end": "2020-12"
+    },
+    {
+      "id": "org-2",
+      "name": "Other Society de",
+      "role": null,
+      "start": "2021-01",
+      "end": null
+    }
+  ]
 }
