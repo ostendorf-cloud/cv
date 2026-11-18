@@ -55,8 +55,9 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "id", e.ID)
 		v.required(ref, "name", e.Name)
 		v.required(ref, "issuer", e.Issuer)
-		v.required(ref, "issued", e.Issued)
-		v.required(ref, "valid_until", e.ValidUntil)
+		v.requiredDate(ref, "issued", e.Issued)
+		v.date(ref, "valid_until", e.ValidUntil)
+		v.notBefore(ref, "valid_until", e.ValidUntil, "issued", e.Issued)
 	}
 	for i, e := range doc.Skills {
 		ref := entryRef("skills", i, e.ID)
@@ -128,6 +129,19 @@ func (v *validator) date(ref, field, value string) {
 	value = strings.TrimSpace(value)
 	if value != "" && !monthPattern.MatchString(value) {
 		v.fail(ref, "%s: %q is not a YYYY-MM date", field, value)
+	}
+}
+
+// notBefore fails ref when both values are valid "YYYY-MM" months and later
+// is earlier than earlier. A missing or malformed value is reported by
+// required and date, not here. "YYYY-MM" strings compare in date order.
+func (v *validator) notBefore(ref, laterField, later, earlierField, earlier string) {
+	later, earlier = strings.TrimSpace(later), strings.TrimSpace(earlier)
+	if !monthPattern.MatchString(later) || !monthPattern.MatchString(earlier) {
+		return
+	}
+	if later < earlier {
+		v.fail(ref, "%s: %q is before %s %q", laterField, later, earlierField, earlier)
 	}
 }
 

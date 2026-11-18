@@ -62,7 +62,8 @@
 - `experience`, career entries. Required: `id`, `employer`, `title`, `start`.
 - `education`, degrees and programmes. Required: `id`, `institution`, `degree`, `start`.
 - `certificates`, issued credentials, the one section with a validity window. Required: `id`,
-  `name`, `issuer`, `issued`, `valid_until`.
+  `name`, `issuer`, `issued`. Optional: `valid_until`. A certificate without it has no expiry
+  and stays valid. Both dates are `YYYY-MM`, and `valid_until` is not before `issued`.
 - `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`. `level` is one
   of `familiar`, `working`, `proficient`, `expert`. `evidence` links back to a `project`,
   `experience` or `certificate` id, which is how the GitHub loop below feeds skills.

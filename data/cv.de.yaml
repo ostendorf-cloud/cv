@@ -31,6 +31,10 @@ certificates:
     issuer: Example Certification Body
     issued: "2023-01"
     valid_until: "2026-01"
+  - id: example-certificate-2
+    name: Platzhalterzertifikat ohne Ablauf
+    issuer: Example Certification Body
+    issued: "2021-05"
 
 skills:
   - id: example-skill-1

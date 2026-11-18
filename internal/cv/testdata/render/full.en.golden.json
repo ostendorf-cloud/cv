@@ -50,6 +50,13 @@
       "issuer": "Example Body en",
       "issued": "2023-01",
       "valid_until": "2026-01"
+    },
+    {
+      "id": "cert-2",
+      "name": "Lifetime Certificate en",
+      "issuer": "Other Body en",
+      "issued": "2021-05",
+      "valid_until": null
     }
   ],
   "skills": [

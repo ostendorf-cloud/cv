@@ -65,6 +65,8 @@ curl localhost:8081/metrics
   `internal/cv/testdata/render/legacy.*.golden.json` pins that.
 - The dates of the seven new sections are `YYYY-MM`.
 - Lists are always present, empty rather than null. An unset optional value is `null`.
+- `certificates[].valid_until` is optional: `null` means the certificate has no expiry. The key
+  stays in place and no version bump is needed. A consumer must not assume a string.
 - Two space indentation, one trailing newline, no timestamp: the same data yields the same bytes.
 - Every text field has leading and trailing whitespace removed, so a folded YAML summary
   carries no trailing newline. Inner newlines stay. An optional value that is only whitespace

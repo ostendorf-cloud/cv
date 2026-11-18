@@ -38,6 +38,10 @@ func fixtureDocument(lang string, p func(string) string) Document {
 	doc.Experience[1].EmploymentType = p("")
 	doc.Education[0].Grade = p("1,6 " + lang)
 	doc.Education[1].Grade = p("")
+	// A certificate without an expiry renders valid_until as null.
+	doc.Certificates = append(doc.Certificates, CertificateEntry{
+		ID: p("cert-2"), Name: p("Lifetime Certificate " + lang), Issuer: p("Other Body " + lang), Issued: p("2021-05"), ValidUntil: p(""),
+	})
 	doc.Volunteering = []VolunteeringEntry{
 		{ID: p("vol-1"), Organisation: p("Example Association " + lang), Role: p("Helper " + lang), Cause: p("Education " + lang), Start: p("2019-03"), End: p("2021-06"), Summary: p("Volunteer text " + lang + ".")},
 		{ID: p("vol-2"), Organisation: p("Other Association " + lang), Role: p("Lead " + lang), Cause: p(""), Start: p("2021-07"), End: p(""), Summary: p("")},

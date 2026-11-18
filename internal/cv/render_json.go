@@ -136,11 +136,11 @@ type jsonOrganisation struct {
 }
 
 type jsonCertificate struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Issuer     string `json:"issuer"`
-	Issued     string `json:"issued"`
-	ValidUntil string `json:"valid_until"`
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	Issuer     string  `json:"issuer"`
+	Issued     string  `json:"issued"`
+	ValidUntil *string `json:"valid_until"`
 }
 
 type jsonEvidence struct {
@@ -282,7 +282,9 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		})
 	}
 	for _, e := range doc.Certificates {
-		out.Certificates = append(out.Certificates, jsonCertificate(e))
+		out.Certificates = append(out.Certificates, jsonCertificate{
+			ID: e.ID, Name: e.Name, Issuer: e.Issuer, Issued: e.Issued, ValidUntil: optional(e.ValidUntil),
+		})
 	}
 	for _, e := range doc.Skills {
 		evidence := make([]jsonEvidence, 0, len(e.Evidence))

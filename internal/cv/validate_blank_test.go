@@ -74,7 +74,6 @@ func TestValidateRejectsBlankValues(t *testing.T) {
 		"certificate name":         {func(d *Document) { d.Certificates[0].Name = blank }, "name: is required"},
 		"certificate issuer":       {func(d *Document) { d.Certificates[0].Issuer = blank }, "issuer: is required"},
 		"certificate issued":       {func(d *Document) { d.Certificates[0].Issued = blank }, "issued: is required"},
-		"certificate valid_until":  {func(d *Document) { d.Certificates[0].ValidUntil = blank }, "valid_until: is required"},
 		"skill id":                 {func(d *Document) { d.Skills[0].ID = blank }, "id: is required"},
 		"skill name":               {func(d *Document) { d.Skills[0].Name = blank }, "name: is required"},
 		"skill level":              {func(d *Document) { d.Skills[0].Level = Level(blank) }, "level: is required"},

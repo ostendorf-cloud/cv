@@ -102,14 +102,16 @@ type EducationEntry struct {
 func (e EducationEntry) identity() string { return e.ID }
 
 // CertificateEntry is one issued credential. Required: ID, Name, Issuer,
-// Issued, ValidUntil. The validity window is why this is its own section
-// rather than folded into Skills' evidence.
+// Issued. ValidUntil is optional: a certificate without one has no expiry.
+// Both dates are "YYYY-MM", and ValidUntil is not before Issued. The validity
+// window is why this is its own section rather than folded into Skills'
+// evidence.
 type CertificateEntry struct {
 	ID         string `yaml:"id"`
 	Name       string `yaml:"name"`
 	Issuer     string `yaml:"issuer"`
 	Issued     string `yaml:"issued"`
-	ValidUntil string `yaml:"valid_until"`
+	ValidUntil string `yaml:"valid_until,omitempty"`
 }
 
 func (e CertificateEntry) identity() string { return e.ID }
