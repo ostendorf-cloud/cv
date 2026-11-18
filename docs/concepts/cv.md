@@ -91,7 +91,11 @@
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
-  and year only, so a full date is rejected. The older sections keep their dates unchecked.
+  and year only, so a full date is rejected. Certificates check `issued` and `valid_until` the
+  same way. The dates of the other older sections stay unchecked. An `end` is not before its
+  `start` in `volunteering` and `organisations`.
+- `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
+  value is `null`.
 - The JSON document carries the new sections after `contact`, so the older keys keep their order.
 - Left out on purpose: recommendations and interests. A recommendation is text a third party
   wrote, and this repository holds only what the owner may publish as their own. Interests are

@@ -19,7 +19,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   aggregates `cvd`'s own configuration errors. `cmd/cv`'s `validate` command is the CLI
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
   instead of only through a renderer. `render_json.go` renders the public JSON document
-  for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`.
+  for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
+  model holds what LinkedIn holds, except recommendations (third party text) and interests
+  (not CV content).
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
   language, matched by each entry's `id`. Both currently hold placeholder entries only;
   see `docs/concepts/cv.md` for the model and the two files' own header comments for
@@ -38,9 +40,7 @@ The service answers one placeholder route and its own health, readiness and metr
 Left out, tracked as later milestones:
 
 - `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
-  pasted into LinkedIn, which has no write API for one's own profile. The model holds
-  what LinkedIn holds, except recommendations (third party text) and interests (not CV
-  content). Every renderer calls
+  pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - `cvd` serving the real document at `GET /api/v1/cv`, read through `internal/cv` instead
   of answering an empty placeholder.

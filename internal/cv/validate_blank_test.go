@@ -25,7 +25,7 @@ func validDocument() Document {
 		},
 		Volunteering:  []VolunteeringEntry{{ID: "vol-1", Organisation: "Association", Role: "Helper", Start: "2019-03"}},
 		Awards:        []AwardEntry{{ID: "award-1", Title: "Award", Issuer: "Body", Date: "2020-11"}},
-		ExamResults:   []ExamResultEntry{{ID: "exam-1", Name: "Thesis", Score: "1,3", Date: "2019-06"}},
+		ExamResults:   []ExamResultEntry{{ID: "exam-1", Name: "Thesis", Score: "0,0", Date: "2019-06"}},
 		Courses:       []CourseEntry{{ID: "course-1", Name: "Course"}},
 		Publications:  []PublicationEntry{{ID: "pub-1", Title: "Article", Date: "2021-09"}},
 		Patents:       []PatentEntry{{ID: "patent-1", Title: "Patent", Date: "2020-05"}},

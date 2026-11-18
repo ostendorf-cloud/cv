@@ -159,6 +159,7 @@ func (v *validator) volunteering(entries []VolunteeringEntry) {
 		v.required(ref, "role", e.Role)
 		v.requiredDate(ref, "start", e.Start)
 		v.date(ref, "end", e.End)
+		v.notBefore(ref, "end", e.End, "start", e.Start)
 	}
 }
 
@@ -216,6 +217,7 @@ func (v *validator) organisations(entries []OrganisationEntry) {
 		v.required(ref, "name", e.Name)
 		v.requiredDate(ref, "start", e.Start)
 		v.date(ref, "end", e.End)
+		v.notBefore(ref, "end", e.End, "start", e.Start)
 	}
 }
 

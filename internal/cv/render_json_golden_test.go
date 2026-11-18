@@ -36,7 +36,7 @@ func fixtureDocument(lang string, p func(string) string) Document {
 	doc.Experience[0].EmploymentType = p("Full-time " + lang)
 	doc.Experience[1].Location = p("")
 	doc.Experience[1].EmploymentType = p("")
-	doc.Education[0].Grade = p("1,6 " + lang)
+	doc.Education[0].Grade = p("0,0 " + lang)
 	doc.Education[1].Grade = p("")
 	// A certificate without an expiry renders valid_until as null.
 	doc.Certificates = append(doc.Certificates, CertificateEntry{
@@ -51,7 +51,7 @@ func fixtureDocument(lang string, p func(string) string) Document {
 		{ID: p("award-2"), Title: p("Other Award " + lang), Issuer: p("Other Body " + lang), Date: p("2021-12"), Summary: p("")},
 	}
 	doc.ExamResults = []ExamResultEntry{
-		{ID: p("exam-1"), Name: p("Thesis " + lang), Score: p("1,3"), Date: p("2019-06"), Summary: p("Exam text " + lang + ".")},
+		{ID: p("exam-1"), Name: p("Thesis " + lang), Score: p("0,0"), Date: p("2019-06"), Summary: p("Exam text " + lang + ".")},
 		{ID: p("exam-2"), Name: p("Test " + lang), Score: p("passed"), Date: p("2018-02"), Summary: p("")},
 	}
 	doc.Courses = []CourseEntry{

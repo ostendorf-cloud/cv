@@ -44,7 +44,8 @@ const (
 )
 
 // Document is one data file, data/cv.de.yaml or data/cv.en.yaml, decoded
-// into the eight top level sections docs/concepts/cv.md defines. Both files
+// into the fifteen top level sections docs/concepts/cv.md defines: eight
+// core sections and seven optional ones. Both files
 // decode into the same Go type; nothing here merges the two languages, that
 // stays the renderer's job once one exists.
 type Document struct {

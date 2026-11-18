@@ -61,12 +61,13 @@ curl localhost:8081/metrics
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`.
 - The last seven keys and the entry keys `grade` (education), `location` and `employment_type`
   (experience) were added without a version bump: they are new keys a consumer can ignore. The
-  existing keys, their names and their order are unchanged.
-  `internal/cv/testdata/render/legacy.*.golden.json` pins that.
-- The dates of the seven new sections are `YYYY-MM`.
+  other existing keys, their names and their order are unchanged.
+  `internal/cv/testdata/render/legacy.*.golden.json` pins that and is frozen.
+- Exception: version 1 is fixed at the first release. Before that, `certificates[].valid_until`
+  became nullable (`null` means no expiry). A consumer must not assume a string there.
+- The dates of the seven new sections and the certificate dates `issued` and `valid_until` are
+  `YYYY-MM`.
 - Lists are always present, empty rather than null. An unset optional value is `null`.
-- `certificates[].valid_until` is optional: `null` means the certificate has no expiry. The key
-  stays in place and no version bump is needed. A consumer must not assume a string.
 - Two space indentation, one trailing newline, no timestamp: the same data yields the same bytes.
 - Every text field has leading and trailing whitespace removed, so a folded YAML summary
   carries no trailing newline. Inner newlines stay. An optional value that is only whitespace

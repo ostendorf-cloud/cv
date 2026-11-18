@@ -22,7 +22,7 @@ education:
     end: "2019-06"
     summary: >
       Placeholder text for this programme's description.
-    grade: "1,6"
+    grade: "0,0"
 
 certificates:
   - id: example-certificate-1
@@ -95,7 +95,7 @@ awards:
 exam_results:
   - id: example-exam-result-1
     name: Placeholder Thesis
-    score: "1,3"
+    score: "0,0"
     date: "2019-06"
 
 courses:

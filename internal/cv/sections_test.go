@@ -23,6 +23,8 @@ func TestValidateNewSections(t *testing.T) {
 		"volunteering bad start":            {func(d *Document) { d.Volunteering[0].Start = "2019" }, `start: "2019" is not a YYYY-MM date`},
 		"volunteering bad end":              {func(d *Document) { d.Volunteering[0].End = "2021-13" }, `end: "2021-13" is not a YYYY-MM date`},
 		"volunteering duplicate id":         {func(d *Document) { d.Volunteering[1].ID = "vol-1" }, `volunteering: duplicate id "vol-1"`},
+		"volunteering end before start":     {func(d *Document) { d.Volunteering[0].End = "2019-02" }, `end: "2019-02" is before start "2019-03"`},
+		"organisations end before start":    {func(d *Document) { d.Organisations[0].End = "2017-12" }, `end: "2017-12" is before start "2018-01"`},
 		"awards without title":              {func(d *Document) { d.Awards[0].Title = "" }, "title: is required"},
 		"awards without issuer":             {func(d *Document) { d.Awards[0].Issuer = "" }, "issuer: is required"},
 		"awards without date":               {func(d *Document) { d.Awards[0].Date = "" }, "date: is required"},
@@ -65,6 +67,18 @@ func TestValidateNewSections(t *testing.T) {
 				t.Errorf("Validate() error = %v, want it to contain %q", err, tc.want)
 			}
 		})
+	}
+}
+
+// TestValidateEndInStartMonth proves an end in the start month is valid.
+func TestValidateEndInStartMonth(t *testing.T) {
+	t.Parallel()
+
+	doc := goldenDocument("en")
+	doc.Volunteering[0].End = doc.Volunteering[0].Start
+	doc.Organisations[0].End = doc.Organisations[0].Start
+	if err := Validate(doc, "test"); err != nil {
+		t.Fatalf("Validate() error = %v, want nil", err)
 	}
 }
 
@@ -137,13 +151,13 @@ contact:
 experience:
   - {id: e, employer: E, title: T, start: "2020-01", location: Berlin, employment_type: Full-time}
 education:
-  - {id: d, institution: I, degree: D, start: "2020-01", grade: "1,6"}
+  - {id: d, institution: I, degree: D, start: "2020-01", grade: "0,0"}
 volunteering:
   - {id: v, organisation: O, role: R, cause: C, start: "2020-01", end: null}
 awards:
   - {id: a, title: T, issuer: I, date: "2020-01"}
 exam_results:
-  - {id: x, name: N, score: "1,3", date: "2020-01"}
+  - {id: x, name: N, score: "0,0", date: "2020-01"}
 courses:
   - {id: c, name: N}
 publications:
@@ -161,8 +175,8 @@ func TestParseNewSections(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	if doc.Education[0].Grade != "1,6" || doc.Experience[0].Location != "Berlin" ||
-		doc.Experience[0].EmploymentType != "Full-time" || doc.ExamResults[0].Score != "1,3" ||
+	if doc.Education[0].Grade != "0,0" || doc.Experience[0].Location != "Berlin" ||
+		doc.Experience[0].EmploymentType != "Full-time" || doc.ExamResults[0].Score != "0,0" ||
 		len(doc.Volunteering) != 1 || len(doc.Awards) != 1 || len(doc.Courses) != 1 ||
 		len(doc.Publications) != 1 || len(doc.Patents) != 1 || len(doc.Organisations) != 1 {
 		t.Errorf("Parse() decoded %+v", doc)

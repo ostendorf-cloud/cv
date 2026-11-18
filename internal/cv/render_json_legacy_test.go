@@ -2,7 +2,10 @@ package cv
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -130,17 +133,42 @@ func TestRenderJSONLegacyKeysUnchanged(t *testing.T) {
 			got = stripNewKeys(t, got)
 
 			path := filepath.Join("testdata", "render", "legacy."+lang+".golden.json")
-			if *update {
-				if err := os.WriteFile(path, got, 0o644); err != nil {
-					t.Fatal(err)
-				}
-			}
+			// No -update branch: the legacy goldens are frozen on purpose.
 			want, err := os.ReadFile(path)
 			if err != nil {
 				t.Fatalf("read legacy golden: %v", err)
 			}
 			if !bytes.Equal(got, want) {
 				t.Errorf("old keys changed\n--- got\n%s\n--- want\n%s", got, want)
+			}
+		})
+	}
+}
+
+// legacyGoldenBlobs are the git blob sha1 hashes of the two legacy goldens,
+// which equal the full goldens of the first release shape. A change to a
+// legacy golden fails here even when someone regenerates it.
+var legacyGoldenBlobs = map[string]string{
+	"de": "ad406fab4c20c25df1d2fd2fd0bb5a0822ca7160",
+	"en": "f8d4ea7b5e1d21a9be94a8680a071b3eca10a49e",
+}
+
+func TestLegacyGoldensAreFrozen(t *testing.T) {
+	t.Parallel()
+
+	for lang, want := range legacyGoldenBlobs {
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+
+			data, err := os.ReadFile(filepath.Join("testdata", "render", "legacy."+lang+".golden.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := sha1.New() //nolint:gosec // git blob id, not a security use
+			fmt.Fprintf(h, "blob %d\x00", len(data))
+			h.Write(data)
+			if got := hex.EncodeToString(h.Sum(nil)); got != want {
+				t.Errorf("legacy golden %s blob = %s, want %s: the legacy goldens must never change", lang, got, want)
 			}
 		})
 	}
@@ -202,10 +230,10 @@ func TestRenderJSONNewFields(t *testing.T) {
 		"set fields render their value": {
 			doc: Document{
 				Experience: []ExperienceEntry{{ID: "e", Employer: "E", Title: "T", Start: "2020-01", Location: "Berlin", EmploymentType: "Full-time"}},
-				Education:  []EducationEntry{{ID: "d", Institution: "I", Degree: "D", Start: "2020-01", Grade: "1,6"}},
+				Education:  []EducationEntry{{ID: "d", Institution: "I", Degree: "D", Start: "2020-01", Grade: "0,0"}},
 				Contact:    Contact{Email: "contact@example.com"},
 			},
-			want: []string{`"location": "Berlin"`, `"employment_type": "Full-time"`, `"grade": "1,6"`},
+			want: []string{`"location": "Berlin"`, `"employment_type": "Full-time"`, `"grade": "0,0"`},
 		},
 	}
 
