@@ -1,0 +1,52 @@
+suite: cv data directory
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: passes the embedded data directory and mounts nothing by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATA_DIR
+            value: "/data"
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: mounts an existing ConfigMap read only at the data directory
+    set:
+      data.existingConfigMap: cv-data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: cv-data
+            mountPath: "/data"
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cv-data
+            configMap:
+              name: cv-data
+
+  - it: follows a custom data directory in the env variable and the mount
+    set:
+      config.dataDir: /srv/cv
+      data.existingConfigMap: cv-data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATA_DIR
+            value: "/srv/cv"
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /srv/cv
+
+  - it: rejects a relative data directory through the schema
+    set:
+      config.dataDir: data
+    asserts:
+      - failedTemplate: {}

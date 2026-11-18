@@ -85,8 +85,11 @@ assert_status "/metrics" "200" "$admin_url"
 # live on the admin listener above.
 assert_status "/metrics" "404"
 
-# cv's one real route today; see internal/cvd/cvd.go.
+# cv's one real route; see internal/cvd/cvd.go. The image embeds data/, so
+# both languages answer, and an unknown one is refused.
 assert_status "/api/v1/cv" "200"
+assert_status "/api/v1/cv?lang=de" "200"
+assert_status "/api/v1/cv?lang=xx" "400"
 
 # cv serves no frontend: every other path falls through to the
 # NotFoundHandler.

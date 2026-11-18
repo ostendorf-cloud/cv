@@ -152,7 +152,7 @@ contact:
 ### `cvd` serves the same document in cluster, for whatever shows up next
 
 - `cvd` answers `GET /api/v1/cv` with the same document the JSON release artefact carries, read
-  through `internal/cv` instead of today's empty placeholder.
+  through `internal/cv`, once at start, with the language chosen by a `lang` query parameter.
 - Neither sibling site calls it: both pull the JSON release artefact at build time instead, a
   decision their own concept docs already settled and this one does not reopen.
 - What it is still for, given that: a later in-cluster consumer that wants current data without

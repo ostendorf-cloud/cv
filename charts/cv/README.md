@@ -27,6 +27,8 @@ inside the cluster.
 | `config.addr` | The public listener's address, passed as `ADDR`. | `:8080` |
 | `config.adminAddr` | govue's admin listener's address, passed as `ADMIN_ADDR`. | `:8081` |
 | `config.logLevel` | `LOG_LEVEL`. | `info` |
+| `config.dataDir` | Absolute path of the CV data directory, passed as `DATA_DIR`. | `/data` |
+| `data.existingConfigMap` | Name of a ConfigMap with the keys `cv.de.yaml` and `cv.en.yaml`, mounted read only at `config.dataDir`. Empty uses the data embedded in the image. | empty |
 
 ## Upgrade notes
 

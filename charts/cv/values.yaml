@@ -121,3 +121,13 @@ config:
   addr: ":8080"
   adminAddr: ":8081"
   logLevel: "info"
+  # Absolute path of the directory holding cv.de.yaml and cv.en.yaml. The
+  # image embeds the repository's data/ at /data. Not a secret.
+  dataDir: "/data"
+
+# Where the CV data comes from. Empty uses the data embedded in the image.
+# Set to the name of an existing ConfigMap with the keys cv.de.yaml and
+# cv.en.yaml to mount it read only over config.dataDir instead. The chart
+# never creates the ConfigMap.
+data:
+  existingConfigMap: ""
