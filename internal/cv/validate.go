@@ -3,6 +3,7 @@ package cv
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // validator collects every problem found while checking one Document,
@@ -100,9 +101,10 @@ func Validate(doc Document, source string) error {
 	return v.err()
 }
 
-// required fails ref when value is empty.
+// required fails ref when value is empty or only whitespace: the JSON
+// renderer trims every text field, so a blank value would render as "".
 func (v *validator) required(ref, field, value string) {
-	if value == "" {
+	if strings.TrimSpace(value) == "" {
 		v.fail(ref, "%s: is required", field)
 	}
 }
@@ -110,7 +112,7 @@ func (v *validator) required(ref, field, value string) {
 // level fails ref when value is set but is none of the four levels
 // docs/concepts/cv.md defines.
 func (v *validator) level(ref string, value Level) {
-	if value == "" {
+	if strings.TrimSpace(string(value)) == "" {
 		v.fail(ref, "level: is required")
 		return
 	}
@@ -139,7 +141,7 @@ func (v *validator) skillEvidence(doc Document) {
 				v.fail(ref, "type: unknown value %q", e.Type)
 				continue
 			}
-			if e.Ref == "" {
+			if strings.TrimSpace(e.Ref) == "" {
 				v.fail(ref, "ref: is required")
 				continue
 			}
@@ -154,7 +156,7 @@ func (v *validator) skillEvidence(doc Document) {
 // its position in the file otherwise, since a missing id is itself reported
 // separately.
 func entryRef(section string, index int, id string) string {
-	if id == "" {
+	if strings.TrimSpace(id) == "" {
 		return fmt.Sprintf("%s[%d]", section, index)
 	}
 	return fmt.Sprintf("%s[%d] (id=%s)", section, index, id)
@@ -167,7 +169,7 @@ func duplicates(values []string) []string {
 	reported := make(map[string]bool, len(values))
 	var out []string
 	for _, v := range values {
-		if v == "" {
+		if strings.TrimSpace(v) == "" {
 			// A missing id is reported by required; it is not this
 			// function's duplicate to report, or every entry missing an
 			// id would also be flagged as a duplicate of the others.

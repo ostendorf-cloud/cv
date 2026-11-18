@@ -5,8 +5,8 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Layout
 
-- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate` is its one
-  command so far.
+- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate` and
+  `render json` are its commands so far.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
@@ -16,7 +16,8 @@ service that serves it. The baseline rules apply and are not repeated here.
   one load finds is aggregated into one error, the same way `internal/cvdconfig`
   aggregates `cvd`'s own configuration errors. `cmd/cv`'s `validate` command is the CLI
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
-  instead of only through a renderer that does not exist yet.
+  instead of only through a renderer. `render_json.go` renders the public JSON document
+  for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`.
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
   language, matched by each entry's `id`. Both currently hold placeholder entries only;
   see `docs/concepts/cv.md` for the model and the two files' own header comments for
@@ -30,14 +31,13 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Scope of this milestone
 
-The CLI compiles, answers `version`, `help` and `validate`, and does nothing else yet.
+The CLI compiles and answers `version`, `help`, `validate` and `render json`.
 The service answers one placeholder route and its own health, readiness and metrics.
 Left out, tracked as later milestones:
 
-- `cv`'s own renderers: a PDF, the JSON document the websites consume, the block for the
-  GitHub profile README, and the export pasted into LinkedIn, which has no write API for
-  one's own profile. Every renderer calls `internal/cv`'s validation before it writes
-  anything, the same way `validate` already does.
+- `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
+  pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
+  `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - `cvd` serving the real document at `GET /api/v1/cv`, read through `internal/cv` instead
   of answering an empty placeholder.
 - Fetching a GitHub repository's language and latest release and merging it with hand
@@ -55,9 +55,15 @@ Left out, tracked as later milestones:
 - `helm-unittest` is pinned in `mise.toml` through mise's generic `github:` backend with a
   `postinstall` hook, not a plain registry entry: it is not in the mise registry, and
   `helm plugin install <url>` is forbidden by the baseline regardless of Helm version.
-- `cv`'s release artefacts are not wired into `publish.yaml` yet: `task build:release`
-  builds a local snapshot with goreleaser and `task lint:goreleaser` checks the
-  configuration in CI, but no workflow attaches a binary to a GitHub release yet.
+- Releases are drafts until their assets attach: `release-me.yaml` sets
+  `github-release-draft-until-assets-attach`, and `release.yaml` runs
+  `scripts/publish-release-assets.sh` after the release-me step. The script renders the JSON
+  documents in the tag's own worktree (`task render:json`, which validates first), builds the
+  archives with `goreleaser release --skip=announce,validate,publish`, uploads the archives,
+  the checksums and `rendered/cv.*.json` with `gh release upload`, then publishes with
+  `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
+  `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
+  `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.

@@ -110,8 +110,14 @@ tasks:
     cmds:
       - go build -o bin/cvd ./cmd/cvd
 
+  render:json:
+    desc: Render cv.de.json and cv.en.json into rendered/
+    cmds:
+      - go run ./cmd/cv render json --out rendered
+
   build:release:
-    desc: Build a local snapshot release of cv with goreleaser
+    desc: Build a local snapshot release of cv with goreleaser, with the JSON documents
+    deps: [render:json]
     cmds:
       - goreleaser release --snapshot --clean
 
@@ -142,6 +148,7 @@ tasks:
       - task: lint:helm
       - task: validate:kubeconform
       - task: validate:cv
+      - task: render:json
       - task: test:helm
       - task: build:cv
       - task: build:cvd
