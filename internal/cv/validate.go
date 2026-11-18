@@ -3,6 +3,7 @@ package cv
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -90,6 +91,14 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "url", p.URL)
 	}
 
+	v.volunteering(doc.Volunteering)
+	v.awards(doc.Awards)
+	v.examResults(doc.ExamResults)
+	v.courses(doc.Courses)
+	v.publications(doc.Publications)
+	v.patents(doc.Patents)
+	v.organisations(doc.Organisations)
+
 	for _, section := range sectionNames {
 		for _, id := range duplicates(sectionIDs(doc)[section]) {
 			v.fail(section, "duplicate id %q", id)
@@ -106,6 +115,93 @@ func Validate(doc Document, source string) error {
 func (v *validator) required(ref, field, value string) {
 	if strings.TrimSpace(value) == "" {
 		v.fail(ref, "%s: is required", field)
+	}
+}
+
+// monthPattern is the one date format the optional sections accept: a year
+// and a month, "YYYY-MM", month 01 to 12.
+var monthPattern = regexp.MustCompile(`^[0-9]{4}-(0[1-9]|1[0-2])$`)
+
+// date fails ref when value is set but is not a "YYYY-MM" month. An empty
+// value passes: whether it is required is required's decision.
+func (v *validator) date(ref, field, value string) {
+	value = strings.TrimSpace(value)
+	if value != "" && !monthPattern.MatchString(value) {
+		v.fail(ref, "%s: %q is not a YYYY-MM date", field, value)
+	}
+}
+
+// requiredDate is required plus date.
+func (v *validator) requiredDate(ref, field, value string) {
+	v.required(ref, field, value)
+	v.date(ref, field, value)
+}
+
+func (v *validator) volunteering(entries []VolunteeringEntry) {
+	for i, e := range entries {
+		ref := entryRef("volunteering", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "organisation", e.Organisation)
+		v.required(ref, "role", e.Role)
+		v.requiredDate(ref, "start", e.Start)
+		v.date(ref, "end", e.End)
+	}
+}
+
+func (v *validator) awards(entries []AwardEntry) {
+	for i, e := range entries {
+		ref := entryRef("awards", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "title", e.Title)
+		v.required(ref, "issuer", e.Issuer)
+		v.requiredDate(ref, "date", e.Date)
+	}
+}
+
+func (v *validator) examResults(entries []ExamResultEntry) {
+	for i, e := range entries {
+		ref := entryRef("exam_results", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "name", e.Name)
+		v.required(ref, "score", e.Score)
+		v.requiredDate(ref, "date", e.Date)
+	}
+}
+
+func (v *validator) courses(entries []CourseEntry) {
+	for i, e := range entries {
+		ref := entryRef("courses", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "name", e.Name)
+		v.date(ref, "date", e.Date)
+	}
+}
+
+func (v *validator) publications(entries []PublicationEntry) {
+	for i, e := range entries {
+		ref := entryRef("publications", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "title", e.Title)
+		v.requiredDate(ref, "date", e.Date)
+	}
+}
+
+func (v *validator) patents(entries []PatentEntry) {
+	for i, e := range entries {
+		ref := entryRef("patents", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "title", e.Title)
+		v.requiredDate(ref, "date", e.Date)
+	}
+}
+
+func (v *validator) organisations(entries []OrganisationEntry) {
+	for i, e := range entries {
+		ref := entryRef("organisations", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "name", e.Name)
+		v.requiredDate(ref, "start", e.Start)
+		v.date(ref, "end", e.End)
 	}
 }
 

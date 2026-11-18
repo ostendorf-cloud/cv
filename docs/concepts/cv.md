@@ -74,6 +74,28 @@
 - `contact`, a flat set of contact fields plus a `profiles` list. Required on each profile:
   `id`, `platform`, `url`.
 
+### Seven optional sections, so the data files lose nothing a LinkedIn profile holds
+
+- The eight sections above are the core. Seven more are optional lists, absent means empty, and
+  each entry carries a required `id`, matched across the two files like every other section:
+  - `volunteering`. Required: `id`, `organisation`, `role`, `start`. Optional: `cause`, `end`,
+    `summary`.
+  - `awards`, honors and awards. Required: `id`, `title`, `issuer`, `date`. Optional: `summary`.
+  - `exam_results`, test scores such as a thesis grade. Required: `id`, `name`, `score`, `date`.
+    Optional: `summary`. `score` is free text, grading schemes differ.
+  - `courses`. Required: `id`, `name`. Optional: `provider`, `date`.
+  - `publications`. Required: `id`, `title`, `date`. Optional: `publisher`, `url`, `summary`.
+  - `patents`. Required: `id`, `title`, `date`. Optional: `number`, `url`, `summary`.
+  - `organisations`, memberships. Required: `id`, `name`, `start`. Optional: `role`, `end`.
+- Three optional free text fields join existing sections: `grade` on `education`, `location` and
+  `employment_type` on `experience`.
+- The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
+  and year only, so a full date is rejected. The older sections keep their dates unchecked.
+- The JSON document carries the new sections after `contact`, so the older keys keep their order.
+- Left out on purpose: recommendations and interests. A recommendation is text a third party
+  wrote, and this repository holds only what the owner may publish as their own. Interests are
+  not curriculum vitae content.
+
 ```yaml
 # data/cv.en.yaml, excerpts, one entry per section
 experience:

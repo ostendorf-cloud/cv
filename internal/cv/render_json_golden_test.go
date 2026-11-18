@@ -24,13 +24,59 @@ func pad(s string) string { return " \t" + s + " \n\n" }
 
 func plain(s string) string { return s }
 
-// fixtureDocument is a fake document with all eight sections. Every optional
+// fixtureDocument is a fake document with every section. Every optional
 // field is set on one entry and unset on another, in each language: the
 // address carries a street and a city in de and a city only in en. Each
 // language carries its own text, so a mixup of languages shows too. Every
 // string goes through p, which is plain for the golden fixture and pad for
 // the whitespace fixture.
 func fixtureDocument(lang string, p func(string) string) Document {
+	doc := legacyFixture(lang, p)
+	doc.Experience[0].Location = p("Example City " + lang)
+	doc.Experience[0].EmploymentType = p("Full-time " + lang)
+	doc.Experience[1].Location = p("")
+	doc.Experience[1].EmploymentType = p("")
+	doc.Education[0].Grade = p("1,6 " + lang)
+	doc.Education[1].Grade = p("")
+	doc.Volunteering = []VolunteeringEntry{
+		{ID: p("vol-1"), Organisation: p("Example Association " + lang), Role: p("Helper " + lang), Cause: p("Education " + lang), Start: p("2019-03"), End: p("2021-06"), Summary: p("Volunteer text " + lang + ".")},
+		{ID: p("vol-2"), Organisation: p("Other Association " + lang), Role: p("Lead " + lang), Cause: p(""), Start: p("2021-07"), End: p(""), Summary: p("")},
+	}
+	doc.Awards = []AwardEntry{
+		{ID: p("award-1"), Title: p("Award " + lang), Issuer: p("Example Body " + lang), Date: p("2020-11"), Summary: p("Award text " + lang + ".")},
+		{ID: p("award-2"), Title: p("Other Award " + lang), Issuer: p("Other Body " + lang), Date: p("2021-12"), Summary: p("")},
+	}
+	doc.ExamResults = []ExamResultEntry{
+		{ID: p("exam-1"), Name: p("Thesis " + lang), Score: p("1,3"), Date: p("2019-06"), Summary: p("Exam text " + lang + ".")},
+		{ID: p("exam-2"), Name: p("Test " + lang), Score: p("passed"), Date: p("2018-02"), Summary: p("")},
+	}
+	doc.Courses = []CourseEntry{
+		{ID: p("course-1"), Name: p("Course " + lang), Provider: p("Example Academy " + lang), Date: p("2022-02")},
+		{ID: p("course-2"), Name: p("Other Course " + lang), Provider: p(""), Date: p("")},
+	}
+	doc.Publications = []PublicationEntry{
+		{ID: p("pub-1"), Title: p("Article " + lang), Publisher: p("Example Journal " + lang), Date: p("2021-09"), URL: p("https://example.com/article"), Summary: p("Article text " + lang + ".")},
+		{ID: p("pub-2"), Title: p("Other Article " + lang), Publisher: p(""), Date: p("2022-10"), URL: p(""), Summary: p("")},
+	}
+	doc.Patents = []PatentEntry{
+		{ID: p("patent-1"), Title: p("Patent " + lang), Number: p("EX 0000000"), Date: p("2020-05"), URL: p("https://example.com/patent"), Summary: p("Patent text " + lang + ".")},
+		{ID: p("patent-2"), Title: p("Other Patent " + lang), Number: p(""), Date: p("2020-06"), URL: p(""), Summary: p("")},
+	}
+	doc.Organisations = []OrganisationEntry{
+		{ID: p("org-1"), Name: p("Example Society " + lang), Role: p("Member " + lang), Start: p("2018-01"), End: p("2020-12")},
+		{ID: p("org-2"), Name: p("Other Society " + lang), Role: p(""), Start: p("2021-01"), End: p("")},
+	}
+	return doc
+}
+
+// legacyDocument is the fixture as it was before the LinkedIn parity
+// sections and fields existed. It stays so TestRenderJSONLegacyKeysUnchanged
+// can prove the old part of the contract did not move.
+func legacyDocument(lang string) Document { return legacyFixture(lang, plain) }
+
+// legacyFixture is the fixture of the sections that existed before the
+// LinkedIn parity change, every string going through p.
+func legacyFixture(lang string, p func(string) string) Document {
 	doc := Document{
 		Experience: []ExperienceEntry{
 			{ID: p("exp-1"), Employer: p("Example Employer " + lang), Title: p("Engineer " + lang), Start: p("2020-01"), End: p("2022-01"), Summary: p("Summary one " + lang + ".")},

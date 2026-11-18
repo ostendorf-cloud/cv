@@ -8,7 +8,9 @@
       "title": "Engineer en",
       "start": "2020-01",
       "end": "2022-01",
-      "summary": "Summary one en."
+      "summary": "Summary one en.",
+      "location": "Example City en",
+      "employment_type": "Full-time en"
     },
     {
       "id": "exp-2",
@@ -16,7 +18,9 @@
       "title": "Lead en",
       "start": "2022-02",
       "end": null,
-      "summary": null
+      "summary": null,
+      "location": null,
+      "employment_type": null
     }
   ],
   "education": [
@@ -26,7 +30,8 @@
       "degree": "Degree en",
       "start": "2015-10",
       "end": "2019-06",
-      "summary": "Degree summary en."
+      "summary": "Degree summary en.",
+      "grade": "1,6 en"
     },
     {
       "id": "edu-2",
@@ -34,7 +39,8 @@
       "degree": "Course en",
       "start": "2019-09",
       "end": null,
-      "summary": null
+      "summary": null,
+      "grade": null
     }
   ],
   "certificates": [
@@ -108,5 +114,123 @@
         "url": "https://github.com/example"
       }
     ]
-  }
+  },
+  "volunteering": [
+    {
+      "id": "vol-1",
+      "organisation": "Example Association en",
+      "role": "Helper en",
+      "cause": "Education en",
+      "start": "2019-03",
+      "end": "2021-06",
+      "summary": "Volunteer text en."
+    },
+    {
+      "id": "vol-2",
+      "organisation": "Other Association en",
+      "role": "Lead en",
+      "cause": null,
+      "start": "2021-07",
+      "end": null,
+      "summary": null
+    }
+  ],
+  "awards": [
+    {
+      "id": "award-1",
+      "title": "Award en",
+      "issuer": "Example Body en",
+      "date": "2020-11",
+      "summary": "Award text en."
+    },
+    {
+      "id": "award-2",
+      "title": "Other Award en",
+      "issuer": "Other Body en",
+      "date": "2021-12",
+      "summary": null
+    }
+  ],
+  "exam_results": [
+    {
+      "id": "exam-1",
+      "name": "Thesis en",
+      "score": "1,3",
+      "date": "2019-06",
+      "summary": "Exam text en."
+    },
+    {
+      "id": "exam-2",
+      "name": "Test en",
+      "score": "passed",
+      "date": "2018-02",
+      "summary": null
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-1",
+      "name": "Course en",
+      "provider": "Example Academy en",
+      "date": "2022-02"
+    },
+    {
+      "id": "course-2",
+      "name": "Other Course en",
+      "provider": null,
+      "date": null
+    }
+  ],
+  "publications": [
+    {
+      "id": "pub-1",
+      "title": "Article en",
+      "publisher": "Example Journal en",
+      "date": "2021-09",
+      "url": "https://example.com/article",
+      "summary": "Article text en."
+    },
+    {
+      "id": "pub-2",
+      "title": "Other Article en",
+      "publisher": null,
+      "date": "2022-10",
+      "url": null,
+      "summary": null
+    }
+  ],
+  "patents": [
+    {
+      "id": "patent-1",
+      "title": "Patent en",
+      "number": "EX 0000000",
+      "date": "2020-05",
+      "url": "https://example.com/patent",
+      "summary": "Patent text en."
+    },
+    {
+      "id": "patent-2",
+      "title": "Other Patent en",
+      "number": null,
+      "date": "2020-06",
+      "url": null,
+      "summary": null
+    }
+  ],
+  "organisations": [
+    {
+      "id": "org-1",
+      "name": "Example Society en",
+      "role": "Member en",
+      "start": "2018-01",
+      "end": "2020-12"
+    },
+    {
+      "id": "org-2",
+      "name": "Other Society en",
+      "role": null,
+      "start": "2021-01",
+      "end": null
+    }
+  ]
 }

@@ -57,7 +57,13 @@ curl localhost:8081/metrics
 - A rename, a removed key, a changed type or a changed meaning raises the version. A new key
   that a consumer can ignore does not.
 - Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
-  `certificates`, `skills`, `projects`, `references`, `languages`, `contact`.
+  `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
+  `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`.
+- The last seven keys and the entry keys `grade` (education), `location` and `employment_type`
+  (experience) were added without a version bump: they are new keys a consumer can ignore. The
+  existing keys, their names and their order are unchanged.
+  `internal/cv/testdata/render/legacy.*.golden.json` pins that.
+- The dates of the seven new sections are `YYYY-MM`.
 - Lists are always present, empty rather than null. An unset optional value is `null`.
 - Two space indentation, one trailing newline, no timestamp: the same data yields the same bytes.
 - Every text field has leading and trailing whitespace removed, so a folded YAML summary

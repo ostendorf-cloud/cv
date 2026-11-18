@@ -23,6 +23,30 @@ func validDocument() Document {
 			Email:    "contact@example.com",
 			Profiles: []Profile{{ID: "github", Platform: "GitHub", URL: "https://github.com/example"}},
 		},
+		Volunteering:  []VolunteeringEntry{{ID: "vol-1", Organisation: "Association", Role: "Helper", Start: "2019-03"}},
+		Awards:        []AwardEntry{{ID: "award-1", Title: "Award", Issuer: "Body", Date: "2020-11"}},
+		ExamResults:   []ExamResultEntry{{ID: "exam-1", Name: "Thesis", Score: "1,3", Date: "2019-06"}},
+		Courses:       []CourseEntry{{ID: "course-1", Name: "Course"}},
+		Publications:  []PublicationEntry{{ID: "pub-1", Title: "Article", Date: "2021-09"}},
+		Patents:       []PatentEntry{{ID: "patent-1", Title: "Patent", Date: "2020-05"}},
+		Organisations: []OrganisationEntry{{ID: "org-1", Name: "Society", Start: "2018-01"}},
+	}
+}
+
+// TestValidateAcceptsPaddedDates proves a date with surrounding whitespace is
+// valid, since the renderer trims it, and that a padded wrong date still fails.
+func TestValidateAcceptsPaddedDates(t *testing.T) {
+	t.Parallel()
+
+	doc := validDocument()
+	doc.Awards[0].Date = " 2020-11\n"
+	doc.Organisations[0].End = "\t2021-01 "
+	if err := Validate(doc, "test"); err != nil {
+		t.Fatalf("Validate() error = %v, want nil", err)
+	}
+	doc.Awards[0].Date = " 2020-11-05 "
+	if err := Validate(doc, "test"); err == nil {
+		t.Fatal("Validate() error = nil, want a date error")
 	}
 }
 
@@ -68,6 +92,30 @@ func TestValidateRejectsBlankValues(t *testing.T) {
 		"contact profile id":       {func(d *Document) { d.Contact.Profiles[0].ID = blank }, "id: is required"},
 		"contact profile platform": {func(d *Document) { d.Contact.Profiles[0].Platform = blank }, "platform: is required"},
 		"contact profile url":      {func(d *Document) { d.Contact.Profiles[0].URL = blank }, "url: is required"},
+
+		"volunteering id":           {func(d *Document) { d.Volunteering[0].ID = blank }, "id: is required"},
+		"volunteering organisation": {func(d *Document) { d.Volunteering[0].Organisation = blank }, "organisation: is required"},
+		"volunteering role":         {func(d *Document) { d.Volunteering[0].Role = blank }, "role: is required"},
+		"volunteering start":        {func(d *Document) { d.Volunteering[0].Start = blank }, "start: is required"},
+		"award id":                  {func(d *Document) { d.Awards[0].ID = blank }, "id: is required"},
+		"award title":               {func(d *Document) { d.Awards[0].Title = blank }, "title: is required"},
+		"award issuer":              {func(d *Document) { d.Awards[0].Issuer = blank }, "issuer: is required"},
+		"award date":                {func(d *Document) { d.Awards[0].Date = blank }, "date: is required"},
+		"exam result id":            {func(d *Document) { d.ExamResults[0].ID = blank }, "id: is required"},
+		"exam result name":          {func(d *Document) { d.ExamResults[0].Name = blank }, "name: is required"},
+		"exam result score":         {func(d *Document) { d.ExamResults[0].Score = blank }, "score: is required"},
+		"exam result date":          {func(d *Document) { d.ExamResults[0].Date = blank }, "date: is required"},
+		"course id":                 {func(d *Document) { d.Courses[0].ID = blank }, "id: is required"},
+		"course name":               {func(d *Document) { d.Courses[0].Name = blank }, "name: is required"},
+		"publication id":            {func(d *Document) { d.Publications[0].ID = blank }, "id: is required"},
+		"publication title":         {func(d *Document) { d.Publications[0].Title = blank }, "title: is required"},
+		"publication date":          {func(d *Document) { d.Publications[0].Date = blank }, "date: is required"},
+		"patent id":                 {func(d *Document) { d.Patents[0].ID = blank }, "id: is required"},
+		"patent title":              {func(d *Document) { d.Patents[0].Title = blank }, "title: is required"},
+		"patent date":               {func(d *Document) { d.Patents[0].Date = blank }, "date: is required"},
+		"organisation id":           {func(d *Document) { d.Organisations[0].ID = blank }, "id: is required"},
+		"organisation name":         {func(d *Document) { d.Organisations[0].Name = blank }, "name: is required"},
+		"organisation start":        {func(d *Document) { d.Organisations[0].Start = blank }, "start: is required"},
 	}
 
 	if err := Validate(validDocument(), "test"); err != nil {

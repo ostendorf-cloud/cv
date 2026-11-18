@@ -10,7 +10,9 @@ service that serves it. The baseline rules apply and are not repeated here.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
-  section, the four skill levels, a duplicate id within a section, a skill's evidence
+  section, the seven optional sections that hold what LinkedIn holds (`volunteering`,
+  `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`, with
+  `YYYY-MM` dates), the four skill levels, a duplicate id within a section, a skill's evidence
   checked against the project, experience and certificate ids that actually exist, and
   the two-file drift check between `data/cv.de.yaml` and `data/cv.en.yaml`. Every problem
   one load finds is aggregated into one error, the same way `internal/cvdconfig`
@@ -36,7 +38,9 @@ The service answers one placeholder route and its own health, readiness and metr
 Left out, tracked as later milestones:
 
 - `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
-  pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
+  pasted into LinkedIn, which has no write API for one's own profile. The model holds
+  what LinkedIn holds, except recommendations (third party text) and interests (not CV
+  content). Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - `cvd` serving the real document at `GET /api/v1/cv`, read through `internal/cv` instead
   of answering an empty placeholder.
