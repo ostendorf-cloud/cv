@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -175,7 +176,6 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		})
 	}
 	for _, e := range doc.Projects {
-		e.Description = trimText(e.Description)
 		out.Projects = append(out.Projects, jsonProject(e))
 	}
 	for _, e := range doc.References {
@@ -191,6 +191,8 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		out.Contact.Profiles = append(out.Contact.Profiles, jsonProfile(p))
 	}
 
+	trimStrings(reflect.ValueOf(&out).Elem())
+
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
@@ -201,17 +203,44 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// trimText drops trailing whitespace. YAML's folded `>` style keeps one
-// trailing newline, which is formatting of the data file, not content, so it
-// never reaches the contract. Leading and inner whitespace stay.
-func trimText(s string) string {
-	return strings.TrimRight(s, " \t\r\n")
+// trimStrings removes leading and trailing whitespace from every string in
+// the output value v, at any depth, and sets an optional (*string) value that
+// ends up empty to nil, so it encodes as null. YAML's folded `>` style keeps a
+// trailing newline, which is formatting of the data file, not content. Walking
+// the output, not the model, means a field added later is covered without
+// anyone remembering to list it. Inner whitespace stays.
+func trimStrings(v reflect.Value) {
+	switch v.Kind() {
+	case reflect.String:
+		v.SetString(strings.TrimSpace(v.String()))
+	case reflect.Pointer:
+		if v.IsNil() {
+			return
+		}
+		if v.Elem().Kind() == reflect.String {
+			trimmed := strings.TrimSpace(v.Elem().String())
+			if trimmed == "" {
+				v.Set(reflect.Zero(v.Type()))
+				return
+			}
+			s := trimmed
+			v.Set(reflect.ValueOf(&s))
+			return
+		}
+		trimStrings(v.Elem())
+	case reflect.Struct:
+		for i := range v.NumField() {
+			trimStrings(v.Field(i))
+		}
+	case reflect.Slice:
+		for i := range v.Len() {
+			trimStrings(v.Index(i))
+		}
+	}
 }
 
-// optional maps an unset optional string to nil, which encodes as null. It
-// trims first, so a value that is only whitespace counts as unset.
+// optional maps an unset optional string to nil, which encodes as null.
 func optional(s string) *string {
-	s = trimText(s)
 	if s == "" {
 		return nil
 	}

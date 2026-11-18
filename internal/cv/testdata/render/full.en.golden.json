@@ -98,8 +98,8 @@
   "contact": {
     "email": "contact@example.com",
     "address": {
-      "street": "Example Street 1",
-      "city": null
+      "street": null,
+      "city": "Example City"
     },
     "profiles": [
       {
