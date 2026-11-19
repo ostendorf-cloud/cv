@@ -75,9 +75,9 @@
 - `contact`, a flat set of contact fields plus a `profiles` list. Required on each profile:
   `id`, `platform`, `url`.
 
-### Seven optional sections, so the data files lose nothing a LinkedIn profile holds
+### Eight optional sections, so the data files lose nothing a LinkedIn profile holds
 
-- The eight sections above are the core. Seven more are optional lists, absent means empty, and
+- The eight sections above are the core. Eight more are optional lists, absent means empty, and
   each entry carries a required `id`, matched across the two files like every other section:
   - `volunteering`. Required: `id`, `organisation`, `role`, `start`. Optional: `cause`, `end`,
     `summary`.
@@ -88,6 +88,20 @@
   - `publications`. Required: `id`, `title`, `date`. Optional: `publisher`, `url`, `summary`.
   - `patents`. Required: `id`, `title`, `date`. Optional: `number`, `url`, `summary`.
   - `organisations`, memberships. Required: `id`, `name`, `start`. Optional: `role`, `end`.
+- An eighth optional section, `engagements`, holds client or internal projects of a position,
+  described without a repository. `projects` requires a `github_repo` and `experience` holds one
+  `summary` per position, so separate engagements had no place. Required: `id`, `experience`,
+  `title`, `summary`. Optional: `industry`, `start`, `end`.
+  - `experience` is the id of an existing experience entry, checked like a skill's evidence.
+  - `start` and `end` are `YYYY-MM` or `YYYY`, both optional. `end` is not before `start`. A
+    bare year spans its whole year: as a start it means January, as an end December, so
+    `2020-06` to `2020` is in order and `2020` to `2019-12` is not.
+  - The text of an entry is German in `data/cv.de.yaml` and English in `data/cv.en.yaml`, like
+    every section. The ids must match across the files, checked by the drift rule.
+  - An engagement is public the moment it is committed, see "No visibility" below. It holds an
+    anonymised, publishable description only: no customer or client name, no internal project
+    or product name, nothing an NDA covers. `industry` names the sector in place of the
+    customer. An NDA bound client project has no entry here at all.
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
@@ -97,6 +111,11 @@
 - `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
   value is `null`.
 - The JSON document carries the new sections after `contact`, so the older keys keep their order.
+  `engagements` is the last key, after `organisations`.
+- Decision: no `engagement` evidence type for skills. Evidence already reaches a position
+  through `experience`, and an engagement belongs to exactly one position. A new type adds a
+  value every consumer must resolve, for a link nobody asked for yet. Adding it later is a new
+  enum value, so it needs its own versioning decision.
 - Left out on purpose: recommendations and interests. A recommendation is text a third party
   wrote, and this repository holds only what the owner may publish as their own. Interests are
   not curriculum vitae content.

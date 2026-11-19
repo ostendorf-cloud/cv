@@ -6,7 +6,8 @@
 // sections": experience, education, certificates, skills, projects,
 // references, languages and contact, plus seven optional sections that
 // hold what a LinkedIn profile holds: volunteering, awards, exam_results,
-// courses, publications, patents and organisations. Every entry in every section carries a
+// courses, publications, patents and organisations, plus engagements, the
+// repository-less projects of a position. Every entry in every section carries a
 // required, hand assigned id, never derived from its own text, which is what
 // makes an entry the same entry across data/cv.de.yaml and data/cv.en.yaml.
 // See Load, LoadPair and Validate for the checks each file and each pair of
@@ -44,8 +45,8 @@ const (
 )
 
 // Document is one data file, data/cv.de.yaml or data/cv.en.yaml, decoded
-// into the fifteen top level sections docs/concepts/cv.md defines: eight
-// core sections and seven optional ones. Both files
+// into the sixteen top level sections docs/concepts/cv.md defines: eight
+// core sections and eight optional ones. Both files
 // decode into the same Go type; nothing here merges the two languages, that
 // stays the renderer's job once one exists.
 type Document struct {
@@ -67,6 +68,7 @@ type Document struct {
 	Publications  []PublicationEntry  `yaml:"publications"`
 	Patents       []PatentEntry       `yaml:"patents"`
 	Organisations []OrganisationEntry `yaml:"organisations"`
+	Engagements   []EngagementEntry   `yaml:"engagements"`
 }
 
 // ExperienceEntry is one career entry. Required: ID, Employer, Title, Start.
@@ -287,6 +289,26 @@ type OrganisationEntry struct {
 
 func (e OrganisationEntry) identity() string { return e.ID }
 
+// EngagementEntry is one client or internal project of a position, described
+// without a repository. Required: ID, Experience (the id of an existing
+// experience entry), Title, Summary. Industry, Start and End are optional.
+// Start and End are "YYYY-MM" or "YYYY".
+//
+// An engagement is public once committed. It holds an anonymised description
+// only: never a customer or client name, an internal project or product name,
+// or any detail an NDA covers. Industry names the sector instead.
+type EngagementEntry struct {
+	ID         string `yaml:"id"`
+	Experience string `yaml:"experience"`
+	Title      string `yaml:"title"`
+	Industry   string `yaml:"industry,omitempty"`
+	Start      string `yaml:"start,omitempty"`
+	End        string `yaml:"end,omitempty"`
+	Summary    string `yaml:"summary"`
+}
+
+func (e EngagementEntry) identity() string { return e.ID }
+
 // sectionNames is every top level section docs/concepts/cv.md defines, in
 // the order it defines them, used wherever a section is iterated by name:
 // the duplicate id check, the cross reference check and the two-file drift
@@ -307,6 +329,7 @@ var sectionNames = []string{
 	"publications",
 	"patents",
 	"organisations",
+	"engagements",
 }
 
 // identified is implemented by every entry type, so one generic helper can
@@ -346,5 +369,6 @@ func sectionIDs(doc Document) map[string][]string {
 		"publications":  ids(doc.Publications),
 		"patents":       ids(doc.Patents),
 		"organisations": ids(doc.Organisations),
+		"engagements":   ids(doc.Engagements),
 	}
 }

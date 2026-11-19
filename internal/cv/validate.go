@@ -99,6 +99,7 @@ func Validate(doc Document, source string) error {
 	v.publications(doc.Publications)
 	v.patents(doc.Patents)
 	v.organisations(doc.Organisations)
+	v.engagements(doc.Engagements, toSet(ids(doc.Experience)))
 
 	for _, section := range sectionNames {
 		for _, id := range duplicates(sectionIDs(doc)[section]) {
@@ -218,6 +219,54 @@ func (v *validator) organisations(entries []OrganisationEntry) {
 		v.requiredDate(ref, "start", e.Start)
 		v.date(ref, "end", e.End)
 		v.notBefore(ref, "end", e.End, "start", e.Start)
+	}
+}
+
+// yearOrMonthPattern is the date format of an engagement: "YYYY-MM" or "YYYY".
+var yearOrMonthPattern = regexp.MustCompile(`^[0-9]{4}(-(0[1-9]|1[0-2]))?$`)
+
+// yearOrMonth fails ref when value is set but is neither "YYYY-MM" nor "YYYY".
+func (v *validator) yearOrMonth(ref, field, value string) {
+	value = strings.TrimSpace(value)
+	if value != "" && !yearOrMonthPattern.MatchString(value) {
+		v.fail(ref, "%s: %q is not a YYYY-MM or YYYY date", field, value)
+	}
+}
+
+// engagementEndNotBeforeStart fails ref when end is clearly before start. A
+// bare year spans its whole year: as a start it means January, as an end it
+// means December, so "2020-06" to "2020" is in order and "2020" to "2019-12"
+// is not. A missing or malformed value is reported by yearOrMonth, not here.
+func (v *validator) engagementEndNotBeforeStart(ref, start, end string) {
+	start, end = strings.TrimSpace(start), strings.TrimSpace(end)
+	if !yearOrMonthPattern.MatchString(start) || !yearOrMonthPattern.MatchString(end) {
+		return
+	}
+	earliest, latest := start, end
+	if len(earliest) == 4 {
+		earliest += "-01"
+	}
+	if len(latest) == 4 {
+		latest += "-12"
+	}
+	if latest < earliest {
+		v.fail(ref, "end: %q is before start %q", end, start)
+	}
+}
+
+func (v *validator) engagements(entries []EngagementEntry, experienceIDs map[string]bool) {
+	for i, e := range entries {
+		ref := entryRef("engagements", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "experience", e.Experience)
+		v.required(ref, "title", e.Title)
+		v.required(ref, "summary", e.Summary)
+		if strings.TrimSpace(e.Experience) != "" && !experienceIDs[e.Experience] {
+			v.fail(ref, "experience: no experience with id %q exists", e.Experience)
+		}
+		v.yearOrMonth(ref, "start", e.Start)
+		v.yearOrMonth(ref, "end", e.End)
+		v.engagementEndNotBeforeStart(ref, e.Start, e.End)
 	}
 }
 

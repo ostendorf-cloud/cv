@@ -70,6 +70,10 @@ func fixtureDocument(lang string, p func(string) string) Document {
 		{ID: p("org-1"), Name: p("Example Society " + lang), Role: p("Member " + lang), Start: p("2018-01"), End: p("2020-12")},
 		{ID: p("org-2"), Name: p("Other Society " + lang), Role: p(""), Start: p("2021-01"), End: p("")},
 	}
+	doc.Engagements = []EngagementEntry{
+		{ID: p("eng-1"), Experience: p("exp-1"), Title: p("Example Engagement " + lang), Industry: p("Example Industry " + lang), Start: p("2020-03"), End: p("2021"), Summary: p("Engagement text " + lang + ".")},
+		{ID: p("eng-2"), Experience: p("exp-2"), Title: p("Other Engagement " + lang), Industry: p(""), Start: p(""), End: p(""), Summary: p("Other engagement text " + lang + ".")},
+	}
 	return doc
 }
 

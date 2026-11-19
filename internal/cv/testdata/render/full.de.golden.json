@@ -239,5 +239,25 @@
       "start": "2021-01",
       "end": null
     }
+  ],
+  "engagements": [
+    {
+      "id": "eng-1",
+      "experience": "exp-1",
+      "title": "Example Engagement de",
+      "industry": "Example Industry de",
+      "start": "2020-03",
+      "end": "2021",
+      "summary": "Engagement text de."
+    },
+    {
+      "id": "eng-2",
+      "experience": "exp-2",
+      "title": "Other Engagement de",
+      "industry": null,
+      "start": null,
+      "end": null,
+      "summary": "Other engagement text de."
+    }
   ]
 }

@@ -53,6 +53,7 @@ type jsonDocument struct {
 	Publications  []jsonPublication  `json:"publications"`
 	Patents       []jsonPatent       `json:"patents"`
 	Organisations []jsonOrganisation `json:"organisations"`
+	Engagements   []jsonEngagement   `json:"engagements"`
 }
 
 type jsonExperience struct {
@@ -133,6 +134,16 @@ type jsonOrganisation struct {
 	Role  *string `json:"role"`
 	Start string  `json:"start"`
 	End   *string `json:"end"`
+}
+
+type jsonEngagement struct {
+	ID         string  `json:"id"`
+	Experience string  `json:"experience"`
+	Title      string  `json:"title"`
+	Industry   *string `json:"industry"`
+	Start      *string `json:"start"`
+	End        *string `json:"end"`
+	Summary    string  `json:"summary"`
 }
 
 type jsonCertificate struct {
@@ -228,6 +239,7 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		Publications:  make([]jsonPublication, 0, len(doc.Publications)),
 		Patents:       make([]jsonPatent, 0, len(doc.Patents)),
 		Organisations: make([]jsonOrganisation, 0, len(doc.Organisations)),
+		Engagements:   make([]jsonEngagement, 0, len(doc.Engagements)),
 	}
 
 	for _, e := range doc.Experience {
@@ -279,6 +291,12 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 	for _, e := range doc.Organisations {
 		out.Organisations = append(out.Organisations, jsonOrganisation{
 			ID: e.ID, Name: e.Name, Role: optional(e.Role), Start: e.Start, End: optional(e.End),
+		})
+	}
+	for _, e := range doc.Engagements {
+		out.Engagements = append(out.Engagements, jsonEngagement{
+			ID: e.ID, Experience: e.Experience, Title: e.Title, Industry: optional(e.Industry),
+			Start: optional(e.Start), End: optional(e.End), Summary: e.Summary,
 		})
 	}
 	for _, e := range doc.Certificates {

@@ -15,7 +15,7 @@ import (
 // newTopLevelKeys are the sections added after schema_version 1 first
 // shipped. newEntryKeys are the fields added to existing sections' entries.
 var (
-	newTopLevelKeys = []string{"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations"}
+	newTopLevelKeys = []string{"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations", "engagements"}
 	newEntryKeys    = map[string][]string{
 		"experience": {"location", "employment_type"},
 		"education":  {"grade"},
@@ -187,7 +187,7 @@ func TestRenderJSONNewKeysComeLast(t *testing.T) {
 	want := []string{
 		"schema_version", "language", "experience", "education", "certificates", "skills",
 		"projects", "references", "languages", "contact",
-		"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations",
+		"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations", "engagements",
 	}
 	if strings.Join(keys, ",") != strings.Join(want, ",") {
 		t.Errorf("top level keys = %v, want %v", keys, want)
@@ -206,7 +206,7 @@ func TestRenderJSONNewFields(t *testing.T) {
 			doc: Document{Contact: Contact{Email: "contact@example.com"}},
 			want: []string{
 				`"volunteering": []`, `"awards": []`, `"exam_results": []`, `"courses": []`,
-				`"publications": []`, `"patents": []`, `"organisations": []`,
+				`"publications": []`, `"patents": []`, `"organisations": []`, `"engagements": []`,
 			},
 		},
 		"unset optional fields render null": {
@@ -220,10 +220,11 @@ func TestRenderJSONNewFields(t *testing.T) {
 				Publications:  []PublicationEntry{{ID: "p", Title: "T", Date: "2020-01"}},
 				Patents:       []PatentEntry{{ID: "t", Title: "T", Date: "2020-01"}},
 				Organisations: []OrganisationEntry{{ID: "o", Name: "N", Start: "2020-01"}},
+				Engagements:   []EngagementEntry{{ID: "g", Experience: "e", Title: "T", Summary: "S"}},
 				Contact:       Contact{Email: "contact@example.com"},
 			},
 			want: []string{
-				`"location": null`, `"employment_type": null`, `"grade": null`, `"cause": null`,
+				`"industry": null`, `"location": null`, `"employment_type": null`, `"grade": null`, `"cause": null`,
 				`"provider": null`, `"publisher": null`, `"number": null`, `"url": null`, `"role": null`,
 			},
 		},
@@ -275,6 +276,8 @@ func TestRenderJSONTrimsNewTextFields(t *testing.T) {
 		"publications summary":     {Document{Publications: []PublicationEntry{{ID: "e", Summary: dirty}}}, `"summary": "Text."`},
 		"patents summary":          {Document{Patents: []PatentEntry{{ID: "e", Summary: dirty}}}, `"summary": "Text."`},
 		"organisations role":       {Document{Organisations: []OrganisationEntry{{ID: "e", Role: dirty}}}, `"role": "Text."`},
+		"engagements industry":     {Document{Engagements: []EngagementEntry{{ID: "e", Industry: dirty}}}, `"industry": "Text."`},
+		"engagements summary":      {Document{Engagements: []EngagementEntry{{ID: "e", Summary: dirty}}}, `"summary": "Text."`},
 		"whitespace only is null":  {Document{Education: []EducationEntry{{ID: "e", Grade: " \n"}}}, `"grade": null`},
 		"whitespace only location": {Document{Experience: []ExperienceEntry{{ID: "e", Location: "\t"}}}, `"location": null`},
 	}
