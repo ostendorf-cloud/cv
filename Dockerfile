@@ -25,6 +25,12 @@ FROM gcr.io/distroless/static-debian12:nonroot@sha256:52dcfbabb7457ea47c82f6e13a
 
 COPY --from=build /out/cvd /usr/local/bin/cvd
 
+# The data cvd serves ships in the image: it is the repository's own data/,
+# so one tag is one binary plus the document it serves. A deployment that
+# wants other data mounts it over DATA_DIR; see charts/cv.
+COPY data/ /data/
+ENV DATA_DIR=/data
+
 # Matches ADDR's and ADMIN_ADDR's defaults, the public listener and
 # govue's own admin listener (health, readiness, metrics).
 EXPOSE 8080

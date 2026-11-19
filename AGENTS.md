@@ -30,20 +30,22 @@ service that serves it. The baseline rules apply and are not repeated here.
   into one error.
 - `internal/cvd/`: builds the two HTTP handlers `cmd/cvd` serves: the public one with the
   API routes, and the one govue's admin listener serves, health, readiness and metrics.
+  `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
+  the bytes; the handler serves them. Startup logs problems with positions, ids and
+  enumerated values; free text excerpts of YAML type errors are redacted, best effort.
 - `charts/cv/`: the Helm chart, for `cvd` only. `cv` ships as a release artefact, not a
   container image.
 
 ## Scope of this milestone
 
 The CLI compiles and answers `version`, `help`, `validate` and `render json`.
-The service answers one placeholder route and its own health, readiness and metrics.
-Left out, tracked as later milestones:
+The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
+`DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
+data. Left out, tracked as later milestones:
 
 - `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
   pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
-- `cvd` serving the real document at `GET /api/v1/cv`, read through `internal/cv` instead
-  of answering an empty placeholder.
 - Fetching a GitHub repository's language and latest release and merging it with hand
   maintained project descriptions, so the stack a project actually uses feeds back into
   the skills and tools the CV claims.

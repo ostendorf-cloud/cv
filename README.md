@@ -6,9 +6,8 @@ The one source for Simon Ostendorf's curriculum vitae.
 
 - `cv`, a CLI that validates the CV data and renders the website's JSON. A PDF and a
   GitHub profile README block follow.
-- `cvd`, a small service that will serve the same data at `GET /api/v1/cv` inside the
-  cluster. This milestone answers that route with an empty placeholder document and
-  serves health, readiness and metrics on govue's admin listener.
+- `cvd`, a small service that serves the same JSON document at `GET /api/v1/cv` inside
+  the cluster, and health, readiness and metrics on govue's admin listener.
 
 See `AGENTS.md` for what each later milestone adds.
 
@@ -28,17 +27,37 @@ task build:cv
 
 ```sh
 task build:cvd
-./bin/cvd
+DATA_DIR=data ./bin/cvd
 ```
 
 `cvd` answers on `:8080` by default, and health, readiness and metrics on `:8081`:
 
 ```sh
 curl localhost:8080/api/v1/cv
+curl 'localhost:8080/api/v1/cv?lang=de'
 curl localhost:8081/healthz
 curl localhost:8081/readyz
 curl localhost:8081/metrics
 ```
+
+## API
+
+`GET /api/v1/cv` answers the document `cv render json` writes for one language: the same
+bytes, so the same `schema_version`.
+
+- The language is the `lang` query parameter, `de` or `en`. The default is `en`.
+- An unknown, empty or repeated `lang` answers `400` in govue's error shape. It never falls
+  back to the default. `Accept-Language` is not read.
+- `ETag` is strong and stable for the same data. `If-None-Match` answers `304`.
+- `Cache-Control: no-cache`: a client revalidates each time, so a restart with new data shows
+  at once.
+- Only `GET` and `HEAD`. Any other method answers `405` with `Allow: GET, HEAD`.
+- `lang` is case sensitive and the name is too: `?LANG=de` is an unknown parameter and
+  serves the default. Unknown parameters are ignored.
+- The data is read once at start. `cvd` refuses to start when it is invalid, and logs
+  problems with positions, ids and enumerated values. Free text excerpts of YAML type
+  errors are redacted (best effort). Reading new data needs a restart.
+- Readiness is unready until the documents are loaded. Liveness does not depend on them.
 
 ## JSON release artefact
 
@@ -96,6 +115,7 @@ go test ./internal/cv -run TestRenderJSONGolden -update
 | `ADDR` | The public listener's address. | `:8080` | No |
 | `ADMIN_ADDR` | govue's admin listener: health, readiness and metrics. Empty disables it. | `:8081` | No |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error`. | `info` | No |
+| `DATA_DIR` | Directory holding `cv.de.yaml` and `cv.en.yaml`. The image sets it to `/data`, where it embeds `data/`. | none | Yes |
 
 ## Container
 

@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -34,6 +35,17 @@ func run() error {
 	logger := logging.New(os.Stdout, cfg.LogLevel)
 
 	app := cvd.New(logger)
+
+	// Read once, before anything listens: invalid data stops the start, so
+	// a half document is never served. The problems are logged one by one,
+	// with positions, ids and enumerated values, and free text excerpts
+	// redacted on a best effort basis; see cvd.Problems.
+	if err := app.Load(cfg.DataDir); err != nil {
+		for _, problem := range cvd.Problems(err) {
+			logger.Error("cv data is invalid", "problem", problem)
+		}
+		return errors.New("cvd: refusing to start: the cv data is invalid")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

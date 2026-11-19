@@ -76,7 +76,14 @@
       "properties": {
         "addr": { "type": "string" },
         "adminAddr": { "type": "string" },
-        "logLevel": { "type": "string" }
+        "logLevel": { "type": "string" },
+        "dataDir": { "type": "string", "pattern": "^/.+" }
+      }
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "existingConfigMap": { "type": "string" }
       }
     }
   }
