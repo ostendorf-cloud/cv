@@ -98,7 +98,10 @@
     `2020-06` to `2020` is in order and `2020` to `2019-12` is not.
   - The text of an entry is German in `data/cv.de.yaml` and English in `data/cv.en.yaml`, like
     every section. The ids must match across the files, checked by the drift rule.
-  - The section holds data the owner has reviewed and decided to publish, like every section.
+  - An engagement is public the moment it is committed, see "No visibility" below. It holds an
+    anonymised, publishable description only: no customer or client name, no internal project
+    or product name, nothing an NDA covers. `industry` names the sector in place of the
+    customer. An NDA bound client project has no entry here at all.
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
@@ -111,8 +114,8 @@
   `engagements` is the last key, after `organisations`.
 - Decision: no `engagement` evidence type for skills. Evidence already reaches a position
   through `experience`, and an engagement belongs to exactly one position. A new type adds a
-  value every consumer must resolve, for a link nobody asked for yet. It can be added later
-  without a schema version bump.
+  value every consumer must resolve, for a link nobody asked for yet. Adding it later is a new
+  enum value, so it needs its own versioning decision.
 - Left out on purpose: recommendations and interests. A recommendation is text a third party
   wrote, and this repository holds only what the owner may publish as their own. Interests are
   not curriculum vitae content.

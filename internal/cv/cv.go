@@ -293,6 +293,10 @@ func (e OrganisationEntry) identity() string { return e.ID }
 // without a repository. Required: ID, Experience (the id of an existing
 // experience entry), Title, Summary. Industry, Start and End are optional.
 // Start and End are "YYYY-MM" or "YYYY".
+//
+// An engagement is public once committed. It holds an anonymised description
+// only: never a customer or client name, an internal project or product name,
+// or any detail an NDA covers. Industry names the sector instead.
 type EngagementEntry struct {
 	ID         string `yaml:"id"`
 	Experience string `yaml:"experience"`
