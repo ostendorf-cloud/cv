@@ -51,6 +51,18 @@ func TestValidateNewSections(t *testing.T) {
 		"organisations bad start":           {func(d *Document) { d.Organisations[0].Start = "2018-1" }, "is not a YYYY-MM date"},
 		"organisations bad end":             {func(d *Document) { d.Organisations[0].End = "x" }, "is not a YYYY-MM date"},
 		"organisations duplicate id":        {func(d *Document) { d.Organisations[1].ID = "org-1" }, `organisations: duplicate id "org-1"`},
+		"engagements without id":            {func(d *Document) { d.Engagements[0].ID = "" }, "engagements[0]: id: is required"},
+		"engagements without experience":    {func(d *Document) { d.Engagements[0].Experience = "" }, "engagements[0] (id=eng-1): experience: is required"},
+		"engagements without title":         {func(d *Document) { d.Engagements[0].Title = "" }, "title: is required"},
+		"engagements without summary":       {func(d *Document) { d.Engagements[0].Summary = "" }, "summary: is required"},
+		"engagements unknown experience":    {func(d *Document) { d.Engagements[0].Experience = "exp-9" }, `experience: no experience with id "exp-9" exists`},
+		"engagements bad start":             {func(d *Document) { d.Engagements[0].Start = "2020-3" }, `start: "2020-3" is not a YYYY-MM or YYYY date`},
+		"engagements bad end":               {func(d *Document) { d.Engagements[0].End = "2021-13" }, `end: "2021-13" is not a YYYY-MM or YYYY date`},
+		"engagements full date":             {func(d *Document) { d.Engagements[0].Start = "2020-03-01" }, "is not a YYYY-MM or YYYY date"},
+		"engagements end before start":      {func(d *Document) { d.Engagements[0].End = "2020-02" }, `end: "2020-02" is before start "2020-03"`},
+		"engagements end year before start": {func(d *Document) { d.Engagements[0].End = "2019" }, `end: "2019" is before start "2020-03"`},
+		"engagements start year after end":  {func(d *Document) { d.Engagements[0].Start, d.Engagements[0].End = "2022", "2021-12" }, `end: "2021-12" is before start "2022"`},
+		"engagements duplicate id":          {func(d *Document) { d.Engagements[1].ID = "eng-1" }, `engagements: duplicate id "eng-1"`},
 	}
 
 	for name, tc := range tests {
@@ -82,6 +94,58 @@ func TestValidateEndInStartMonth(t *testing.T) {
 	}
 }
 
+// TestValidateEngagementDates proves the accepted date forms and orders.
+func TestValidateEngagementDates(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct{ start, end string }{
+		"both unset":              {"", ""},
+		"start only":              {"2020-03", ""},
+		"end only":                {"", "2021-06"},
+		"months":                  {"2020-03", "2021-06"},
+		"years":                   {"2020", "2021"},
+		"same year":               {"2020", "2020"},
+		"same month":              {"2020-03", "2020-03"},
+		"start year, end month":   {"2020", "2020-01"},
+		"start month, end year":   {"2020-12", "2020"},
+		"padded":                  {" 2020-03\n", "\t2021 "},
+		"year start, month later": {"2020", "2021-01"},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := goldenDocument("en")
+			doc.Engagements[0].Start, doc.Engagements[0].End = tc.start, tc.end
+			if err := Validate(doc, "test"); err != nil {
+				t.Fatalf("Validate() error = %v, want nil", err)
+			}
+		})
+	}
+}
+
+// TestValidateWithoutEngagements proves the section is optional: a document
+// without it validates, and a missing list is the same as an empty one.
+func TestValidateWithoutEngagements(t *testing.T) {
+	t.Parallel()
+
+	for name, engagements := range map[string][]EngagementEntry{"nil": nil, "empty": {}} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := goldenDocument("en")
+			doc.Engagements = engagements
+			if err := Validate(doc, "test"); err != nil {
+				t.Fatalf("Validate() error = %v, want nil", err)
+			}
+		})
+	}
+	if err := Validate(legacyDocument("en"), "test"); err != nil {
+		t.Fatalf("Validate() of a document without engagements = %v, want nil", err)
+	}
+}
+
 // TestValidateOptionalNewFieldsMayBeEmpty proves the optional fields are not
 // required.
 func TestValidateOptionalNewFieldsMayBeEmpty(t *testing.T) {
@@ -96,7 +160,9 @@ func TestValidateOptionalNewFieldsMayBeEmpty(t *testing.T) {
 		Publications:  []PublicationEntry{{ID: "p", Title: "T", Date: "2020-01"}},
 		Patents:       []PatentEntry{{ID: "t", Title: "T", Date: "2020-01"}},
 		Organisations: []OrganisationEntry{{ID: "o", Name: "N", Start: "2020-01"}},
+		Engagements:   []EngagementEntry{{ID: "g", Experience: "e", Title: "T", Summary: "S"}},
 	}
+	doc.Experience = []ExperienceEntry{{ID: "e", Employer: "E", Title: "T", Start: "2020-01"}}
 	if err := Validate(doc, "test"); err != nil {
 		t.Fatalf("Validate() error = %v, want nil", err)
 	}
@@ -115,6 +181,7 @@ func TestDriftNewSections(t *testing.T) {
 		"publications":  func(d *Document) { d.Publications = d.Publications[:1] },
 		"patents":       func(d *Document) { d.Patents = d.Patents[:1] },
 		"organisations": func(d *Document) { d.Organisations = d.Organisations[:1] },
+		"engagements":   func(d *Document) { d.Engagements = d.Engagements[:1] },
 	}
 
 	if err := Drift(goldenDocument("de"), goldenDocument("en")); err != nil {
@@ -166,6 +233,8 @@ patents:
   - {id: t, title: T, date: "2020-01", number: EX 1}
 organisations:
   - {id: o, name: N, start: "2020-01"}
+engagements:
+  - {id: g, experience: e, title: T, industry: I, start: "2020", end: "2021-02", summary: S}
 `
 
 func TestParseNewSections(t *testing.T) {
@@ -178,7 +247,8 @@ func TestParseNewSections(t *testing.T) {
 	if doc.Education[0].Grade != "0,0" || doc.Experience[0].Location != "Berlin" ||
 		doc.Experience[0].EmploymentType != "Full-time" || doc.ExamResults[0].Score != "0,0" ||
 		len(doc.Volunteering) != 1 || len(doc.Awards) != 1 || len(doc.Courses) != 1 ||
-		len(doc.Publications) != 1 || len(doc.Patents) != 1 || len(doc.Organisations) != 1 {
+		len(doc.Publications) != 1 || len(doc.Patents) != 1 || len(doc.Organisations) != 1 ||
+		len(doc.Engagements) != 1 || doc.Engagements[0].End != "2021-02" {
 		t.Errorf("Parse() decoded %+v", doc)
 	}
 }

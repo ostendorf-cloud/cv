@@ -30,6 +30,7 @@ func validDocument() Document {
 		Publications:  []PublicationEntry{{ID: "pub-1", Title: "Article", Date: "2021-09"}},
 		Patents:       []PatentEntry{{ID: "patent-1", Title: "Patent", Date: "2020-05"}},
 		Organisations: []OrganisationEntry{{ID: "org-1", Name: "Society", Start: "2018-01"}},
+		Engagements:   []EngagementEntry{{ID: "eng-1", Experience: "exp-1", Title: "Engagement", Summary: "Text"}},
 	}
 }
 
@@ -115,6 +116,10 @@ func TestValidateRejectsBlankValues(t *testing.T) {
 		"organisation id":           {func(d *Document) { d.Organisations[0].ID = blank }, "id: is required"},
 		"organisation name":         {func(d *Document) { d.Organisations[0].Name = blank }, "name: is required"},
 		"organisation start":        {func(d *Document) { d.Organisations[0].Start = blank }, "start: is required"},
+		"engagement id":             {func(d *Document) { d.Engagements[0].ID = blank }, "id: is required"},
+		"engagement experience":     {func(d *Document) { d.Engagements[0].Experience = blank }, "experience: is required"},
+		"engagement title":          {func(d *Document) { d.Engagements[0].Title = blank }, "title: is required"},
+		"engagement summary":        {func(d *Document) { d.Engagements[0].Summary = blank }, "summary: is required"},
 	}
 
 	if err := Validate(validDocument(), "test"); err != nil {

@@ -77,10 +77,15 @@ bytes, so the same `schema_version`.
   that a consumer can ignore does not.
 - Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
-  `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`.
-- The last seven keys and the entry keys `grade` (education), `location` and `employment_type`
-  (experience) were added without a version bump: they are new keys a consumer can ignore. The
-  other existing keys, their names and their order are unchanged.
+  `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`,
+  `engagements`.
+- `engagements` is the last key. Each entry has `id`, `experience` (an experience id), `title`,
+  `industry`, `start`, `end` and `summary`. `industry`, `start` and `end` are `null` when unset,
+  `start` and `end` are `YYYY-MM` or `YYYY`. It was added without a version bump.
+- The seven keys from `volunteering` to `organisations` and the entry keys `grade`
+  (education), `location` and `employment_type` (experience) were added without a version
+  bump: they are new keys a consumer can ignore. The other existing keys, their names and
+  their order are unchanged.
   `internal/cv/testdata/render/legacy.*.golden.json` pins that and is frozen.
 - Exception: version 1 is fixed at the first release. Before that, `certificates[].valid_until`
   became nullable (`null` means no expiry). A consumer must not assume a string there.
