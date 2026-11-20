@@ -59,9 +59,9 @@ jobs:
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
         if: steps.release-me.outputs.tags != ''
         with:
-          install_args: go goreleaser task
+          install_args: go goreleaser task typst
 
-      # Renders the JSON documents, which fails on invalid data and leaves the
+      # Renders the JSON documents and the PDFs, which fails on invalid data and leaves the
       # draft unpublished, builds the archives, attaches everything and
       # publishes.
       - name: Render, build, attach and publish the assets for every tag just released

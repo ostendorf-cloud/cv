@@ -18,7 +18,7 @@
 coverage.out
 bin/
 
-# `cv render json` output, attached to a release by goreleaser. dist/ is goreleaser's own.
+# `cv render json` and `cv render pdf` output, attached to a release by goreleaser. dist/ is goreleaser's own.
 rendered/
 dist/
 
