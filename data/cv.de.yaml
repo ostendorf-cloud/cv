@@ -1,63 +1,508 @@
-# Platzhalterdaten. Jeder Eintrag in dieser Datei ist ein Beispiel, keine
-# Tatsache aus dem Werdegang von Simon Ostendorf. Er steht nur für den
-# echten Eintrag, der ihn ersetzen wird, und zeigt, welche Felder jeder
-# Abschnitt erwartet. ids sind mit data/cv.en.yaml geteilt: wer einen
-# Eintrag hinzufügt, entfernt oder umbenennt, hält beide Dateien auf dem
-# gleichen Stand, sonst meldet `cv validate` die Abweichung.
+# Lebenslauf, deutsche Fassung. ids sind mit data/cv.en.yaml geteilt: Einträge in beiden Dateien gleich halten,
+# sonst meldet `cv validate` die Abweichung.
 experience:
-  - id: example-experience-1
-    employer: Example Employer GmbH
-    title: Platzhaltertitel
-    start: "2020-01"
-    end: null
+  - id: stackmeister-devops-cloud-engineer
+    employer: Stackmeister
+    title: DevOps- und Cloud-Engineer
+    start: "2026-03"
     summary: >
-      Platzhaltertext für die Tätigkeitsbeschreibung dieses Eintrags.
-    location: Platzhalterstadt
+      Plattformaufbau, Entwicklung und vor allem DevOps, Cloud-Migration und Beratung für unterschiedliche Kunden. In
+      meinen Projekten baue und betreibe ich Plattformen wie eine OpenStack-Plattform mit Kolla-Ansible und Ansible,
+      erstelle Proofs of Concept wie für OpenStack Magnum mit Cluster API und migriere VMware-Rechenzentren mit OpenTofu
+      und Ansible in OpenStack-basierte Clouds.
+    location: Remote
     employment_type: Vollzeit
+  - id: self-employed-event-technician
+    employer: Selbstständig
+    title: Veranstaltungstechniker
+    start: "2023-06"
+    summary: >
+      Einzelunternehmen für Veranstaltungstechnik in Aachen.
+    location: Aachen
+    employment_type: Selbstständig
+  - id: cancom-working-student
+    employer: CANCOM
+    title: Working Student
+    start: "2023-07"
+    end: "2026-02"
+    summary: >
+      Ende-zu-Ende-Automatisierung von Kubernetes-Clustern im Self-Service (Terraform, Cluster API), Weiterentwicklung
+      und Wartung des Cluster API Providers für OpenStack in Go mit Beiträgen an das Upstream-Projekt,
+      Entwicklung eines Kubelet Credential Providers sowie Proof of Concept für DBaaS (Database as a Service) auf
+      Kubernetes.
+    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    employment_type: Werkstudium
+  - id: cancom-internship-semester
+    employer: CANCOM
+    title: Internship Semester
+    start: "2023-03"
+    end: "2023-07"
+    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    employment_type: Praktikum
+  - id: cancom-working-student-2022
+    employer: CANCOM
+    title: Working Student
+    start: "2022-10"
+    end: "2023-02"
+    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    employment_type: Werkstudium
+  - id: fh-tutor-math-precourse-2022
+    employer: Aachen University of Applied Sciences - FH Aachen
+    title: Tutor for the mathematic precourse
+    start: "2022-09"
+    end: "2022-09"
+  - id: fh-tutor-hoehere-mathematik-2
+    employer: Aachen University of Applied Sciences - FH Aachen
+    title: Tutor of the module "Höhere Mathematik 2"
+    start: "2022-04"
+    end: "2022-07"
+  - id: fh-tutor-informatik-grundlagen
+    employer: Aachen University of Applied Sciences - FH Aachen
+    title: Tutor of the module "Grundlagen der Informatik und höhere Programmiersprachen"
+    start: "2021-10"
+    end: "2022-01"
+  - id: fh-tutor-hoehere-mathematik-1
+    employer: Aachen University of Applied Sciences - FH Aachen
+    title: Tutor of the module "Höhere Mathematik 1"
+    start: "2021-10"
+    end: "2022-01"
+  - id: fh-tutor-math-precourse-2021
+    employer: Aachen University of Applied Sciences - FH Aachen
+    title: Tutor for the mathematics pre-course
+    start: "2021-09"
+    end: "2021-09"
 
 education:
-  - id: example-education-1
-    institution: Example University
-    degree: Platzhalterabschluss
-    start: "2015-10"
-    end: "2019-06"
-    summary: >
-      Platzhaltertext für die Beschreibung dieses Bildungswegs.
-    grade: "0,0"
+  - id: fh-aachen-msc-computer-science
+    institution: FH Aachen University of Applied Sciences
+    degree: Master of Science - MS, Informatik (Teilzeit)
+    start: "2024-03"
+    end: "2026-02"
+    grade: "1,6"
+  - id: fh-aachen-bsc-computer-science
+    institution: FH Aachen University of Applied Sciences
+    degree: Bachelor of Science - BS, Computer Science
+    start: "2020-09"
+    end: "2024-02"
+    grade: "1,3"
+  - id: goethe-gymnasium-abitur
+    institution: Goethe-Gymnasium Ibbenbüren
+    degree: Abitur
+    start: "2020-06"
+    end: "2020-06"
+    grade: "1,7"
 
 certificates:
-  - id: example-certificate-1
-    name: Platzhalterzertifikat
-    issuer: Example Certification Body
-    issued: "2023-01"
-    valid_until: "2026-01"
-  - id: example-certificate-2
-    name: Platzhalterzertifikat ohne Ablauf
-    issuer: Example Certification Body
-    issued: "2021-05"
+  - id: lfc102-inclusive-open-source
+    name: "LFC102: Inclusive Open Source Community Orientation"
+    issuer: The Linux Foundation
+    issued: "2025-12"
+  - id: linux-essentials
+    name: Linux Essentials Zertifizierung
+    issuer: FH Aachen University of Applied Sciences
+    issued: "2022-08"
 
 skills:
-  - id: example-skill-1
-    name: Platzhalterfähigkeit
+  - id: isms
+    name: Information Security Management System (ISMS)
+    level: familiar
+  - id: informationssicherheit
+    name: Informationssicherheit
+    level: working
+  - id: informationssicherheitsmanagement
+    name: Informationssicherheitsmanagement
+    level: familiar
+  - id: iso-27001
+    name: ISO 27001
+    level: familiar
+  - id: webentwicklung
+    name: Webentwicklung
     level: working
     evidence:
-      - type: experience
-        ref: example-experience-1
-      - type: certificate
-        ref: example-certificate-1
-      - type: project
-        ref: example-project-1
+      - {type: project, ref: ostendorf-dev}
+      - {type: project, ref: wishlist}
+      - {type: project, ref: qarr}
+  - id: interdisziplinaere-zusammenarbeit
+    name: Interdisziplinäre Zusammenarbeit
+    level: working
+  - id: graphentheorie
+    name: Graphentheorie
+    level: familiar
+  - id: bash
+    name: Bash
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: experience, ref: cancom-working-student}
+      - {type: certificate, ref: linux-essentials}
+  - id: microservices
+    name: Microservices
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: containerization
+    name: Containerization
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: helm-charts
+    name: Helm Charts
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: cv}
+      - {type: project, ref: burnlink}
+  - id: proxmox
+    name: Proxmox
+    level: familiar
+  - id: go
+    name: Go
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: govue}
+      - {type: project, ref: release-me}
+      - {type: project, ref: gitcd}
+  - id: hashicorp-vault
+    name: HashiCorp Vault
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: experience, ref: cancom-working-student}
+  - id: informatik
+    name: Informatik
+    level: proficient
+  - id: ansible
+    name: Ansible
+    level: proficient
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: ci-cd
+    name: Continuous Integration und Continuous Delivery (CI/CD)
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: workflows}
+  - id: docker
+    name: Docker
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: burnlink}
+  - id: cluster-api
+    name: Cluster API
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: gitlab
+    name: Gitlab
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: it-infrastruktur-management
+    name: IT-Infrastruktur-Management
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: experience, ref: cancom-working-student}
+  - id: devops
+    name: DevOps
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: gitops
+    name: GitOps
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: infrastructure-as-code
+    name: Infrastructure as code (IaC)
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: yaml
+    name: YAML
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: cv}
+  - id: terraform
+    name: Terraform
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: kubernetes
+    name: Kubernetes
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: rancher
+    name: Rancher
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: openstack
+    name: OpenStack
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: python
+    name: Python (Programmiersprache)
+    level: working
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+      - {type: project, ref: skills}
+  - id: cpp
+    name: C++
+    level: working
+    evidence:
+      - {type: experience, ref: fh-tutor-informatik-grundlagen}
+  - id: mathematik
+    name: Mathematik
+    level: proficient
+    evidence:
+      - {type: experience, ref: fh-tutor-hoehere-mathematik-1}
+      - {type: experience, ref: fh-tutor-hoehere-mathematik-2}
+      - {type: experience, ref: fh-tutor-math-precourse-2021}
+      - {type: experience, ref: fh-tutor-math-precourse-2022}
+  - id: java
+    name: Java
+    level: familiar
+  - id: linux-systemadministration
+    name: Linux-Systemadministration
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: experience, ref: cancom-working-student}
+      - {type: certificate, ref: linux-essentials}
+  - id: linux-server
+    name: Linux-Server
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: certificate, ref: linux-essentials}
+  - id: linux
+    name: Linux
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-internship-semester}
+      - {type: certificate, ref: linux-essentials}
+  - id: sql
+    name: SQL
+    level: working
+    evidence:
+      - {type: project, ref: solobill}
+      - {type: project, ref: calbridge}
+  - id: php
+    name: PHP
+    level: familiar
+  - id: git
+    name: Git
+    level: proficient
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: gitcd}
+  - id: github
+    name: GitHub
+    level: proficient
+    evidence:
+      - {type: project, ref: workflows}
+      - {type: project, ref: govue}
+  - id: json
+    name: JSON
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+  - id: opentofu
+    name: OpenTofu
+    level: proficient
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+      - {type: experience, ref: cancom-working-student}
+  - id: kolla-ansible
+    name: Kolla-Ansible
+    level: working
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: openstack-magnum
+    name: OpenStack Magnum
+    level: familiar
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: vmware
+    name: VMware vSphere
+    level: familiar
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: ceph
+    name: Ceph
+    level: familiar
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: powershell
+    name: PowerShell
+    level: familiar
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: prometheus
+    name: Prometheus
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: project, ref: govue}
+  - id: grafana
+    name: Grafana
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: loki
+    name: Loki
+    level: familiar
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: harbor
+    name: Harbor
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: flux
+    name: Flux
+    level: working
+    evidence:
+      - {type: experience, ref: cancom-working-student}
+  - id: github-actions
+    name: GitHub Actions
+    level: proficient
+    evidence:
+      - {type: project, ref: workflows}
+      - {type: project, ref: release-me}
+  - id: renovate
+    name: Renovate
+    level: working
+    evidence:
+      - {type: project, ref: workflows}
+  - id: vue-js
+    name: Vue.js
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: qarr}
+      - {type: project, ref: solobill}
+  - id: typescript
+    name: TypeScript
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: calbridge}
+  - id: vitest
+    name: Vitest
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+  - id: playwright
+    name: Playwright
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+  - id: postgresql
+    name: PostgreSQL
+    level: working
+    evidence:
+      - {type: project, ref: solobill}
+      - {type: project, ref: calbridge}
+  - id: oidc
+    name: OIDC
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: solobill}
+  - id: keycloak
+    name: Keycloak
+    level: familiar
+    evidence:
+      - {type: project, ref: solobill}
 
 projects:
-  - id: example-project-1
-    github_repo: ostendorf-cloud/example-project
+  - id: cv
+    github_repo: ostendorf-cloud/cv
     description: >
-      Platzhaltertext für die Projektbeschreibung dieses Eintrags.
+      Die eine Quelle für diesen Lebenslauf: eine CLI, die ihn validiert und rendert, und ein Dienst, der ihn ausliefert.
+  - id: govue
+    github_repo: ostendorf-cloud/govue
+    description: >
+      Bibliothek für Webanwendungen mit Go-Backend und Vue-Frontend: HTTP-Server-Schicht mit Timeouts, Security-Headern,
+      Health-Endpunkten, Sessions, OIDC-Login, CSRF-Schutz, Rate Limiting und Prometheus-Metriken sowie ein Vue-Paket mit
+      Komponenten und Design-Token-Vertrag.
+  - id: release-me
+    github_repo: ostendorf-cloud/release-me
+    description: >
+      Release-Automatisierung für Repositories mit Merge-Commits: ein Changelog-Eintrag je Pull Request, Versionen aus
+      Conventional Commits, Release-Pull-Request, Tag und Release.
+  - id: gitcd
+    github_repo: ostendorf-cloud/gitcd
+    description: >
+      Klont Repositories in ein vorhersagbares Pfadlayout, wendet je Remote ein Git-Identitätsprofil an und springt aus der
+      Shell zu jedem Repository.
+  - id: skills
+    github_repo: ostendorf-cloud/skills
+    description: >
+      Regeln, Skills, Hooks und Einstellungen für Coding-Agenten, zuerst für Claude Code und für jeden Agenten, der
+      AGENTS.md liest.
+  - id: workflows
+    github_repo: ostendorf-cloud/workflows
+    description: >
+      Gemeinsame, wiederverwendbare GitHub-Actions-Workflows der Organisation ostendorf-cloud.
+  - id: qarr
+    github_repo: ostendorf-cloud/qarr
+    description: >
+      QR-Codes mit eigenem Inhalt, eigenen Farben und Logo, im Browser erzeugt.
+  - id: burnlink
+    github_repo: ostendorf-cloud/burnlink
+    description: >
+      Geheimnisse einmalig teilen: Der Browser verschlüsselt, der Server gibt den Inhalt genau einmal heraus und kennt nie
+      einen Schlüssel.
+  - id: wishlist
+    github_repo: ostendorf-cloud/wishlist
+    description: >
+      Geteilte Wunschlisten mit Reservierungen, die der Besitzer nie sieht. Go-Dienst mit Vue-3-Single-Page-Application auf
+      govue.
+  - id: calbridge
+    github_repo: ostendorf-cloud/calbridge
+    description: >
+      Selektives Spiegeln von Kalendern zwischen Google Calendar, Microsoft 365 und iCloud, ein Detailgrad je Verbindung.
+  - id: solobill
+    github_repo: ostendorf-cloud/solobill
+    description: >
+      Buchhaltung für Einzelunternehmer: Angebote, Rechnungen, Ausgaben, EÜR und die Zahlen für Elster. Go-API und
+      Vue-Anwendung auf govue mit Postgres, im Aufbau.
+  - id: homebrew-tap
+    github_repo: ostendorf-cloud/homebrew-tap
+    description: >
+      Homebrew-Formeln für die Werkzeuge von ostendorf-cloud.
+  - id: ostendorf-dev
+    github_repo: ostendorf-cloud/ostendorf.dev
+    description: >
+      Die Entwickler-Website von Simon Ostendorf: Projekte, Fähigkeiten und Kontakt. Go-Dienst mit Vue-3-Anwendung auf govue.
+  - id: ostendorf-tech
+    github_repo: ostendorf-cloud/ostendorf.tech
+    description: >
+      Die Geschäfts-Website von Simon Ostendorf Veranstaltungstechnik: deutsch und englisch, mit hellem und dunklem Design,
+      zur Bauzeit vorgerendert.
+  - id: simon-ostendorf-de
+    github_repo: ostendorf-cloud/simon-ostendorf.de
+    description: >
+      Die persönliche Startseite von Simon Ostendorf mit dem Weg zur Softwareentwicklung oder Veranstaltungstechnik und dem
+      Lebenslauf.
 
-references:
-  - id: example-reference-1
-    name: Platzhaltername
-    role: Platzhalterrolle
+references: []
 
 languages:
   - id: german
@@ -65,61 +510,226 @@ languages:
     level: expert
   - id: english
     name: Englisch
-    level: working
+    level: proficient
 
 contact:
-  email: contact@example.com
+  email: simon@ostendorf.cloud
   address:
-    street: Platzhalterstraße 1
-    city: Platzhalterstadt
+    city: Aachen
   profiles:
     - id: github
       platform: GitHub
-      url: https://github.com/example
+      url: https://github.com/ostendorf-cloud
+    - id: linkedin
+      platform: LinkedIn
+      url: https://www.linkedin.com/in/simonostendorf
 
 volunteering:
-  - id: example-volunteering-1
-    organisation: Example Association
-    role: Platzhalterrolle
-    cause: Platzhalteranliegen
-    start: "2019-03"
-    end: "2021-06"
+  - id: studierendenparlament-2025
+    organisation: FH Aachen University of Applied Sciences
+    role: Gewähltes Mitglied im Studierendenparlament
+    cause: Politik
+    start: "2025-06"
+    end: "2026-02"
     summary: >
-      Platzhaltertext für die Beschreibung dieses Eintrags.
+      Kassenprüfer der Studierendenschaft. Vorsitzender des Haushaltsausschusses der Studierendenschaft.
+  - id: studierendenparlament-2024
+    organisation: FH Aachen University of Applied Sciences
+    role: Gewähltes Mitglied im Studierendenparlament
+    cause: Politik
+    start: "2024-05"
+    end: "2025-06"
+    summary: >
+      Kassenprüfer der Studierendenschaft. Stellvertretender Vorsitzender des Haushaltsausschusses der Studierendenschaft.
+  - id: studierendenparlament-2023
+    organisation: FH Aachen University of Applied Sciences
+    role: Gewähltes Mitglied im Studierendenparlament
+    cause: Politik
+    start: "2023-05"
+    end: "2024-05"
+    summary: >
+      Kassenprüfer der Studierendenschaft.
+  - id: fachschaftsrat-2025
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Gewähltes Mitglied im Fachschaftsrat
+    cause: Politik
+    start: "2025-06"
+    end: "2026-02"
+    summary: >
+      Kassenwart
+  - id: fachschaftsrat-2024
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Freiwilliges Mitglied im Fachschaftsrat
+    cause: Politik
+    start: "2024-05"
+    end: "2025-06"
+  - id: fachschaftsrat-2023
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Gewähltes Mitglied im Fachschaftsrat
+    cause: Politik
+    start: "2023-05"
+    end: "2024-05"
+    summary: >
+      Vorsitzender
+  - id: fachschaftsrat-2022
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Gewähltes Mitglied im Fachschaftsrat
+    cause: Politik
+    start: "2022-05"
+    end: "2023-05"
+    summary: >
+      Vorsitzender, Kassenwart und IT-Referent
+  - id: fachschaftsrat-2021
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Gewähltes Mitglied im Fachschaftsrat
+    cause: Politik
+    start: "2021-05"
+    end: "2022-05"
+    summary: >
+      Stellvertretender Vorsitzender und Referent für IT
+  - id: berufungskommission
+    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    role: Studentisches Mitglied in Berufungskommission
+    start: "2021-12"
+    end: "2023-12"
+  - id: scheune-ibbenbueren
+    organisation: Jugendkulturzentrum Scheune Ibbenbüren
+    role: Veranstaltungstechniker
+    cause: Sozialwesen
+    start: "2013-01"
+  - id: cncf-community-group-organizer
+    organisation: Cloud Native Computing Foundation (CNCF)
+    role: Community Group Organizer
+    start: "2025-12"
+    summary: >
+      (Co-)Organizer of the Cloud Native Aachen Meetup
 
 awards:
-  - id: example-award-1
-    title: Platzhalterauszeichnung
-    issuer: Example Awarding Body
-    date: "2020-11"
+  - id: ehrenplakette-fh-aachen-2024
+    title: Ehrenplakette FH Aachen
+    issuer: Fachhochschule Aachen
+    date: "2024-12"
+    summary: >
+      Auszeichnung der besten 5% Absolvierenden des Jahrgangs 2024 der Fachhochschule Aachen
+  - id: deutschlandstipendium-2024
+    title: Stipendiat des Deutschland Stipendiums der FH Aachen
+    issuer: Deutschlandstipendium FH-Aachen | SOPTIM AG
+    date: "2024-10"
+  - id: deutschlandstipendium-2023
+    title: Stipendiat des Deutschland Stipendiums der FH Aachen
+    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    date: "2023-10"
+  - id: deutschlandstipendium-2022
+    title: Stipendiat des Deutschland Stipendiums der FH Aachen
+    issuer: Deutschlandstipendium FH-Aachen | Kabelwerk Eupen AG
+    date: "2022-09"
+  - id: deutschlandstipendium-2021
+    title: Stipendiat des Deutschland Stipendiums der FH Aachen
+    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    date: "2021-10"
+  - id: hans-riegel-fachpreis-2019
+    title: Hans Riegel Fachpreis
+    issuer: WWU Münster und Hans-Riegel Stiftung
+    date: "2019-01"
 
 exam_results:
-  - id: example-exam-result-1
-    name: Platzhalterabschlussarbeit
-    score: "0,0"
-    date: "2019-06"
+  - id: master-thesis
+    name: "Master Thesis: Strategien aus Provider-Sicht zur Sicherstellung von IT Supply Chain Security in Kubernetes"
+    score: "1,0"
+    date: "2026-02"
+    summary: >
+      FH Aachen University of Applied Sciences
+  - id: bachelor-thesis
+    name: "Bachelor Thesis: Konzeption und Realisierung von Workload Identity in Kubernetes für die CANCOM Managed Services GmbH"
+    score: "1,0"
+    date: "2024-02"
+    summary: >
+      FH Aachen University of Applied Sciences
 
-courses:
-  - id: example-course-1
-    name: Platzhalterkurs
-    provider: Example Academy
-    date: "2022-02"
-
-publications:
-  - id: example-publication-1
-    title: Platzhalterartikel
-    publisher: Example Journal
-    date: "2021-09"
-    url: https://example.com/article
-
-patents:
-  - id: example-patent-1
-    title: Platzhalterpatent
-    number: EX 0000000
-    date: "2020-05"
-
-organisations:
-  - id: example-organisation-1
-    name: Example Society
-    role: Mitglied
-    start: "2018-01"
+engagements:
+  - id: openstack-private-cloud-platform
+    experience: stackmeister-devops-cloud-engineer
+    title: Plattformaufbau und -betrieb einer OpenStack Private Cloud im öffentlichen Sektor
+    industry: Öffentlicher Sektor
+    start: "2026"
+    summary: >
+      Aufbau und Betrieb einer OpenStack-basierten Private-Cloud-Plattform, die Compute, Storage
+      und Netzwerk für Verwaltungsanwendungen bereitstellt. Deployment, Konfiguration und Updates
+      sind mit Kolla-Ansible und Ansible automatisiert und in Git versioniert, ergänzt um
+      CI/CD-Pipelines. Zur Arbeit gehören Härtung der Basissysteme, Netzwerk-, Storage- und
+      Mandantenkonzepte, Monitoring, Patch-Management und Upgrades. Dazu kommen Betriebshandbücher
+      und die Abstimmung mit Fachabteilungen, Betrieb und Security-Verantwortlichen.
+  - id: magnum-kubernetes-poc
+    experience: stackmeister-devops-cloud-engineer
+    title: Proof of Concept für Kubernetes as a Service auf OpenStack
+    industry: Öffentlicher Sektor
+    start: "2026"
+    end: "2026"
+    summary: >
+      Proof of Concept für OpenStack Magnum mit Cluster API in einer bestehenden, mit
+      Kolla-Ansible betriebenen OpenStack-Umgebung. Installation und Anpassung von Magnum samt
+      Abhängigkeiten, danach Bereitstellung eines Testclusters über ein Cluster-Template mit einer
+      Beispielanwendung. Das Kundenteam wurde zu Installation, Konfiguration und Anpassung
+      geschult. Ergebnis war eine dokumentierte Entscheidungsvorlage zur Wahl eines passenden
+      Cluster-API-Providers.
+  - id: vmware-migration-public-sector
+    experience: stackmeister-devops-cloud-engineer
+    title: Migration einer virtualisierten Bestandsumgebung in eine OpenStack-Cloud im öffentlichen Sektor
+    industry: Öffentlicher Sektor
+    start: "2026"
+    end: "2026"
+    summary: >
+      Ablösung eines VMware-Rechenzentrums durch Migration in eine OpenStack-basierte
+      Cloud-Umgebung. Die Fachverfahren und Basisdienste wurden spezifiziert und dokumentiert,
+      ihre Infrastruktur mit OpenTofu aufgebaut und die Softwarebereitstellung mit Ansible
+      automatisiert. Dazu kamen Architekturentscheidungen zu Netzwerk und Cloud, die Einbindung in
+      Monitoring und Backup, Betriebshandbücher und das Enablement der Mitarbeitenden.
+  - id: vmware-migration-sovereign-cloud
+    experience: stackmeister-devops-cloud-engineer
+    title: Migration einer VMware-Umgebung in eine souveräne OpenStack-Cloud
+    industry: Verbands- und Organisationsumfeld
+    start: "2026"
+    end: "2026"
+    summary: >
+      Ablösung eines VMware-Rechenzentrums durch Migration der Anwendungen und
+      Infrastrukturdienste in eine OpenStack-basierte Cloud. Nach Inventarisierung und
+      Abhängigkeitsanalyse wurden wiederverwendbare OpenTofu-Module für Compute, Storage, Netzwerk
+      und Security erstellt und Ansible-Playbooks für Konfiguration und Härtung der VMs entwickelt.
+      CI/CD-Pipelines automatisieren die Infrastrukturbereitstellung, Funktions-, Integrations-
+      und Migrationstests begleiteten die Umstellung. Migrationsabläufe und Wartungsfenster wurden
+      mit dem Kunden und externen Dienstleistern abgestimmt und in Migrationskonzepten, ADRs und
+      Betriebsanleitungen dokumentiert.
+  - id: kubernetes-self-service-automation
+    experience: cancom-working-student
+    title: Ende-zu-Ende-Automatisierung von Kubernetes-Clustern im Self-Service
+    industry: IT-Dienstleistung
+    start: "2023"
+    end: "2026"
+    summary: >
+      Entwicklung einer automatisierten Plattform, über die Kunden Kubernetes-Cluster im
+      Self-Service über ein Cloud-Portal anlegen. Provisionierung und Konfiguration laufen Ende zu
+      Ende über Terraform/OpenTofu und Cluster API, das Portal selbst gehörte nicht zum Umfang.
+      Jeder Cluster erhält einen standardisierten Add-on-Stack und wird in das zentrale Monitoring
+      eingebunden, Grafana-Dashboards zeigen die Auslastung.
+  - id: cluster-api-provider-openstack
+    experience: cancom-working-student
+    title: Weiterentwicklung des Cluster API Providers für OpenStack
+    industry: IT-Dienstleistung
+    start: "2024"
+    end: "2025"
+    summary: >
+      Wartung und Weiterentwicklung des Cluster API Providers für OpenStack für die automatisierte
+      Bereitstellung von Kubernetes-Clustern. Umgesetzt wurden Bugfixes für die eingesetzte
+      OpenStack-Version sowie neue Funktionen rund um Load-Balancer, Netzwerk und das Löschen von
+      Nodes, jeweils mit Go-Unit-Tests. Die Änderungen wurden upstream eingereicht und laufend auf
+      neue Upstream-Versionen rebased, Provider-Updates wurden vorbereitet und dokumentiert.
+  - id: kubelet-credential-provider
+    experience: cancom-working-student
+    title: Entwicklung eines Kubelet Credential Providers
+    industry: IT-Dienstleistung
+    start: "2025"
+    end: "2025"
+    summary: >
+      Anforderungsanalyse und Entwicklung eines Kubelet Credential Providers in Go auf Basis neuer
+      Kubernetes-Funktionen für Credential Provider. Für die Tests entstand eine eigene Umgebung
+      aus Kubernetes-Cluster, Vault und Harbor Registry.
