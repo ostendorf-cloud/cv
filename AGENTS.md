@@ -5,8 +5,9 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Layout
 
-- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate` and
-  `render json` are its commands so far.
+- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
+  and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
+  `mise.toml`) on the path, or `--typst <binary>`.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
@@ -29,6 +30,8 @@ service that serves it. The baseline rules apply and are not repeated here.
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
   instead of only through a renderer. `render_json.go` renders the public JSON document
   for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
+  `render_pdf.go` fills `templates/cv.typ.tmpl` (typst) and shells out to `typst compile`;
+  the golden test pins the typst source. The
   model holds what LinkedIn holds, except recommendations (third party text) and interests
   (not CV content).
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
@@ -47,12 +50,12 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Scope of this milestone
 
-The CLI compiles and answers `version`, `help`, `validate` and `render json`.
+The CLI compiles and answers `version`, `help`, `validate`, `render json` and `render pdf`.
 The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
 `DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
 data. Left out, tracked as later milestones:
 
-- `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
+- `cv`'s other renderers: the block for the GitHub profile README, and the export
   pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - Fetching a GitHub repository's language and latest release and merging it with hand
@@ -73,9 +76,11 @@ data. Left out, tracked as later milestones:
 - Releases are drafts until their assets attach: `release-me.yaml` sets
   `github-release-draft-until-assets-attach`, and `release.yaml` runs
   `scripts/publish-release-assets.sh` after the release-me step. The script renders the JSON
-  documents in the tag's own worktree (`task render:json`, which validates first), builds the
+  documents and the PDFs in the tag's own worktree (`task render:json render:pdf`, which
+  validate first), writes `rendered/SHA256SUMS` over the four documents, builds the
   archives with `goreleaser release --skip=announce,validate,publish`, uploads the archives,
-  the checksums and `rendered/cv.*.json` with `gh release upload`, then publishes with
+  the checksums, `rendered/cv.*.json`, `rendered/cv.*.pdf` and `SHA256SUMS` with
+  `gh release upload`, then publishes with
   `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
   `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
   `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Renders the JSON documents, builds the archives and checksums with
+# Renders the JSON documents and the PDFs, writes SHA256SUMS over the four, builds the archives and checksums with
 # goreleaser, attaches all of them to the draft release release-me just
 # created for each tag in TAGS, then publishes it. Adapted from
 # ostendorf-cloud/release-me's scripts/publish-release-assets.sh.
@@ -69,14 +69,18 @@ while IFS= read -r tag; do
     cd "${worktree_dir}"
     mise trust --quiet
 
-    echo "rendering the JSON documents for ${tag}"
-    task render:json
+    echo "rendering the JSON documents and the PDFs for ${tag}"
+    task render:json render:pdf
+
+    # The two websites pin the sha256 of these four files from the release.
+    echo "writing SHA256SUMS for ${tag}"
+    (cd rendered && sha256sum cv.de.json cv.en.json cv.de.pdf cv.en.pdf >SHA256SUMS)
 
     echo "building archives for ${tag}"
     GORELEASER_CURRENT_TAG="${tag}" goreleaser release --clean --skip=announce,validate,publish
 
     echo "attaching assets to the draft release ${tag}"
-    gh release upload "${tag}" dist/*.tar.gz dist/*checksums.txt rendered/cv.*.json --clobber
+    gh release upload "${tag}" dist/*.tar.gz dist/*checksums.txt rendered/cv.*.json rendered/cv.*.pdf rendered/SHA256SUMS --clobber
 
     echo "publishing ${tag}"
     gh release edit "${tag}" --draft=false

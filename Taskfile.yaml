@@ -115,6 +115,11 @@ tasks:
     cmds:
       - go run ./cmd/cv render json --out rendered
 
+  render:pdf:
+    desc: Render cv.de.pdf and cv.en.pdf into rendered/ with typst
+    cmds:
+      - go run ./cmd/cv render pdf --out rendered
+
   build:release:
     desc: Build a local snapshot release of cv with goreleaser, with the JSON documents
     deps: [render:json]
@@ -149,6 +154,7 @@ tasks:
       - task: validate:kubeconform
       - task: validate:cv
       - task: render:json
+      - task: render:pdf
       - task: test:helm
       - task: build:cv
       - task: build:cvd

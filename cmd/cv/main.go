@@ -5,11 +5,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ostendorf-cloud/cv/internal/cv"
 )
@@ -25,7 +27,7 @@ Usage:
 Commands:
   version    print the version
   validate   validate data/cv.de.yaml and data/cv.en.yaml
-  render     render an artefact, json so far
+  render     render an artefact, json or pdf
 
 Every command prints its result on stdout and everything else on stderr.
 `
@@ -43,8 +45,11 @@ It validates both files first and writes nothing when they are invalid.
 
 Usage:
   cv render json [--dir data] [--out rendered]
+  cv render pdf [--dir data] [--out rendered] [--typst typst]
 
 json writes cv.de.json and cv.en.json into --out.
+pdf writes cv.de.pdf and cv.en.pdf into --out. It fills a typst template and runs
+"typst compile" with the binary --typst names, found on PATH by default.
 `
 
 func main() {
@@ -97,19 +102,30 @@ func runValidate(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// runRender dispatches "cv render <artefact>". json is the only artefact so
-// far. It validates both data files first and writes nothing when they fail.
+// renderPDF fills the typst template for lang and compiles it with typstBin.
+// Expiry is judged against today's date in UTC.
+func renderPDF(doc cv.Document, lang, typstBin string) ([]byte, error) {
+	source, err := cv.RenderTypst(doc, lang, time.Now().UTC())
+	if err != nil {
+		return nil, err
+	}
+	return cv.CompilePDF(context.Background(), typstBin, source)
+}
+
+// runRender dispatches "cv render <artefact>": json or pdf. It validates both data files first and writes nothing when they fail.
 func runRender(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 0 || args[0] != "json" {
+	if len(args) == 0 || (args[0] != "json" && args[0] != "pdf") {
 		fmt.Fprint(stderr, renderUsage)
 		return 2
 	}
+	artefact := args[0]
 
-	fs := flag.NewFlagSet("render json", flag.ContinueOnError)
+	fs := flag.NewFlagSet("render "+artefact, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() { fmt.Fprint(stderr, renderUsage) }
 	dir := fs.String("dir", "data", "directory holding cv.de.yaml and cv.en.yaml")
-	out := fs.String("out", "rendered", "directory the JSON documents are written to")
+	out := fs.String("out", "rendered", "directory the "+artefact+" documents are written to")
+	typst := fs.String("typst", "typst", "typst binary, pdf only")
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -123,8 +139,18 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 	// Render both before writing either, so a failure leaves no half set.
 	docs := map[string]cv.Document{"de": de, "en": en}
 	rendered := make(map[string][]byte, len(cv.Languages))
+	name := cv.JSONFileName
+	if artefact == "pdf" {
+		name = cv.PDFFileName
+	}
 	for _, lang := range cv.Languages {
-		data, err := cv.RenderJSON(docs[lang], lang)
+		var data []byte
+		var err error
+		if artefact == "pdf" {
+			data, err = renderPDF(docs[lang], lang, *typst)
+		} else {
+			data, err = cv.RenderJSON(docs[lang], lang)
+		}
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -137,7 +163,7 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	for _, lang := range cv.Languages {
-		path := filepath.Join(*out, cv.JSONFileName(lang))
+		path := filepath.Join(*out, name(lang))
 		if err := os.WriteFile(path, rendered[lang], 0o644); err != nil {
 			fmt.Fprintf(stderr, "cv: %v\n", err)
 			return 1

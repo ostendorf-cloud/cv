@@ -346,8 +346,9 @@ contact:
 ### Where the rendered artefacts live
 
 - The PDF and the JSON document attach to `cv`'s GitHub release as release assets, next to the
-  binary archives `.goreleaser.yaml` already builds. `cv render` runs ahead of
-  `goreleaser release`, which attaches both through `release.extra_files`.
+  binary archives `.goreleaser.yaml` already builds. `scripts/publish-release-assets.sh`
+  renders both, writes a `SHA256SUMS` asset over `cv.de.json`, `cv.en.json`, `cv.de.pdf` and
+  `cv.en.pdf`, and attaches them to the draft release with `gh release upload`.
 - The README block is not an artefact of this repository at all: `cv render readme`'s pull
   request against the profile repository is the delivery.
 - `cvd` ships as a container image only, as it does today; it is a service, not a rendered
@@ -367,6 +368,11 @@ contact:
 
 - `cv render pdf` fills a typst template with the data and shells out to `typst compile`. `typst`
   is in the mise registry and gets pinned in `mise.toml` like every other tool here.
+- The template is `internal/cv/templates/cv.typ.tmpl`, one design, one A4 layout for both
+  languages. Go's `text/template` fills it, and every text reaches typst as a string literal
+  argument, never as markup, so data cannot inject typst code. A blank required text or a
+  template field the model lacks fails the render. The golden test pins the generated typst
+  source, not the PDF bytes.
 - The cost: a second template language next to the Go code that fills it, and a shelled out
   process rather than a pure Go call. Weighed against a pure Go PDF library hand laying out every
   page, typst buys real typesetting, pagination, headings, tables, for a one time template cost
@@ -415,8 +421,6 @@ contact:
   whoever wires the release workflow.
 - Does `cv suggest-skills` need to remember an already-declined suggestion, so a repeat run does
   not resurface it? Owner: whoever implements it.
-- The exact typst template and page layout; this document settles the tool, not the design.
-  Owner: whoever implements `cv render pdf`.
 - Whether `cvd`'s API ever gets an actual consumer, and if not, when to drop it. Owner: revisit
   once both sibling sites have shipped against the JSON release artefact for a while.
 - Where an entry that may not belong on the open web, a postal address, a reference's personal
