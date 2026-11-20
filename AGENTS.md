@@ -28,9 +28,10 @@ service that serves it. The baseline rules apply and are not repeated here.
   model holds what LinkedIn holds, except recommendations (third party text) and interests
   (not CV content).
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
-  language, matched by each entry's `id`. Both currently hold placeholder entries only;
-  see `docs/concepts/cv.md` for the model and the two files' own header comments for
-  what still needs replacing with the owner's real career data.
+  language, matched by each entry's `id`. Both hold the owner's real, approved career data
+  (merged in #38): experience, education, certificates, skills, projects, languages,
+  contact, volunteering, awards, exam results and engagements. `references` is empty. See
+  `docs/concepts/cv.md` for the model.
 - `internal/cvdconfig/`: loads and validates `cvd`'s own environment once, aggregated
   into one error.
 - `internal/cvd/`: builds the two HTTP handlers `cmd/cvd` serves: the public one with the
@@ -48,8 +49,8 @@ The service answers `GET /api/v1/cv` with the JSON document, loaded once at star
 `DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
 data. Left out, tracked as later milestones:
 
-- `cv`'s other renderers: a PDF, the block for the GitHub profile README, and the export
-  pasted into LinkedIn, which has no write API for one's own profile. Every renderer calls
+- `cv`'s other renderers: a PDF and the block for the GitHub profile README. A LinkedIn
+  export is a non goal of the concept. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - Fetching a GitHub repository's language and latest release and merging it with hand
   maintained project descriptions, so the stack a project actually uses feeds back into
