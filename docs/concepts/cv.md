@@ -76,9 +76,9 @@
 - `contact`, a flat set of contact fields plus a `profiles` list. Required on each profile:
   `id`, `platform`, `url`.
 
-### Eight optional sections, so the data files lose nothing a LinkedIn profile holds
+### Optional sections, so the data files lose nothing a LinkedIn profile holds
 
-- The eight sections above are the core. Eight more are optional lists, absent means empty, and
+- The sections above are the core. The ones below are optional lists, absent means empty, and
   each entry carries a required `id`, matched across the two files like every other section:
   - `volunteering`. Required: `id`, `organisation`, `role`, `start`. Optional: `cause`, `end`,
     `summary`.
@@ -89,7 +89,7 @@
   - `publications`. Required: `id`, `title`, `date`. Optional: `publisher`, `url`, `summary`.
   - `patents`. Required: `id`, `title`, `date`. Optional: `number`, `url`, `summary`.
   - `organisations`, memberships. Required: `id`, `name`, `start`. Optional: `role`, `end`.
-- An eighth optional section, `engagements`, holds client or internal projects of a position,
+- A further optional section, `engagements`, holds client or internal projects of a position,
   described without a repository. `projects` requires a `github_repo` and `experience` holds one
   `summary` per position, so separate engagements had no place. Required: `id`, `experience`,
   `title`, `summary`. Optional: `industry`, `start`, `end`.
@@ -112,9 +112,13 @@
     one, a duplicate category id, a category without `id` or `name`, and an `order` below 1.
   - The `id` is shared by both files and matched by the drift rule. The `name` is German in
     `data/cv.de.yaml` and English in `data/cv.en.yaml`.
+  - The drift rule also compares each skill's `category` and each category's `order` across
+    the two files, and names the id that differs. The grouping cannot depend on the language.
+  - `order` is a whole number from 1. A fraction or a string is refused.
   - The JSON `skill_categories` list is in display order: categories with an `order` first,
-    ascending, then the others, each group in file order. Without any `order` it is the file
-    order. Each skill carries its category id in `category`.
+    ascending, then the others, each group in file order. Equal `order` values keep their file
+    order. Without any `order` it is the file order. Each skill carries its category id in
+    `category`.
   - A category no skill names is valid. Consumers omit an empty category: a page or a PDF
     shows no heading for it. The JSON still lists it.
   - One level only. A category has no parent.

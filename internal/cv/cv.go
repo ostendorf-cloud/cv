@@ -7,12 +7,19 @@
 // references, languages and contact, plus seven optional sections that
 // hold what a LinkedIn profile holds: volunteering, awards, exam_results,
 // courses, publications, patents and organisations, plus engagements, the
-// repository-less projects of a position. Every entry in every section carries a
+// repository-less projects of a position, plus skill_categories, the groups
+// every skill names by id. Every entry in every section carries a
 // required, hand assigned id, never derived from its own text, which is what
 // makes an entry the same entry across data/cv.de.yaml and data/cv.en.yaml.
 // See Load, LoadPair and Validate for the checks each file and each pair of
 // files goes through.
 package cv
+
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+)
 
 // Level is a proficiency level. docs/concepts/cv.md defines exactly one
 // four-step scale, under the skills section, and does not define a separate
@@ -45,8 +52,9 @@ const (
 )
 
 // Document is one data file, data/cv.de.yaml or data/cv.en.yaml, decoded
-// into the seventeen top level sections docs/concepts/cv.md defines: eight
-// core sections and nine optional ones. Both files
+// into the top level sections docs/concepts/cv.md defines: the core
+// sections, the optional LinkedIn sections, engagements and
+// skill_categories. Both files
 // decode into the same Go type; nothing here merges the two languages, that
 // stays the renderer's job once one exists.
 type Document struct {
@@ -137,6 +145,31 @@ type SkillCategoryEntry struct {
 	ID    string `yaml:"id"`
 	Name  string `yaml:"name"`
 	Order *int   `yaml:"order,omitempty"`
+}
+
+// UnmarshalYAML decodes the entry and refuses an order that is not a whole
+// number: yaml.v3 would cut 1.5 to 1 without a word. A refused order stays
+// unset, so Validate reports no second problem for it.
+func (e *SkillCategoryEntry) UnmarshalYAML(node *yaml.Node) error {
+	var raw struct {
+		ID    string    `yaml:"id"`
+		Name  string    `yaml:"name"`
+		Order yaml.Node `yaml:"order"`
+	}
+	if err := node.Decode(&raw); err != nil {
+		return err
+	}
+	e.ID, e.Name, e.Order = raw.ID, raw.Name, nil
+	if raw.Order.Kind == 0 || raw.Order.Tag == "!!null" {
+		return nil
+	}
+	var n int
+	if raw.Order.Tag != "!!int" || raw.Order.Decode(&n) != nil {
+		return &yaml.TypeError{Errors: []string{fmt.Sprintf(
+			"line %d: skill_categories: order %q is not a whole number", raw.Order.Line, raw.Order.Value)}}
+	}
+	e.Order = &n
+	return nil
 }
 
 func (e SkillCategoryEntry) identity() string { return e.ID }

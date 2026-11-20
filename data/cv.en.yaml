@@ -230,7 +230,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: gitlab
     category: tools
-    name: Gitlab
+    name: GitLab
     level: working
     evidence:
       - {type: experience, ref: cancom-working-student}
@@ -263,7 +263,7 @@ skills:
       - {type: experience, ref: cancom-working-student}
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: yaml
-    category: programming
+    category: tools
     name: YAML
     level: proficient
     evidence:
@@ -370,7 +370,7 @@ skills:
       - {type: project, ref: workflows}
       - {type: project, ref: govue}
   - id: json
-    category: programming
+    category: tools
     name: JSON
     level: working
     evidence:
