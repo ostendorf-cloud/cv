@@ -72,6 +72,23 @@ func TestRunRefusesToStartOnInvalidData(t *testing.T) {
 	}
 }
 
+// TestRunRefusesToStartOnAFileThatIsNotAPDF runs the real startup path with
+// valid data and a PDF directory holding a file that is not a PDF: run must
+// return before it listens.
+func TestRunRefusesToStartOnAFileThatIsNotAPDF(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "cv.de.pdf"), []byte("<html>"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DATA_DIR", validDir)
+	t.Setenv("PDF_DIR", dir)
+
+	err := run()
+	if err == nil || !strings.Contains(err.Error(), "refusing to start") || !strings.Contains(err.Error(), "not a PDF") {
+		t.Fatalf("run() error = %v, want a refusal naming the file that is not a PDF", err)
+	}
+}
+
 func TestRunRefusesToStartWithoutADataDir(t *testing.T) {
 	t.Setenv("DATA_DIR", "")
 

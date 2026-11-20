@@ -137,6 +137,32 @@ jobs:
       - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78  # v5.3.0
       - run: task render:json
 
+  # Compiles the typst template with the real data, checks the page count and
+  # keeps both PDFs as the cv-pdf-preview artefact, so a review can look at
+  # the layout without a local typst.
+  render-pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
+        with:
+          install_args: go task typst
+      - id: render
+        run: task render:pdf
+      - name: Check that each PDF has one to three pages
+        run: task validate:pdf
+      # Kept even when the page count check fails: the preview shows why.
+      - name: Keep both PDFs as the preview artefact
+        if: always() && steps.render.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: cv-pdf-preview
+          path: |
+            rendered/cv.de.pdf
+            rendered/cv.en.pdf
+          if-no-files-found: error
+
   build-cv:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -247,6 +273,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
+        with:
+          install_args: go task typst
+      # The image copies rendered/cv.*.pdf in, like the published one, so the
+      # smoke test reaches the PDF route.
+      - run: task render:pdf
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
         with:

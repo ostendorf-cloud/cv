@@ -7,7 +7,10 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 - `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
   and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
-  `mise.toml`) on the path, or `--typst <binary>`.
+  `mise.toml`) on the path, or `--typst <binary>`, and reads the portrait from
+  `assets/portrait.jpg` (`--photo`; a missing file fails, `--photo ""` renders without).
+- `assets/portrait.jpg`: the owner's portrait for the PDF header, 600x600, made from the
+  920 pixel portrait of `ostendorf.tech`.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
@@ -30,7 +33,8 @@ service that serves it. The baseline rules apply and are not repeated here.
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
   instead of only through a renderer. `render_json.go` renders the public JSON document
   for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
-  `render_pdf.go` fills `templates/cv.typ.tmpl` (typst) and shells out to `typst compile`;
+  `render_pdf.go` fills `templates/cv.typ.tmpl` (typst) and shells out to `typst compile`
+  with the fonts in `templates/fonts/` (Go fonts, BSD-3-Clause, embedded in the binary);
   the golden test pins the typst source. The
   model holds what LinkedIn holds, except recommendations (third party text) and interests
   (not CV content).
@@ -44,8 +48,10 @@ service that serves it. The baseline rules apply and are not repeated here.
 - `internal/cvd/`: builds the two HTTP handlers `cmd/cvd` serves: the public one with the
   API routes, and the one govue's admin listener serves, health, readiness and metrics.
   `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
-  the bytes; the handler serves them. Startup logs problems with positions, ids and
-  enumerated values; free text excerpts of YAML type errors are redacted, best effort.
+  the bytes; the handler serves them. `App.LoadPDFs` reads the PDFs rendered at image build
+  time from `PDF_DIR`; a missing one answers 503 on the PDF route only. Startup logs
+  problems with positions, ids and enumerated values; free text excerpts of YAML type
+  errors are redacted, best effort.
 - `internal/github/`: a small `net/http` client for a repository's languages and latest
   release, and the token lookup. Each call has a timeout, the client has a call budget, a
   result is cached for the life of the client (a missing repository is asked and reported
@@ -66,8 +72,9 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 The CLI compiles and answers `version`, `help`, `validate`, `render json` and `render pdf`.
 The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
-`DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
-data. Left out, tracked as later milestones:
+`DATA_DIR`, `GET /api/v1/cv.pdf` with the PDF from `PDF_DIR`, and its own health,
+readiness and metrics. It refuses to start on invalid data. Left out, tracked as later
+milestones:
 
 - `cv`'s other renderer: the block for the GitHub profile README. A LinkedIn export is a
   non goal of the concept. Every renderer calls
@@ -125,6 +132,11 @@ Decision for issue 8, closing the concept's open question.
   `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
   `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
   `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
+  The image job runs `task render:pdf` before the build, so the image serves the tag's PDFs.
+- The golden test pins the typst source only. The `render-pdf` job in `checks.yaml` compiles
+  the template with the real data, checks one to three pages with
+  `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look
+  there after a template change, or run `task render:pdf`.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.
