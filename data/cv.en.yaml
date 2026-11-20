@@ -801,3 +801,7 @@ engagements:
       Analysed the requirements for and developed a kubelet credential provider in Go, built on
       new Kubernetes features for credential providers. Set up a dedicated test environment with a
       Kubernetes cluster, Vault and a Harbor registry.
+
+# The owner has not supplied the tools yet. Add entries (id, name, group, description) only with
+# real data, and never a hostname, an address or a port: `cv validate` refuses those.
+tools: []

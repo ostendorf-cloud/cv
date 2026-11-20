@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -114,6 +115,7 @@ func Validate(doc Document, source string) error {
 	v.patents(doc.Patents)
 	v.organisations(doc.Organisations)
 	v.engagements(doc.Engagements, toSet(ids(doc.Experience)))
+	v.tools(doc.Tools)
 
 	for _, section := range sectionNames {
 		for _, id := range duplicates(sectionIDs(doc)[section]) {
@@ -281,6 +283,37 @@ func (v *validator) engagements(entries []EngagementEntry, experienceIDs map[str
 		v.yearOrMonth(ref, "start", e.Start)
 		v.yearOrMonth(ref, "end", e.End)
 		v.engagementEndNotBeforeStart(ref, e.Start, e.End)
+	}
+}
+
+// tools checks the tools section: the required fields, the enumerated group
+// and the forbidden content rule on every public text field.
+func (v *validator) tools(entries []ToolEntry) {
+	for i, e := range entries {
+		ref := entryRef("tools", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "name", e.Name)
+		v.required(ref, "description", e.Description)
+		v.group(ref, e.Group)
+		for _, f := range []struct{ field, value string }{
+			{"name", e.Name},
+			{"description", e.Description},
+		} {
+			for _, reason := range forbiddenContent(f.value) {
+				v.fail(ref, "%s: %s", f.field, reason)
+			}
+		}
+	}
+}
+
+// group fails ref when value is empty or none of the five groups.
+func (v *validator) group(ref string, value Group) {
+	if strings.TrimSpace(string(value)) == "" {
+		v.fail(ref, "group: is required")
+		return
+	}
+	if !slices.Contains(groups, value) {
+		v.fail(ref, "group: unknown value %q", value)
 	}
 }
 

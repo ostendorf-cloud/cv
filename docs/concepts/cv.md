@@ -136,6 +136,102 @@
   - One level only. A category has no parent.
   - Both are additive to schema version 1: the new key comes last, the skill's `category`
     comes after `evidence`.
+- Beyond LinkedIn parity, `tools` holds the tools the owner uses, so the uses page of
+  `ostendorf.dev` has a source. Required: `id`, `name`, `group`, `description`. The section is
+  optional as a whole, absent or empty means no tools.
+  - `group` is one of five enumerated values, in the order a uses page shows them:
+    `workstation`, `editor-shell` (editor and shell), `command-line` (command line tools),
+    `homelab-hardware` and `homelab-platform`. An unknown or empty group is refused. A new
+    group is a new enum value, so it needs its own versioning decision.
+  - `name` is a product name and is the same in both files in practice. `description` says what
+    the tool is used for: German in `data/cv.de.yaml`, English in `data/cv.en.yaml`. The `id` is
+    shared and matched by the drift rule.
+  - The homelab is a real network and this repository is public. Validation refuses, in `name`
+    and `description`:
+    - a URL with any scheme, with or without credentials (an entry has no link field), and
+      `mailto:`
+    - an e-mail address: an `@` after a character and before a dotted host with a letter in it,
+      or `localhost`, or a single label that holds a letter and a digit (`root@nas01`,
+      `git@nas01:org/repo`). `node@22`, `go@1.22` and `pnpm@latest` pass.
+    - an IPv4 address in dotted decimal, dotted octal (`0177.0.0.1`), dotted hex
+      (`0x7f.0.0.1`), integer (`3232235777`) or hex integer form, the short loopback forms
+      (`127.1`, `127.0.1`) and an IPv6 address, also with a zone id. Two or three plain
+      numeric parts are version shaped and pass (`1.2`, `24.04`, `3.14.15`, `2026.11.20`).
+    - a MAC address (`00:11:22:33:44:55`, `00-11-22-33-44-55`, `0011.2233.4455`, a group may
+      have one digit)
+    - a UNC path (`\\nas01\share`)
+    - a port: `:8080`, `port 22`, `ports: 22`, `22/tcp`, `TCP/22`, `udp 5004`, `listens on 8443`,
+      and `name:NN` when the name has a letter and ends in a digit (`nas01:22`), contains a dot
+      (`my.box:22`) or the number has four or more digits (`node-red:1880`, `Linux:2024`)
+    - a hostname: a word of dot separated labels whose last label is an internal suffix
+      (`.local`, `.lan`, `.internal`, `.intranet`, `.corp`, `.home`, `.private`, `.localdomain`,
+      `.arpa`, `.box`, `.hole`, also in capitals), or a known TLD even with two labels
+      (`com`, `org`, `net`, `de`, `dev`, `io`, `cloud`, `tech`, `eu`, `ch`, `at`, `uk`, `app`:
+      `example.com`, `Socket.io`), or three or more labels ending in two or more letters
+      (`nas.example.org`), or a punycode (`xn--`) or non ASCII name
+  - What passes, on purpose: product names (`Home Assistant`, `Node.js`, `ASP.NET`, `Vue.js 3`,
+    `C++`, `.NET`, `k8s`, `Wi-Fi 6E`, `10 GbE`, `192 GB RAM`), abbreviations (`z.B.`, `u.v.m.`,
+    `i.d.R.`, `Ph.D.`), times and ratios (`12:30`), `std::vector`, file names with a known
+    extension (`vite.config.ts`, `tsconfig.app.json`, `cv.de.yaml`) and image references with a
+    tag that holds a letter, a dot or a hyphen (`node:22-alpine`, `ubuntu:24.04`,
+    `postgres:16-alpine`). A file ending in an internal suffix is still refused
+    (`config.local`, `.env.local`). A last label written exactly `.NET` is exempt, so
+    `ASP.NET` passes and `asp.net` does not.
+  - Words are cut at every character that is not a letter, a digit or one of `. : - _`, so
+    backticks, emphasis, quotes, `=`, `|`, an ellipsis and the like around a name do not hide
+    it. A label may hold an underscore. A word with a hyphen or an underscore is checked whole
+    and again per part, so `nas.local-Rechner`, `fe80::1-Adresse` and `nas01:22-Port` are seen
+    while `Node.js-Server` and `node:22-alpine` pass.
+  - Before the checks, format characters (a zero width space, a soft hyphen) are removed, every
+    space separator becomes a plain space, the dot lookalikes (U+2024, U+3002, U+FE52, U+FF61)
+    become `.` and the fullwidth ASCII block becomes plain ASCII.
+  - The error quotes the normalised text, so a fullwidth name such as `ｎａｓ．ｌｏｃａｌ` is
+    reported as `nas.local`. The field path in the error still points to the entry.
+  - The check is a best effort filter and can never be complete. The owner reads every tools
+    entry before it is merged.
+  - What the check cannot catch:
+    - a bare single label: `nas01`, `localhost`, a host name without a dot
+    - `user@host` with a host of letters only
+    - a two label name that ends in none of the listed suffixes or TLDs (`nas.example`,
+      `nas.lokal`): a false negative by design
+    - an encoded name: percent encoding (`nas%2Elocal`), base64 or any escaping
+    - a name broken across a line or split by prose
+    - other lookalike characters: Cyrillic or Greek letters that look Latin, combining marks
+      inside a label (`nas.lo` plus U+0301 plus `cal`), and any dot lookalike not listed above
+    - a name with a spaced or defanged dot (`nas dot example`, `nas[.]local`)
+    - an address with other separators (`192 168 1 1`, `192-168-1-1`), a MAC address without
+      separators, and a version shaped short IPv4 form such as `10.1`
+    - a plain word with a 2 or 3 digit tag (`postgres:16`, `ssh:22`): it has the shape of a
+      host with a port and is accepted. Write the tag with a letter, a dot or a hyphen, or none.
+    - a port or an address written in words or split by prose, a port in a form not listed
+      above, and a port of one digit
+    - a two label name ending in capital `.NET`, such as `example.NET`
+    - an exact version, an exposed service and reachability, see the next point
+  - False alarms, refused although they are not secrets, because the rule prefers a false alarm
+    over a leak:
+    - an 8 to 10 digit number (`20261120`), which reads as an integer IPv4 address
+    - a four part version (`1.2.3.4`) and a word with a four digit tag (`Linux:2024`)
+    - a name ending in a digit with a number tag (`Python3:10`)
+    - every two label name that ends in a listed TLD (`Socket.io`) and lowercase `asp.net`
+    - a file such as `archive.tar.gz`, and a dotted package or namespace name with three or
+      more labels (`com.example.app`, `Microsoft.AspNetCore.App`)
+    - a version pinned with letters and a digit after an at sign (`pnpm@9x`)
+    - a refused name glued to prose with a hyphen or an underscore (`Kubernetes.io-Doku`), and
+      a plain word with a four digit number tag before a hyphen (`redis:6379-alpine`)
+    - a non ASCII word with a dot and no space after it (`Größe.Das`)
+  - Versions: the rule forbids the exact version of anything reachable from the internet, and a
+    validator cannot know what is reachable. So the validator refuses no version, with two side
+    effects: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address, and a
+    word with a four digit tag (`Linux:2024`) looks like a port. Both are refused. Keeping the
+    exact version of an exposed service out of an entry is the owner's duty.
+  - The two files must agree on the `group` of a tool: the drift check reports a tool whose
+    group differs, next to the id check.
+  - The real data files carry `tools: []` until the owner supplies the entries. Example entries
+    live in the test fixtures only.
+  - `tools` is the last JSON key, after `skill_categories`, a list of `id`, `name`, `group` and
+    `description`, in file order. A new key a consumer can ignore does not raise the schema
+    version (policy in `README.md`), so it is additive to version 1, which stays 1 until the
+    first release. `cvd` serves it as part of the same document at `GET /api/v1/cv`.
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
@@ -145,7 +241,8 @@
 - `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
   value is `null`.
 - The JSON document carries the new sections after `contact`, so the older keys keep their order.
-  `engagements` follows `organisations`, and `skill_categories` is the last key.
+  `engagements` follows `organisations`, `skill_categories` follows `engagements` and `tools`
+  is the last key.
 - Decision: no `engagement` evidence type for skills. Evidence already reaches a position
   through `experience`, and an engagement belongs to exactly one position. A new type adds a
   value every consumer must resolve, for a link nobody asked for yet. Adding it later is a new

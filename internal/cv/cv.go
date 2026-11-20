@@ -53,8 +53,8 @@ const (
 
 // Document is one data file, data/cv.de.yaml or data/cv.en.yaml, decoded
 // into the top level sections docs/concepts/cv.md defines: the core
-// sections, the optional LinkedIn sections, engagements and
-// skill_categories. Both files
+// sections, the optional LinkedIn sections, engagements, skill_categories
+// and tools. Both files
 // decode into the same Go type; nothing here merges the two languages, that
 // stays the renderer's job once one exists.
 type Document struct {
@@ -78,8 +78,9 @@ type Document struct {
 	Organisations []OrganisationEntry `yaml:"organisations"`
 	Engagements   []EngagementEntry   `yaml:"engagements"`
 
-	// SkillCategories groups Skills. It sits last, like the JSON key.
+	// SkillCategories groups Skills. Tools sits last, like the JSON key.
 	SkillCategories []SkillCategoryEntry `yaml:"skill_categories"`
+	Tools           []ToolEntry          `yaml:"tools"`
 }
 
 // ExperienceEntry is one career entry. Required: ID, Employer, Title, Start.
@@ -359,6 +360,36 @@ type EngagementEntry struct {
 
 func (e EngagementEntry) identity() string { return e.ID }
 
+// Group is the part of the uses page a tool belongs to.
+type Group string
+
+// The five groups docs/concepts/cv.md defines for the tools section.
+const (
+	GroupWorkstation     Group = "workstation"
+	GroupEditorShell     Group = "editor-shell"
+	GroupCommandLine     Group = "command-line"
+	GroupHomelabHardware Group = "homelab-hardware"
+	GroupHomelabPlatform Group = "homelab-platform"
+)
+
+// groups is every value Group accepts, in the order a uses page shows them.
+var groups = []Group{
+	GroupWorkstation, GroupEditorShell, GroupCommandLine, GroupHomelabHardware, GroupHomelabPlatform,
+}
+
+// ToolEntry is one tool the owner uses. Required: ID, Name, Group and
+// Description (what it is used for, prose in the file's language). Name and
+// Description are public and are checked for content that must never be
+// published: an address, a hostname, a port, a URL. See forbiddenContent.
+type ToolEntry struct {
+	ID          string `yaml:"id"`
+	Name        string `yaml:"name"`
+	Group       Group  `yaml:"group"`
+	Description string `yaml:"description"`
+}
+
+func (e ToolEntry) identity() string { return e.ID }
+
 // sectionNames is every top level section docs/concepts/cv.md defines, in
 // the order it defines them, used wherever a section is iterated by name:
 // the duplicate id check, the cross reference check and the two-file drift
@@ -381,6 +412,7 @@ var sectionNames = []string{
 	"organisations",
 	"engagements",
 	"skill_categories",
+	"tools",
 }
 
 // identified is implemented by every entry type, so one generic helper can
@@ -423,5 +455,6 @@ func sectionIDs(doc Document) map[string][]string {
 		"engagements":   ids(doc.Engagements),
 
 		"skill_categories": ids(doc.SkillCategories),
+		"tools":            ids(doc.Tools),
 	}
 }

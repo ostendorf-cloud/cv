@@ -127,6 +127,47 @@ func TestDocumentEqualsRenderJSON(t *testing.T) {
 	}
 }
 
+// TestDocumentCarriesTheTools proves the tools section is part of the served
+// document, in the requested language, with the group of each entry.
+func TestDocumentCarriesTheTools(t *testing.T) {
+	t.Parallel()
+
+	app := loaded(t)
+	want := map[string]string{
+		"de": "Hausautomation.",
+		"en": "Home automation.",
+	}
+	for lang, description := range want {
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+
+			rec := get(t, app, http.MethodGet, "/api/v1/cv?lang="+lang, nil)
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want 200", rec.Code)
+			}
+			var doc struct {
+				Tools []struct {
+					ID          string `json:"id"`
+					Name        string `json:"name"`
+					Group       string `json:"group"`
+					Description string `json:"description"`
+				} `json:"tools"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+				t.Fatal(err)
+			}
+			if len(doc.Tools) != 2 {
+				t.Fatalf("tools = %+v, want 2 entries", doc.Tools)
+			}
+			got := doc.Tools[1]
+			if got.ID != "home-assistant" || got.Name != "Home Assistant" ||
+				got.Group != "homelab-platform" || got.Description != description {
+				t.Errorf("tools[1] = %+v, want home-assistant in homelab-platform with %q", got, description)
+			}
+		})
+	}
+}
+
 func TestDefaultLanguageIsDocumented(t *testing.T) {
 	t.Parallel()
 

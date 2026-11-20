@@ -82,6 +82,10 @@ func fixtureDocument(lang string, p func(string) string) Document {
 		{ID: p("cat-2"), Name: p("Programming " + lang), Order: &one},
 		{ID: p("cat-3"), Name: p("Unused " + lang)},
 	}
+	doc.Tools = []ToolEntry{
+		{ID: p("tool-1"), Name: p("Example Editor"), Group: Group(p("editor-shell")), Description: p("Editor text " + lang + ".")},
+		{ID: p("tool-2"), Name: p("Example Cluster"), Group: Group(p("homelab-platform")), Description: p("Platform text " + lang + ".")},
+	}
 	return doc
 }
 

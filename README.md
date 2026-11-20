@@ -80,8 +80,11 @@ bytes, so the same `schema_version`.
 - Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`,
-  `engagements`, `skill_categories`.
-- `skill_categories` is the last key: a list of `id`, `name` and `order` (`null` when unset),
+  `engagements`, `skill_categories`, `tools`.
+- `tools` is the last key: a list of `id`, `name`, `group` and `description`, in file order.
+  `group` is one of `workstation`, `editor-shell`, `command-line`, `homelab-hardware` and
+  `homelab-platform`. Added without a version bump.
+- `skill_categories` follows `engagements`: a list of `id`, `name` and `order` (`null` when unset),
   already in display order. Each skill has a `category` key after `evidence`, the id of one
   entry in that list. A category no skill names is listed, and a consumer omits it. Added
   without a version bump.
