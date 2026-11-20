@@ -62,7 +62,6 @@ type labels struct {
 	Grade        string
 	Certificates string
 	Skills       string
-	Projects     string
 	Volunteering string
 	Awards       string
 	ExamResults  string
@@ -84,7 +83,7 @@ var pdfLabels = map[string]labels{
 		Expired: "expired", Location: "Location", Email: "Email", Languages: "Languages",
 		Profiles: "Profiles", Experience: "Experience", Engagements: "Selected engagements",
 		Education: "Education", Grade: "Grade", Certificates: "Certificates", Skills: "Skills",
-		Projects: "Projects", Volunteering: "Volunteering", Awards: "Honors and awards",
+		Volunteering: "Volunteering", Awards: "Honors and awards",
 		ExamResults: "Exam results", Courses: "Courses", Publications: "Publications",
 		Patents: "Patents", Organisation: "Memberships", References: "References", PatentNo: "No.",
 		LangLevels: map[Level]string{
@@ -105,7 +104,7 @@ var pdfLabels = map[string]labels{
 		Expired: "abgelaufen", Location: "Ort", Email: "E-Mail", Languages: "Sprachen",
 		Profiles: "Profile", Experience: "Berufserfahrung", Engagements: "Ausgewählte Einsätze",
 		Education: "Ausbildung", Grade: "Note", Certificates: "Zertifikate", Skills: "Kenntnisse",
-		Projects: "Projekte", Volunteering: "Ehrenamt", Awards: "Auszeichnungen",
+		Volunteering: "Ehrenamt", Awards: "Auszeichnungen",
 		ExamResults: "Prüfungsergebnisse", Courses: "Kurse", Publications: "Veröffentlichungen",
 		Patents: "Patente", Organisation: "Mitgliedschaften", References: "Referenzen", PatentNo: "Nr.",
 		LangLevels: map[Level]string{
@@ -286,7 +285,7 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 		items = append(items, pdfItem{
 			Dates:    l.period(e.Start, e.End, true),
 			Title:    e.Title,
-			Subtitle: joinNonBlank(e.Employer, e.Location, e.EmploymentType),
+			Subtitle: subtitle(e.Title, e.Employer, shortLocation(e.Location), e.EmploymentType),
 			Body:     e.Summary,
 		})
 	}
@@ -353,26 +352,28 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 	}
 	add(l.ExamResults, items)
 
+	// One line per award: title, issuer and date. The summary stays in the
+	// JSON and on the websites.
 	items = nil
 	for _, e := range doc.Awards {
 		items = append(items, pdfItem{
-			Dates: l.month(e.Date), Title: e.Title, Subtitle: e.Issuer, Body: e.Summary,
+			Dates: l.month(e.Date), Title: e.Title, Subtitle: e.Issuer,
 		})
 	}
 	add(l.Awards, items)
 
-	items = nil
-	for _, e := range doc.Projects {
-		items = append(items, pdfItem{Title: e.GithubRepo, Body: e.Description})
-	}
-	add(l.Projects, items)
+	// The repository projects are not printed: the websites show them with
+	// their GitHub data, and the PDF has a page budget. The engagements above
+	// are the projects of the positions.
 
+	// Volunteering prints title, organisation and the short description. The
+	// cause, such as "Politik", is left out.
 	items = nil
 	for _, e := range doc.Volunteering {
 		items = append(items, pdfItem{
 			Dates:    l.period(e.Start, e.End, true),
 			Title:    e.Role,
-			Subtitle: joinNonBlank(e.Organisation, e.Cause),
+			Subtitle: strings.TrimSpace(e.Organisation),
 			Body:     e.Summary,
 		})
 	}
@@ -549,6 +550,41 @@ func labelled(label, value string) string {
 	return label + " " + strings.TrimSpace(value)
 }
 
+// shortLocation is the part of a location before its first comma, so
+// "Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid" prints as
+// "Städteregion Aachen". The full value stays in the JSON.
+func shortLocation(location string) string {
+	head, _, _ := strings.Cut(location, ",")
+	return strings.TrimSpace(head)
+}
+
+// subtitle joins the non blank parts with a middle dot and leaves out a part
+// that repeats the title or an earlier part, ignoring case, so an employment
+// type "Selbstständig" under the employer "Selbstständig" prints once.
+func subtitle(title string, parts ...string) string {
+	seen := []string{strings.TrimSpace(title)}
+	var kept []string
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		repeat := false
+		for _, s := range seen {
+			if strings.EqualFold(p, s) {
+				repeat = true
+				break
+			}
+		}
+		if repeat {
+			continue
+		}
+		seen = append(seen, p)
+		kept = append(kept, p)
+	}
+	return strings.Join(kept, " · ")
+}
+
 // joinNonBlank joins the non blank parts with a middle dot, the separator
 // the template uses between a title and its organisation.
 func joinNonBlank(parts ...string) string {
@@ -583,7 +619,7 @@ func LoadPhoto(path string) ([]byte, error) {
 // typstBin, which is "typst" resolved through PATH when empty. The binary
 // comes from mise: see mise.toml. It writes the source, the bundled fonts
 // and, when photo is not nil, the portrait as PhotoFileName into a temporary
-// directory, and passes the fonts with --font-path.
+// directory, passes the fonts with --font-path and ignores the system fonts.
 func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]byte, error) {
 	if typstBin == "" {
 		typstBin = "typst"
@@ -616,7 +652,10 @@ func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]b
 	}
 
 	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, bin, "compile", "--font-path", fontPath, in, out)
+	// --ignore-system-fonts: only the bundled fonts and the ones typst embeds
+	// are candidates, so no text can fall back to a font the machine happens
+	// to have, such as a runner's Liberation Sans.
+	cmd := exec.CommandContext(ctx, bin, "compile", "--font-path", fontPath, in, out, "--ignore-system-fonts")
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("cv: render pdf: typst compile: %w\n%s", err, strings.TrimSpace(stderr.String()))

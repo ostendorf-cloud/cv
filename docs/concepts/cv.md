@@ -384,8 +384,8 @@ contact:
   argument, never as markup, so data cannot inject typst code. A blank required text or a
   template field the model lacks fails the render. The golden test pins the generated typst
   source, not the PDF bytes.
-- The design is plain and aims at two pages. One accent colour, a deep teal (`#0f766e`), and
-  neutral greys, dark enough for print.
+- The design is plain and aims at two to three pages. One accent colour, a deep teal
+  (`#0f766e`), and neutral greys, dark enough for print. Body text is 8.8 pt.
   - Header: a small uppercase label (`LEBENSLAUF` or `CURRICULUM VITAE`), the name, and a
     headline in grey, with a square portrait with rounded corners on the right. The name is
     a constant in `render_pdf.go`: the model has no name field. The model has no headline
@@ -404,13 +404,29 @@ contact:
     empty category is left out. The level is not printed; it orders the skills within a
     category, highest first.
   - A certificate past its `valid_until` month carries an `expired` badge. Engagements are
-    entries with their sector and period.
+    entries with their sector and period, with their full description.
+- What the PDF leaves out, to stay within the page budget. The data and the JSON keep all
+  of it, and nothing is cut from the data files.
+  - The repository `projects` list. The websites show it with its GitHub data, and on paper
+    it adds a page of repository names. The engagements are the projects that belong to a
+    position, so they stay.
+  - The cause of a volunteering entry, such as `Politik`. A volunteering entry prints role,
+    organisation and its short description.
+  - The summary of an award. An award is one line: title, issuer and date.
+  - Everything of an experience location after its first comma:
+    `Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid` prints as
+    `Städteregion Aachen`. A short location such as `Remote` prints as it is.
+  - A subtitle part that repeats the title or an earlier part, ignoring case: the employer
+    `Selbstständig` with the employment type `Selbstständig` prints once.
   - Footer: the name, `Stand: <month year>` or `As of <month year>` from the render date,
     and `page / pages`.
 - Font: typst bundles only Libertinus Serif and DejaVu Sans Mono, so the sans font ships
   in the repository: Go Regular and Go Bold from `golang.org/x/image`, under the BSD
   3-Clause licence in `internal/cv/templates/fonts/LICENSE`. The binary embeds them, and
-  `cv render pdf` writes them next to the source and passes `--font-path`. Inter or IBM Plex
+  `cv render pdf` writes them next to the source and passes `--font-path` and
+  `--ignore-system-fonts`, so no text falls back to a font of the machine that renders.
+  Every heading and the body use the same family. The Go hyphen is almost as wide as a dash,
+  so a show rule prints every hyphen as the hyphen of the embedded Libertinus Serif. Inter or IBM Plex
   Sans, both under the SIL OFL, can replace them later: the font file and its licence file go
   into the same directory, and the template names the family.
 - Photo: `assets/portrait.jpg`, 600 by 600 pixels. `cv render pdf --photo` names it;

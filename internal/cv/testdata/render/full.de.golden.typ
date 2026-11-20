@@ -10,7 +10,7 @@
 #set document(title: "Lebenslauf" + " " + "Simon Ostendorf", author: "Simon Ostendorf")
 #set page(
   paper: "a4",
-  margin: (x: 1.7cm, top: 1.5cm, bottom: 1.8cm),
+  margin: (x: 1.5cm, top: 1.3cm, bottom: 1.5cm),
   footer: context {
     set text(size: 7.5pt, fill: muted)
     grid(
@@ -21,8 +21,13 @@
     )
   },
 )
-#set text(font: "Go", size: 9pt, fill: ink, lang: "de")
-#set par(justify: false, leading: 0.5em)
+#set text(font: "Go", size: 8.8pt, fill: ink, lang: "de")
+#set par(justify: false, leading: 0.48em)
+
+// The Go font draws its hyphen almost as wide as a dash. Every hyphen prints
+// as the hyphen (U+2010) of the embedded Libertinus Serif instead, in the
+// surrounding size and weight. The en dash of a date range is not touched.
+#show "-": text(font: "Libertinus Serif", "\u{2010}")
 
 // A small uppercase label: the document kind, the info row, a skill category.
 #let caps(body, fill: muted, size: 7pt) = text(
@@ -35,9 +40,9 @@
 
 // A section title with a short accent underline. It sticks to what follows,
 // so a title never ends a page alone.
-#let section(title) = block(above: 14pt, below: 8pt, sticky: true, stack(
-  spacing: 4pt,
-  text(size: 10.5pt, weight: "bold", title),
+#let section(title) = block(above: 11pt, below: 6pt, sticky: true, stack(
+  spacing: 3pt,
+  text(size: 10pt, weight: "bold", title),
   rect(width: 18pt, height: 2pt, fill: accent, stroke: none),
 ))
 
@@ -61,16 +66,16 @@
   }
   let parts = (head,)
   if body != none {
-    parts.push(text(size: 8.5pt, fill: muted, body))
+    parts.push(text(size: 8.2pt, fill: muted, body))
   }
   if url != none {
-    parts.push(text(size: 8pt, fill: accent, link(url)))
+    parts.push(text(size: 7.8pt, fill: accent, link(url)))
   }
-  block(breakable: false, above: 0pt, below: 8pt, grid(
-    columns: (2.9cm, 1fr),
-    column-gutter: 10pt,
-    text(size: 8pt, fill: muted, dates),
-    stack(spacing: 4pt, ..parts),
+  block(breakable: false, above: 0pt, below: 5.5pt, grid(
+    columns: (2.7cm, 1fr),
+    column-gutter: 8pt,
+    text(size: 7.6pt, fill: muted, dates),
+    stack(spacing: 3pt, ..parts),
   ))
 }
 
@@ -84,16 +89,16 @@
 
 // One skill category: its label in the accent colour, then its pills.
 #let category(name, skills) = block(breakable: false, width: 100%, stack(
-  spacing: 6pt,
+  spacing: 5pt,
   caps(name, fill: accent),
-  par(leading: 0.85em, skills.map(pill).join([ ])),
+  par(leading: 0.8em, skills.map(pill).join([ ])),
 ))
 
 // The skill categories, two per row.
 #let categories(..cats) = grid(
   columns: (1fr, 1fr),
-  column-gutter: 16pt,
-  row-gutter: 12pt,
+  column-gutter: 14pt,
+  row-gutter: 9pt,
   ..cats.pos(),
 )
 
@@ -106,7 +111,7 @@
 )
 
 #grid(
-  columns: (1fr, 2.7cm),
+  columns: (1fr, 2.5cm),
   column-gutter: 14pt,
   align(horizon, stack(
     spacing: 7pt,
@@ -117,12 +122,12 @@
   box(
     clip: true,
     radius: 8pt,
-    width: 2.7cm,
-    height: 2.7cm,
+    width: 2.5cm,
+    height: 2.5cm,
     image("portrait.jpg", width: 100%, height: 100%, fit: "cover", alt: "Simon Ostendorf"),
   ),
 )
-#v(10pt)
+#v(8pt)
 #grid(
   columns: (1fr,) * 4,
   column-gutter: 12pt,
@@ -131,7 +136,7 @@
   info("Sprachen", ("English de (Fließend)", "German de (Muttersprache)", )),
   info("Profile", (link("https://github.com/example", "GitHub"), )),
 )
-#v(8pt)
+#v(6pt)
 #line(length: 100%, stroke: 0.5pt + rule)
 
 #section("Berufserfahrung")
@@ -161,14 +166,11 @@
 #entry("Feb. 2018", "Test de", org: "passed")
 
 #section("Auszeichnungen")
-#entry("Nov. 2020", "Award de", org: "Example Body de", body: "Award text de.")
+#entry("Nov. 2020", "Award de", org: "Example Body de")
 #entry("Dez. 2021", "Other Award de", org: "Other Body de")
 
-#section("Projekte")
-#entry("", "example/repo", body: "Project text de.")
-
 #section("Ehrenamt")
-#entry("März 2019 – Juni 2021", "Helper de", org: "Example Association de · Education de", body: "Volunteer text de.")
+#entry("März 2019 – Juni 2021", "Helper de", org: "Example Association de", body: "Volunteer text de.")
 #entry("Juli 2021 – heute", "Lead de", org: "Other Association de")
 
 #section("Kurse")

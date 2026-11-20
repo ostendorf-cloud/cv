@@ -13,7 +13,7 @@ const portrait = "../../assets/portrait.jpg"
 
 // fakeTypst writes an executable stand-in for typst into a temporary
 // directory and returns its path. The CLI calls it as
-// "typst compile --font-path <dir> <in> <out>".
+// "typst compile --font-path <dir> <in> <out> --ignore-system-fonts".
 func fakeTypst(t *testing.T, script string) string {
 	t.Helper()
 
@@ -26,7 +26,7 @@ func fakeTypst(t *testing.T, script string) string {
 
 // copySource copies the source to the output, so the test can read back what
 // the CLI handed over. It fails unless the bundled font sits in --font-path.
-const copySource = `[ "$1" = compile ] && [ "$2" = --font-path ] && [ -f "$3/Go-Regular.ttf" ] && cp "$4" "$5"`
+const copySource = `[ "$1" = compile ] && [ "$2" = --font-path ] && [ -f "$3/Go-Regular.ttf" ] && [ "$6" = --ignore-system-fonts ] && cp "$4" "$5"`
 
 // copyWithPhoto is copySource that also fails unless the portrait sits next
 // to the source, where the template reads it.

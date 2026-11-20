@@ -396,20 +396,102 @@ func TestRenderTypstFailsLoudly(t *testing.T) {
 	})
 }
 
-// TestRenderTypstPrintsEverySection proves each model section reaches the
-// source, by a marker text unique to its entries.
+// TestRenderTypstPrintsEverySection proves each printed section reaches the
+// source, by a marker text unique to its entries, and that what the page
+// budget leaves out stays out.
 func TestRenderTypstPrintsEverySection(t *testing.T) {
 	t.Parallel()
 
 	src := renderSource(t, goldenDocument("en"), "en")
 	for _, want := range []string{
 		"Summary one en.", "Degree summary en.", "Grade 0,0 en", "Certificate en",
-		"Kubernetes en", "Project text en.", "Example Person", "Fluent", "Volunteer text en.",
-		"Award text en.", "Exam text en.", "Course en", "Article text en.", "Patent text en.",
+		"Kubernetes en", "Example Person", "Fluent", "Volunteer text en.",
+		"Award en", "Exam text en.", "Course en", "Article text en.", "Patent text en.",
 		"Example Society en", "Engagement text en.", "Example Industry en",
 	} {
 		if !strings.Contains(src, want) {
 			t.Errorf("source lacks %q", want)
+		}
+	}
+	for _, notWant := range []string{
+		"example/repo", "Project text en.", "Projects", // the repository projects
+		"Education en",   // the cause of a volunteering entry
+		"Award text en.", // the summary of an award
+	} {
+		if strings.Contains(src, notWant) {
+			t.Errorf("source prints %q", notWant)
+		}
+	}
+}
+
+// TestRenderTypstCompactsSubtitles covers the subtitle rules that keep an
+// entry on few lines.
+func TestRenderTypstCompactsSubtitles(t *testing.T) {
+	t.Parallel()
+
+	doc := Document{
+		Experience: []ExperienceEntry{
+			{
+				ID: "a", Employer: "Selbstständig", Title: "Veranstaltungstechniker", Start: "2023-06",
+				Location: "Aachen", EmploymentType: "Selbstständig",
+			},
+			{
+				ID: "b", Employer: "CANCOM", Title: "Working Student", Start: "2023-07", End: "2026-02",
+				Location: "Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid", EmploymentType: "Werkstudium",
+			},
+			{ID: "c", Employer: "Acme", Title: "Freelancer", Start: "2020-01", End: "2021-01", EmploymentType: "freelancer"},
+		},
+		Volunteering: []VolunteeringEntry{
+			{ID: "v", Organisation: "FH Aachen", Role: "Mitglied", Cause: "Politik", Start: "2023-05", End: "2024-05", Summary: "Kassenwart"},
+		},
+		Awards: []AwardEntry{
+			{ID: "w", Title: "Stipendium", Issuer: "Stiftung | Firma AG", Date: "2024-10", Summary: "Lange Begründung."},
+		},
+	}
+	src := renderSource(t, doc, "de")
+	for _, want := range []string{
+		`org: "Selbstständig · Aachen")`,
+		`org: "CANCOM · Städteregion Aachen · Werkstudium")`,
+		`org: "Acme")`,
+		`#entry("Mai 2023 – Mai 2024", "Mitglied", org: "FH Aachen", body: "Kassenwart")`,
+		`#entry("Okt. 2024", "Stipendium", org: "Stiftung | Firma AG")`,
+	} {
+		if !strings.Contains(src, want) {
+			t.Errorf("source lacks %s:\n%s", want, src)
+		}
+	}
+	for _, notWant := range []string{"Nordrhein-Westfalen", "Politik", "Lange Begründung"} {
+		if strings.Contains(src, notWant) {
+			t.Errorf("source prints %q:\n%s", notWant, src)
+		}
+	}
+}
+
+func TestSubtitle(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		title string
+		parts []string
+		want  string
+	}{
+		{"T", []string{"A", "", " B "}, "A · B"},
+		{"T", []string{"A", "a"}, "A"},
+		{"Freelancer", []string{"Acme", "freelancer"}, "Acme"},
+		{"T", nil, ""},
+	}
+	for _, tt := range tests {
+		if got := subtitle(tt.title, tt.parts...); got != tt.want {
+			t.Errorf("subtitle(%q, %q) = %q, want %q", tt.title, tt.parts, got, tt.want)
+		}
+	}
+	for in, want := range map[string]string{
+		"Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid": "Städteregion Aachen",
+		"Remote": "Remote",
+		"":       "",
+	} {
+		if got := shortLocation(in); got != want {
+			t.Errorf("shortLocation(%q) = %q, want %q", in, got, want)
 		}
 	}
 }

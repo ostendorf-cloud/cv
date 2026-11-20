@@ -145,7 +145,10 @@ go test ./internal/cv -run TestRenderJSONGolden -update
 `internal/cv/templates/cv.typ.tmpl` and runs `typst compile`. It writes `cv.de.pdf` and
 `cv.en.pdf` into `--out` (default `rendered/`). `typst` is pinned in `mise.toml`.
 
-- It prints exactly what the JSON shows, empty sections and empty skill categories omitted.
+- It prints what the JSON shows, empty sections and empty skill categories omitted, with
+  a few omissions for the page budget: the repository `projects` list, the volunteering
+  cause, the award summaries and a long location after its first comma. See
+  `docs/concepts/cv.md`, "PDF production".
 - The layout is described in `docs/concepts/cv.md`, "PDF production".
 - The header photo is `--photo`, default `assets/portrait.jpg`. A missing file or one that
   is not a JPEG fails the render. `--photo ""` renders without a photo.
