@@ -1,6 +1,7 @@
 package cv
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -84,6 +85,18 @@ func TestForbiddenContentRefuses(t *testing.T) {
 		"hex integer ipv4":             {"Host 0x7f000001", "IPv4"},
 		"hex dotted ipv4":              {"Host 0x7f.0.0.1", "IPv4"},
 		"ipv6 zone id":                 {"Host fe80::1%eth0", "IPv6"},
+
+		"two label arpa":             {"nas.arpa", "hostname"},
+		"two label home arpa":        {"home.arpa", "hostname"},
+		"underscore in a label":      {"my_nas.local", "hostname"},
+		"leading underscore":         {"_nas.local", "hostname"},
+		"short loopback":             {"Host 127.1", "IPv4"},
+		"three part loopback":        {"Host 127.0.1", "IPv4"},
+		"octal ipv4":                 {"Host 0177.0.0.1", "IPv4"},
+		"hex short ipv4":             {"Host 0x7f.1", "IPv4"},
+		"single label host at":       {"root@nas01", "e-mail"},
+		"single label host with git": {"git@nas01:org/repo", "e-mail"},
+		"one digit mac group":        {"NIC 0:11:22:33:44:55", "MAC"},
 	}
 
 	for name, tc := range tests {
@@ -155,6 +168,14 @@ func TestForbiddenContentAccepts(t *testing.T) {
 		"pinned with an at sign":        "node@22 and go@1.22",
 		"hex number in prose":           "Colour 0xFF",
 		"mac like short hex":            "AA:BB:CC",
+		"two part version":              "Kubernetes 1.31 and v1.2",
+		"version with a leading zero":   "Ubuntu 24.04",
+		"three part version, small":     "Go 3.14.15",
+		"date with dots":                "Release 2026.11.20",
+		"pinned package":                "pnpm@latest and node@22",
+		"emphasised product":            "**Home Assistant** and `Node.js` and *Vue.js*",
+		"quoted product":                "„Node.js“ and ‚ASP.NET‘",
+		"ellipsis after a product":      "Node.js… and Vue.js 3",
 		"filename":                      "Edits the config.yaml file",
 		"abbreviation with dots":        "Written in K.I.S.S. style",
 		"homelab platform product name": "Proxmox VE and Talos Linux",
@@ -169,6 +190,29 @@ func TestForbiddenContentAccepts(t *testing.T) {
 				t.Errorf("forbiddenContent(%q) = %v, want nil", text, got)
 			}
 		})
+	}
+}
+
+// TestForbiddenContentSeesThroughFormatting proves that punctuation, markup
+// and quotes around a forbidden word do not hide it.
+func TestForbiddenContentSeesThroughFormatting(t *testing.T) {
+	t.Parallel()
+
+	bare := []string{
+		"nas.local", "example.com", "nas.example.com", "::1", "2001:db8::1", "fe80::1", ":8080", "nas01:22",
+	}
+	wrappers := []string{
+		"`%s`", "*%s*", "**%s**", "_%s_", "=%s", "host=%s", "„%s“", "«%s»", "%s…", "%s|", "@%s",
+		"~%s", "#%s", "$%s", "%%%s", "&%s", "+%s", "(%s)", "[%s]", "\"%s\"", "'%s'", "<%s>", "%s.",
+		"%s!", "%s?", "%s;", "%s,",
+	}
+	for _, b := range bare {
+		for _, w := range wrappers {
+			text := fmt.Sprintf("Reach it at "+w+" daily", b)
+			if forbiddenContent(text) == nil {
+				t.Errorf("forbiddenContent(%q) = nil, want a reason", text)
+			}
+		}
 	}
 }
 

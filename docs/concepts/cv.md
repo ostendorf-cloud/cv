@@ -139,10 +139,14 @@
     - a URL with any scheme, with or without credentials (an entry has no link field), and
       `mailto:`
     - an e-mail address: an `@` after a character and before a dotted host with a letter in it,
-      or `localhost`. `node@22` and `go@1.22` pass.
-    - an IPv4 address in dotted decimal, dotted hex (`0x7f.0.0.1`), integer (`3232235777`) or
-      hex integer form, and an IPv6 address, also with a zone id
-    - a MAC address (`00:11:22:33:44:55`, `00-11-22-33-44-55`, `0011.2233.4455`)
+      or `localhost`, or a single label that holds a letter and a digit (`root@nas01`,
+      `git@nas01:org/repo`). `node@22`, `go@1.22` and `pnpm@latest` pass.
+    - an IPv4 address in dotted decimal, dotted octal (`0177.0.0.1`), dotted hex
+      (`0x7f.0.0.1`), integer (`3232235777`) or hex integer form, the short loopback forms
+      (`127.1`, `127.0.1`) and an IPv6 address, also with a zone id. Two or three plain
+      numeric parts are version shaped and pass (`1.2`, `24.04`, `3.14.15`, `2026.11.20`).
+    - a MAC address (`00:11:22:33:44:55`, `00-11-22-33-44-55`, `0011.2233.4455`, a group may
+      have one digit)
     - a UNC path (`\\nas01\share`)
     - a port: `:8080`, `port 22`, `ports: 22`, `22/tcp`, `TCP/22`, `udp 5004`, `listens on 8443`,
       and `name:NN` when the name has a letter and ends in a digit (`nas01:22`), contains a dot
@@ -161,17 +165,31 @@
     `postgres:16-alpine`). A file ending in an internal suffix is still refused
     (`config.local`, `.env.local`). A last label written exactly `.NET` is exempt, so
     `ASP.NET` passes and `asp.net` does not.
-  - What the check cannot catch, listed completely:
+  - Words are cut at every character that is not a letter, a digit or one of `. : - _`, so
+    backticks, emphasis, quotes, `=`, `|`, an ellipsis and the like around a name do not hide
+    it. A label may hold an underscore.
+  - What the check cannot catch:
     - a bare single label: `nas01`, `localhost`, a host name without a dot
+    - `user@host` with a host of letters only
     - a two label name that ends in none of the listed suffixes or TLDs (`nas.example`)
+    - a name with a spaced or defanged dot (`nas dot example`, `nas[.]local`)
+    - an address with other separators (`192 168 1 1`, `192-168-1-1`), a MAC address without
+      separators, and a version shaped short IPv4 form such as `10.1`
     - a plain word with a 2 or 3 digit tag (`postgres:16`, `ssh:22`): it has the shape of a
       host with a port and is accepted. Write the tag with a letter, a dot or a hyphen, or none.
     - a port or an address written in words or split by prose, a port in a form not listed
       above, and a port of one digit
     - a two label name ending in capital `.NET`, such as `example.NET`
     - an exact version, an exposed service and reachability, see the next point
-    - `Linux:2024` and a lowercase `asp.net` are refused although they are not secrets: the
-      rule prefers a false alarm over a leak
+  - False alarms, refused although they are not secrets, because the rule prefers a false alarm
+    over a leak:
+    - an 8 to 10 digit number (`20261120`), which reads as an integer IPv4 address
+    - a four part version (`1.2.3.4`) and a word with a four digit tag (`Linux:2024`)
+    - a name ending in a digit with a number tag (`Python3:10`)
+    - every two label name that ends in a listed TLD (`Socket.io`) and lowercase `asp.net`
+    - a file such as `archive.tar.gz`, and a dotted package or namespace name with three or
+      more labels (`com.example.app`, `Microsoft.AspNetCore.App`)
+    - a version pinned with letters and a digit after an at sign (`pnpm@9x`)
   - Versions: the rule forbids the exact version of anything reachable from the internet, and a
     validator cannot know what is reachable. So the validator refuses no version, with two side
     effects: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address, and a
