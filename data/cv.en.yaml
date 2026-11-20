@@ -120,6 +120,10 @@ skills:
   - id: isms
     category: security
     name: Information security management (ISMS)
+    level: familiar
+  - id: informationssicherheit
+    category: security
+    name: Information security
     level: working
   - id: iso-27001
     category: security
@@ -127,7 +131,7 @@ skills:
     level: familiar
   - id: webentwicklung
     category: programming
-    name: Frontend development
+    name: Web development
     level: working
     evidence:
       - {type: project, ref: ostendorf-dev}
@@ -183,6 +187,10 @@ skills:
     evidence:
       - {type: experience, ref: cancom-internship-semester}
       - {type: experience, ref: cancom-working-student}
+  - id: informatik
+    category: methods
+    name: Computer science
+    level: proficient
   - id: ansible
     category: devops-cloud
     name: Ansible
@@ -219,7 +227,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: it-infrastruktur-management
     category: platforms
-    name: IT infrastructure
+    name: IT infrastructure management
     level: working
     evidence:
       - {type: experience, ref: cancom-internship-semester}
@@ -246,7 +254,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: yaml
     category: tools
-    name: YAML and JSON
+    name: YAML
     level: proficient
     evidence:
       - {type: experience, ref: cancom-working-student}
@@ -337,6 +345,12 @@ skills:
     evidence:
       - {type: project, ref: workflows}
       - {type: project, ref: govue}
+  - id: json
+    category: tools
+    name: JSON
+    level: working
+    evidence:
+      - {type: project, ref: cv}
   - id: opentofu
     category: devops-cloud
     name: OpenTofu and Terraform
@@ -348,6 +362,12 @@ skills:
     category: devops-cloud
     name: Kolla-Ansible
     level: working
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: openstack-magnum
+    category: devops-cloud
+    name: OpenStack Magnum
+    level: familiar
     evidence:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: vmware
@@ -681,7 +701,7 @@ skills:
       - {type: project, ref: qarr}
   - id: sqlc-migrations
     category: tools
-    name: sqlc and database migrations (dbmate, golang-migrate)
+    name: sqlc and dbmate migrations
     level: working
     evidence:
       - {type: project, ref: calbridge}
