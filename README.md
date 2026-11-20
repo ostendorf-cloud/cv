@@ -4,8 +4,8 @@ The one source for Simon Ostendorf's curriculum vitae.
 
 ## What it does
 
-- `cv`, a CLI that validates the CV data and renders the website's JSON. A PDF and a
-  GitHub profile README block follow.
+- `cv`, a CLI that validates the CV data and renders the website's JSON and a PDF per
+  language. A GitHub profile README block follows.
 - `cvd`, a small service that serves the same JSON document at `GET /api/v1/cv` inside
   the cluster, and health, readiness and metrics on govue's admin listener.
 
@@ -126,6 +126,30 @@ to the shape, regenerate and review the diff:
 
 ```sh
 go test ./internal/cv -run TestRenderJSONGolden -update
+```
+
+## PDF release artefact
+
+`cv render pdf` validates both data files, fills the typst template
+`internal/cv/templates/cv.typ.tmpl` and runs `typst compile`. It writes `cv.de.pdf` and
+`cv.en.pdf` into `--out` (default `rendered/`). `typst` is pinned in `mise.toml`.
+
+- It prints exactly what the JSON shows, empty sections omitted.
+- A certificate whose `valid_until` month is before the current month is marked as expired.
+- The render fails when the template names a field the model does not hold or a required
+  text is blank. It writes no file unless both languages compile.
+- Every release carries both PDFs and a `SHA256SUMS` asset listing `cv.de.json`,
+  `cv.en.json`, `cv.de.pdf` and `cv.en.pdf`, which the two websites pin.
+
+```sh
+task render:pdf
+```
+
+`internal/cv/testdata/render/*.golden.typ` pins the generated typst source, not the PDF
+bytes. After a deliberate change, regenerate and review the diff:
+
+```sh
+go test ./internal/cv -run TestRenderTypstGolden -update
 ```
 
 ## Configuration
