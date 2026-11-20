@@ -41,6 +41,20 @@ func TestDrift(t *testing.T) {
 			en:      Document{Skills: []SkillEntry{skill("kubernetes"), skill("terraform")}},
 			wantErr: true,
 		},
+		"a category id only in the German file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}, {ID: "tools", Name: "Werkzeuge"}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+			wantErr: true,
+		},
+		"a category id only in the English file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}, {ID: "tools", Name: "Tools"}}},
+			wantErr: true,
+		},
+		"matching category ids with differing names have no drift": {
+			de: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke"}}},
+			en: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+		},
 		"a contact profile only on one side is drift": {
 			de:      Document{Contact: Contact{Profiles: []Profile{profile("github")}}},
 			en:      Document{},

@@ -78,8 +78,12 @@ bytes, so the same `schema_version`.
 - Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`,
-  `engagements`.
-- `engagements` is the last key. Each entry has `id`, `experience` (an experience id), `title`,
+  `engagements`, `skill_categories`.
+- `skill_categories` is the last key: a list of `id`, `name` and `order` (`null` when unset),
+  already in display order. Each skill has a `category` key after `evidence`, the id of one
+  entry in that list. A category no skill names is listed, and a consumer omits it. Added
+  without a version bump.
+- `engagements` follows `organisations`. Each entry has `id`, `experience` (an experience id), `title`,
   `industry`, `start`, `end` and `summary`. `industry`, `start` and `end` are `null` when unset,
   `start` and `end` are `YYYY-MM` or `YYYY`. It was added without a version bump.
 - The seven keys from `volunteering` to `organisations` and the entry keys `grade`

@@ -9,11 +9,12 @@ import (
 // Validate. Each test below blanks exactly one value of it.
 func validDocument() Document {
 	return Document{
-		Experience:   []ExperienceEntry{{ID: "exp-1", Employer: "Acme", Title: "Engineer", Start: "2020-01"}},
-		Education:    []EducationEntry{{ID: "edu-1", Institution: "University", Degree: "BSc", Start: "2016-10"}},
-		Certificates: []CertificateEntry{{ID: "cert-1", Name: "CKAD", Issuer: "Body", Issued: "2024-05", ValidUntil: "2027-05"}},
+		Experience:      []ExperienceEntry{{ID: "exp-1", Employer: "Acme", Title: "Engineer", Start: "2020-01"}},
+		Education:       []EducationEntry{{ID: "edu-1", Institution: "University", Degree: "BSc", Start: "2016-10"}},
+		Certificates:    []CertificateEntry{{ID: "cert-1", Name: "CKAD", Issuer: "Body", Issued: "2024-05", ValidUntil: "2027-05"}},
+		SkillCategories: []SkillCategoryEntry{{ID: "cat-1", Name: "Cloud"}},
 		Skills: []SkillEntry{{
-			ID: "skill-1", Name: "Kubernetes", Level: LevelExpert,
+			ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1",
 			Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "proj-1"}},
 		}},
 		Projects:   []ProjectEntry{{ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV"}},
@@ -78,6 +79,9 @@ func TestValidateRejectsBlankValues(t *testing.T) {
 		"skill id":                 {func(d *Document) { d.Skills[0].ID = blank }, "id: is required"},
 		"skill name":               {func(d *Document) { d.Skills[0].Name = blank }, "name: is required"},
 		"skill level":              {func(d *Document) { d.Skills[0].Level = Level(blank) }, "level: is required"},
+		"skill category":           {func(d *Document) { d.Skills[0].Category = blank }, "category: is required"},
+		"category id":              {func(d *Document) { d.SkillCategories[0].ID = blank }, "id: is required"},
+		"category name":            {func(d *Document) { d.SkillCategories[0].Name = blank }, "name: is required"},
 		"skill evidence ref":       {func(d *Document) { d.Skills[0].Evidence[0].Ref = blank }, "ref: is required"},
 		"project id":               {func(d *Document) { d.Projects[0].ID = blank }, "id: is required"},
 		"project github_repo":      {func(d *Document) { d.Projects[0].GithubRepo = blank }, "github_repo: is required"},
@@ -148,8 +152,8 @@ func TestValidateBlankIdsAreNotDuplicates(t *testing.T) {
 
 	doc := validDocument()
 	doc.Skills = []SkillEntry{
-		{ID: " ", Name: "A", Level: LevelWorking},
-		{ID: " ", Name: "B", Level: LevelWorking},
+		{ID: " ", Name: "A", Level: LevelWorking, Category: "cat-1"},
+		{ID: " ", Name: "B", Level: LevelWorking, Category: "cat-1"},
 	}
 	err := Validate(doc, "test")
 	if err == nil {

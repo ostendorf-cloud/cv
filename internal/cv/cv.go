@@ -45,8 +45,8 @@ const (
 )
 
 // Document is one data file, data/cv.de.yaml or data/cv.en.yaml, decoded
-// into the sixteen top level sections docs/concepts/cv.md defines: eight
-// core sections and eight optional ones. Both files
+// into the seventeen top level sections docs/concepts/cv.md defines: eight
+// core sections and nine optional ones. Both files
 // decode into the same Go type; nothing here merges the two languages, that
 // stays the renderer's job once one exists.
 type Document struct {
@@ -69,6 +69,9 @@ type Document struct {
 	Patents       []PatentEntry       `yaml:"patents"`
 	Organisations []OrganisationEntry `yaml:"organisations"`
 	Engagements   []EngagementEntry   `yaml:"engagements"`
+
+	// SkillCategories groups Skills. It sits last, like the JSON key.
+	SkillCategories []SkillCategoryEntry `yaml:"skill_categories"`
 }
 
 // ExperienceEntry is one career entry. Required: ID, Employer, Title, Start.
@@ -126,13 +129,27 @@ type Evidence struct {
 	Ref  string       `yaml:"ref"`
 }
 
-// SkillEntry is one claimed skill. Required: ID, Name, Level. Evidence is
-// optional; when present, every entry's Ref is checked against the ids that
-// actually exist in the matching section.
+// SkillCategoryEntry is one group of skills. Required: ID, Name. Order is
+// optional: a category with an Order sorts by it, ahead of every category
+// without one, and equal or missing values keep their file order. A category
+// no skill names is valid; consumers omit it.
+type SkillCategoryEntry struct {
+	ID    string `yaml:"id"`
+	Name  string `yaml:"name"`
+	Order *int   `yaml:"order,omitempty"`
+}
+
+func (e SkillCategoryEntry) identity() string { return e.ID }
+
+// SkillEntry is one claimed skill. Required: ID, Name, Level, Category (the
+// id of an existing skill category). Evidence is optional; when present,
+// every entry's Ref is checked against the ids that actually exist in the
+// matching section.
 type SkillEntry struct {
 	ID       string     `yaml:"id"`
 	Name     string     `yaml:"name"`
 	Level    Level      `yaml:"level"`
+	Category string     `yaml:"category"`
 	Evidence []Evidence `yaml:"evidence,omitempty"`
 }
 
@@ -330,6 +347,7 @@ var sectionNames = []string{
 	"patents",
 	"organisations",
 	"engagements",
+	"skill_categories",
 }
 
 // identified is implemented by every entry type, so one generic helper can
@@ -370,5 +388,7 @@ func sectionIDs(doc Document) map[string][]string {
 		"patents":       ids(doc.Patents),
 		"organisations": ids(doc.Organisations),
 		"engagements":   ids(doc.Engagements),
+
+		"skill_categories": ids(doc.SkillCategories),
 	}
 }

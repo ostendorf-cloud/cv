@@ -15,8 +15,9 @@ import (
 // newTopLevelKeys are the sections added after schema_version 1 first
 // shipped. newEntryKeys are the fields added to existing sections' entries.
 var (
-	newTopLevelKeys = []string{"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations", "engagements"}
+	newTopLevelKeys = []string{"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations", "engagements", "skill_categories"}
 	newEntryKeys    = map[string][]string{
+		"skills":     {"category"},
 		"experience": {"location", "employment_type"},
 		"education":  {"grade"},
 	}
@@ -188,6 +189,7 @@ func TestRenderJSONNewKeysComeLast(t *testing.T) {
 		"schema_version", "language", "experience", "education", "certificates", "skills",
 		"projects", "references", "languages", "contact",
 		"volunteering", "awards", "exam_results", "courses", "publications", "patents", "organisations", "engagements",
+		"skill_categories",
 	}
 	if strings.Join(keys, ",") != strings.Join(want, ",") {
 		t.Errorf("top level keys = %v, want %v", keys, want)
@@ -207,6 +209,7 @@ func TestRenderJSONNewFields(t *testing.T) {
 			want: []string{
 				`"volunteering": []`, `"awards": []`, `"exam_results": []`, `"courses": []`,
 				`"publications": []`, `"patents": []`, `"organisations": []`, `"engagements": []`,
+				`"skill_categories": []`,
 			},
 		},
 		"unset optional fields render null": {

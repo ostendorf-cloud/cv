@@ -1,8 +1,13 @@
+skill_categories:
+  - id: devops-cloud
+    name: DevOps and Cloud
 skills:
   - id: kubernetes
+    category: devops-cloud
     name: Kubernetes
     level: expert
   - id: kubernetes
+    category: devops-cloud
     name: Kubernetes, again
     level: working
 contact:

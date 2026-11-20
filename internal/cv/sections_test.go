@@ -143,7 +143,9 @@ func TestValidateWithoutEngagements(t *testing.T) {
 			}
 		})
 	}
-	if err := Validate(legacyDocument("en"), "test"); err != nil {
+	legacy := legacyDocument("en")
+	legacy.SkillCategories = goldenDocument("en").SkillCategories
+	if err := Validate(legacy, "test"); err != nil {
 		t.Fatalf("Validate() of a document without engagements = %v, want nil", err)
 	}
 }

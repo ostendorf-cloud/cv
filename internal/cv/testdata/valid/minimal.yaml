@@ -20,8 +20,13 @@ certificates:
     issued: "2024-05"
     valid_until: "2027-05"
 
+skill_categories:
+  - id: devops-cloud
+    name: DevOps and Cloud
+
 skills:
   - id: kubernetes
+    category: devops-cloud
     name: Kubernetes
     level: expert
     evidence:

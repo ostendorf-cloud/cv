@@ -74,6 +74,14 @@ func fixtureDocument(lang string, p func(string) string) Document {
 		{ID: p("eng-1"), Experience: p("exp-1"), Title: p("Example Engagement " + lang), Industry: p("Example Industry " + lang), Start: p("2020-03"), End: p("2021"), Summary: p("Engagement text " + lang + ".")},
 		{ID: p("eng-2"), Experience: p("exp-2"), Title: p("Other Engagement " + lang), Industry: p(""), Start: p(""), End: p(""), Summary: p("Other engagement text " + lang + ".")},
 	}
+	// The file order is cat-1, cat-2, cat-3: the output sorts cat-2 (order 1)
+	// ahead of cat-1 (order 2) and keeps cat-3, which has no order, last.
+	two, one := 2, 1
+	doc.SkillCategories = []SkillCategoryEntry{
+		{ID: p("cat-1"), Name: p("Cloud " + lang), Order: &two},
+		{ID: p("cat-2"), Name: p("Programming " + lang), Order: &one},
+		{ID: p("cat-3"), Name: p("Unused " + lang)},
+	}
 	return doc
 }
 
@@ -98,11 +106,11 @@ func legacyFixture(lang string, p func(string) string) Document {
 			{ID: p("cert-1"), Name: p("Certificate " + lang), Issuer: p("Example Body " + lang), Issued: p("2023-01"), ValidUntil: p("2026-01")},
 		},
 		Skills: []SkillEntry{
-			{ID: p("skill-1"), Name: p("Kubernetes " + lang), Level: Level(p(string(LevelExpert))), Evidence: []Evidence{
+			{ID: p("skill-1"), Name: p("Kubernetes " + lang), Level: Level(p(string(LevelExpert))), Category: p("cat-1"), Evidence: []Evidence{
 				{Type: EvidenceType(p(string(EvidenceTypeCertificate))), Ref: p("cert-1")},
 				{Type: EvidenceType(p(string(EvidenceTypeProject))), Ref: p("proj-1")},
 			}},
-			{ID: p("skill-2"), Name: p("Go " + lang), Level: Level(p(string(LevelWorking)))},
+			{ID: p("skill-2"), Name: p("Go " + lang), Level: Level(p(string(LevelWorking))), Category: p("cat-2")},
 		},
 		Projects: []ProjectEntry{
 			{ID: p("proj-1"), GithubRepo: p("example/repo"), Description: p("Project text " + lang + ".")},

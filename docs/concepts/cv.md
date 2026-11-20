@@ -64,9 +64,10 @@
 - `certificates`, issued credentials, the one section with a validity window. Required: `id`,
   `name`, `issuer`, `issued`. Optional: `valid_until`. A certificate without it has no expiry
   and stays valid. Both dates are `YYYY-MM`, and `valid_until` is not before `issued`.
-- `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`. `level` is one
-  of `familiar`, `working`, `proficient`, `expert`. `evidence` links back to a `project`,
-  `experience` or `certificate` id, which is how the GitHub loop below feeds skills.
+- `skills`, a level plus the evidence behind it. Required: `id`, `name`, `level`, `category`.
+  `level` is one of `familiar`, `working`, `proficient`, `expert`. `category` is the id of one
+  entry in `skill_categories`. `evidence` links back to a `project`, `experience` or
+  `certificate` id, which is how the GitHub loop below feeds skills.
 - `projects`, a hand written description plus a GitHub repository to enrich from. Required:
   `id`, `github_repo`, `description`. `languages`, `stars` and `latest_release` are never stored
   here; they are merged in at render time.
@@ -102,6 +103,23 @@
     anonymised, publishable description only: no customer or client name, no internal project
     or product name, nothing an NDA covers. `industry` names the sector in place of the
     customer. An NDA bound client project has no entry here at all.
+- Beyond LinkedIn parity, one more section, `skill_categories`, groups the skills so a page
+  or a PDF can show them as "DevOps and Cloud", "Programming" and so on. Required: `id`,
+  `name`. Optional: `order`.
+  The section is a list like every other, so it is optional as a whole, but a skill names
+  exactly one category, so a file with skills needs the categories they name.
+  - Every skill names one category by id. Validation refuses an unknown category, an empty
+    one, a duplicate category id, a category without `id` or `name`, and an `order` below 1.
+  - The `id` is shared by both files and matched by the drift rule. The `name` is German in
+    `data/cv.de.yaml` and English in `data/cv.en.yaml`.
+  - The JSON `skill_categories` list is in display order: categories with an `order` first,
+    ascending, then the others, each group in file order. Without any `order` it is the file
+    order. Each skill carries its category id in `category`.
+  - A category no skill names is valid. Consumers omit an empty category: a page or a PDF
+    shows no heading for it. The JSON still lists it.
+  - One level only. A category has no parent.
+  - Both are additive to schema version 1: the new key comes last, the skill's `category`
+    comes after `evidence`.
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
@@ -111,7 +129,7 @@
 - `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
   value is `null`.
 - The JSON document carries the new sections after `contact`, so the older keys keep their order.
-  `engagements` is the last key, after `organisations`.
+  `engagements` follows `organisations`, and `skill_categories` is the last key.
 - Decision: no `engagement` evidence type for skills. Evidence already reaches a position
   through `experience`, and an engagement belongs to exactly one position. A new type adds a
   value every consumer must resolve, for a link nobody asked for yet. Adding it later is a new
@@ -138,8 +156,13 @@ certificates:
     issued: "2024-05"
     valid_until: "2027-05"
 
+skill_categories:
+  - id: devops-cloud
+    name: DevOps and Cloud
+
 skills:
   - id: kubernetes
+    category: devops-cloud
     name: Kubernetes
     level: expert
     evidence:
