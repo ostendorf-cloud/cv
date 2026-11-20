@@ -135,17 +135,50 @@
     the tool is used for: German in `data/cv.de.yaml`, English in `data/cv.en.yaml`. The `id` is
     shared and matched by the drift rule.
   - The homelab is a real network and this repository is public. Validation refuses, in `name`
-    and `description`, a URL (with or without credentials: an entry has no link field), an IPv4
-    or IPv6 address, a port (`host:8080`, `:8080`, `port 22`) and a hostname: three or more dot
-    separated labels ending in letters (`nas.example.com`) or any name ending in an internal
-    suffix (`.local`, `.lan`, `.internal`, `.intranet`, `.corp`, `.home`, `.private`,
-    `.localdomain`, `.arpa`, so `.home.arpa` too). Product names pass: `Home Assistant`,
-    `Node.js`, `ASP.NET`, `Vue.js 3`, `v1.2`, `Talos 1.9.2`. The check is a heuristic and a
-    backstop: it cannot see a bare name such as `nas01`.
+    and `description`:
+    - a URL with any scheme, with or without credentials (an entry has no link field), and
+      `mailto:`
+    - an e-mail address: an `@` after a character and before a dotted host with a letter in it,
+      or `localhost`. `node@22` and `go@1.22` pass.
+    - an IPv4 address in dotted decimal, dotted hex (`0x7f.0.0.1`), integer (`3232235777`) or
+      hex integer form, and an IPv6 address, also with a zone id
+    - a MAC address (`00:11:22:33:44:55`, `00-11-22-33-44-55`, `0011.2233.4455`)
+    - a UNC path (`\\nas01\share`)
+    - a port: `:8080`, `port 22`, `ports: 22`, `22/tcp`, `TCP/22`, `udp 5004`, `listens on 8443`,
+      and `name:NN` when the name has a letter and ends in a digit (`nas01:22`), contains a dot
+      (`my.box:22`) or the number has four or more digits (`node-red:1880`, `Linux:2024`)
+    - a hostname: a word of dot separated labels whose last label is an internal suffix
+      (`.local`, `.lan`, `.internal`, `.intranet`, `.corp`, `.home`, `.private`, `.localdomain`,
+      `.arpa`, `.box`, `.hole`, also in capitals), or a known TLD even with two labels
+      (`com`, `org`, `net`, `de`, `dev`, `io`, `cloud`, `tech`, `eu`, `ch`, `at`, `uk`, `app`:
+      `example.com`, `Socket.io`), or three or more labels ending in two or more letters
+      (`nas.example.org`), or a punycode (`xn--`) or non ASCII name
+  - What passes, on purpose: product names (`Home Assistant`, `Node.js`, `ASP.NET`, `Vue.js 3`,
+    `C++`, `.NET`, `k8s`, `Wi-Fi 6E`, `10 GbE`, `192 GB RAM`), abbreviations (`z.B.`, `u.v.m.`,
+    `i.d.R.`, `Ph.D.`), times and ratios (`12:30`), `std::vector`, file names with a known
+    extension (`vite.config.ts`, `tsconfig.app.json`, `cv.de.yaml`) and image references with a
+    tag that holds a letter, a dot or a hyphen (`node:22-alpine`, `ubuntu:24.04`,
+    `postgres:16-alpine`). A file ending in an internal suffix is still refused
+    (`config.local`, `.env.local`). A last label written exactly `.NET` is exempt, so
+    `ASP.NET` passes and `asp.net` does not.
+  - What the check cannot catch, listed completely:
+    - a bare single label: `nas01`, `localhost`, a host name without a dot
+    - a two label name that ends in none of the listed suffixes or TLDs (`nas.example`)
+    - a plain word with a 2 or 3 digit tag (`postgres:16`, `ssh:22`): it has the shape of a
+      host with a port and is accepted. Write the tag with a letter, a dot or a hyphen, or none.
+    - a port or an address written in words or split by prose, a port in a form not listed
+      above, and a port of one digit
+    - a two label name ending in capital `.NET`, such as `example.NET`
+    - an exact version, an exposed service and reachability, see the next point
+    - `Linux:2024` and a lowercase `asp.net` are refused although they are not secrets: the
+      rule prefers a false alarm over a leak
   - Versions: the rule forbids the exact version of anything reachable from the internet, and a
-    validator cannot know what is reachable. So the validator refuses no version, with one side
-    effect: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address and are
-    refused. Keeping the exact version of an exposed service out of an entry is the owner's duty.
+    validator cannot know what is reachable. So the validator refuses no version, with two side
+    effects: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address, and a
+    word with a four digit tag (`Linux:2024`) looks like a port. Both are refused. Keeping the
+    exact version of an exposed service out of an entry is the owner's duty.
+  - The two files must agree on the `group` of a tool: the drift check reports a tool whose
+    group differs, next to the id check.
   - The real data files carry `tools: []` until the owner supplies the entries. Example entries
     live in the test fixtures only.
   - `tools` is the last JSON key, after `skill_categories`, a list of `id`, `name`, `group` and

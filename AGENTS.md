@@ -17,8 +17,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   name or NDA bound detail), the `skill_categories` section (each skill names one category
   by id; the JSON lists the categories in display order and consumers omit an empty one),
   the `tools` section (`id`, `name`, `group`, `description`; five enumerated groups; `name`
-  and `description` are refused when they carry a URL, an IP address, a port or a hostname,
-  see `forbidden.go`; the real data files hold `tools: []` until the owner supplies entries),
+  and `description` are refused when they carry a URL, an e-mail, an IP or MAC address, a
+  UNC path, a port or a hostname, see `forbidden.go`; the group must match across the files;
+  the real data files hold `tools: []` until the owner supplies entries),
   the four skill levels, a duplicate id within a section, a
   skill's evidence checked against the project, experience and certificate ids that
   actually exist, and the two-file drift check between `data/cv.de.yaml` and

@@ -70,6 +70,25 @@ func TestValidateTools(t *testing.T) {
 	}
 }
 
+func TestDriftToolGroup(t *testing.T) {
+	t.Parallel()
+
+	de := Document{Tools: []ToolEntry{{ID: "a", Group: GroupWorkstation}, {ID: "b", Group: GroupCommandLine}}}
+	same := Document{Tools: []ToolEntry{{ID: "a", Group: GroupWorkstation}, {ID: "b", Group: GroupCommandLine}}}
+	other := Document{Tools: []ToolEntry{{ID: "a", Group: GroupWorkstation}, {ID: "b", Group: GroupEditorShell}}}
+
+	if err := Drift(de, same); err != nil {
+		t.Errorf("Drift() with equal groups = %v, want nil", err)
+	}
+	err := Drift(de, other)
+	if err == nil || !strings.Contains(err.Error(), `tools "b" has group`) {
+		t.Errorf("Drift() with a differing group = %v, want a group drift for b", err)
+	}
+	if err := Drift(other, de); err == nil {
+		t.Error("Drift() with a differing group, reversed = nil, want an error")
+	}
+}
+
 func TestDriftTools(t *testing.T) {
 	t.Parallel()
 

@@ -38,6 +38,7 @@ func Drift(de, en Document) error {
 		}
 	}
 	problems = append(problems, groupingDrift(de, en)...)
+	problems = append(problems, toolGroupDrift(de, en)...)
 	return errors.Join(problems...)
 }
 
@@ -68,6 +69,24 @@ func groupingDrift(de, en Document) []error {
 			problems = append(problems, fmt.Errorf(
 				"cv: drift: skill_categories %q has order %s in the German file but %s in the English one",
 				c.ID, orderText(c.Order), orderText(other.Order)))
+		}
+	}
+	return problems
+}
+
+// toolGroupDrift reports every tool present in both files whose group differs.
+// The group is not text, it is an enumerated value, so the two files must agree.
+func toolGroupDrift(de, en Document) []error {
+	enGroups := make(map[string]Group, len(en.Tools))
+	for _, t := range en.Tools {
+		enGroups[t.ID] = t.Group
+	}
+	var problems []error
+	for _, t := range de.Tools {
+		if g, ok := enGroups[t.ID]; ok && g != t.Group {
+			problems = append(problems, fmt.Errorf(
+				"cv: drift: tools %q has group %q in the German file but %q in the English one",
+				t.ID, t.Group, g))
 		}
 	}
 	return problems

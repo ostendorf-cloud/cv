@@ -5,32 +5,59 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // forbiddenContent returns one reason per kind of content that must never
 // appear in a public tool entry, or nil. The repository is public and the
 // homelab is a real network, so an entry never carries:
 //
-//   - a URL, with or without credentials: a tool entry has no link field,
-//     and a URL names a host
-//   - an IPv4 or IPv6 address
-//   - a port, as "host:8080", ":8080" or "port 22"
-//   - a hostname: three or more dot separated labels that end in letters
-//     (nas.example.com), or any name ending in an internal suffix
-//     (.local, .lan, .internal, .home.arpa and the like)
+//   - a URL, with or without credentials, or a "mailto:" link: a tool entry
+//     has no link field, and a URL names a host
+//   - an e-mail address: an "@" after a character and before a dotted host
+//     with a letter in it, or before "localhost"
+//   - an IPv4 address in dotted decimal, dotted hexadecimal ("0x7f.0.0.1"),
+//     integer (8 to 10 digits up to 4294967295) or hexadecimal integer form,
+//     and an IPv6 address, also with a zone id
+//   - a MAC address in the forms 00:11:22:33:44:55, 00-11-22-33-44-55 and
+//     0011.2233.4455
+//   - a UNC path such as \\nas01\share
+//   - a port: ":8080" as a word of its own, "name:NN" as described below,
+//     "port 22", "ports: 22", "22/tcp", "TCP/22", "udp 5004", "listens on 8443"
+//   - a hostname, see hostnameIn
 //
-// A product name passes: "Home Assistant", "Node.js", "ASP.NET", "Vue.js 3".
+// What passes: product names (Home Assistant, Node.js, ASP.NET, Vue.js 3,
+// C++, .NET, k8s, Wi-Fi 6E, 10 GbE, 192 GB RAM), versions (v1.2, Talos 1.9.2),
+// times and ratios (12:30), C++ scopes (std::vector), abbreviations (z.B.,
+// u.v.m., i.d.R., Ph.D.), file names with a known extension (vite.config.ts,
+// cv.de.yaml) and image references with a tag that holds a letter, a dot or a
+// hyphen (node:22-alpine, ubuntu:24.04, postgres:16-alpine).
 //
-// Versions: this rule refuses nothing about a version, with one exception. A
-// version that is four numbers separated by dots, such as "10.0.0.1" or
-// "v1.2.3.4", is indistinguishable from an IPv4 address and is refused. A
-// version such as "v1.2" or "1.2.3" passes. The rule the issue states forbids
-// the exact version of anything reachable from the internet, and a validator
-// cannot know what is reachable. Keeping such a version out is the owner's
-// duty.
+// host:port is decided on a word of exactly one colon whose part after the
+// colon is 2 to 5 digits. It is refused when the part before is empty, or has
+// a letter and ends in a digit (nas01:22), or contains a dot (nas.x:22), or the
+// number has 4 or more digits (Linux:2024, node-red:1880). It passes when the
+// part before is only digits (12:30) and otherwise (postgres:16, ssh:22). A
+// plain word with a 2 or 3 digit tag, such as postgres:16, is the same shape as
+// a host with a port and is accepted. Write the tag with a letter, a dot or a
+// hyphen, or none.
 //
-// The check is a heuristic. It cannot see a bare hostname such as "nas01" or
-// a port written out in words. It is a backstop for a slip, not a review.
+// Versions: this rule refuses nothing about a version, with two exceptions that
+// follow from the shapes above: four numbers separated by dots (1.2.3.4) read
+// as an IPv4 address, and a word with a 4 digit tag (Linux:2024) reads as a
+// port. The rule the issue states forbids the exact version of anything
+// reachable from the internet, and a validator cannot know what is reachable.
+// Keeping such a version out is the owner's duty.
+//
+// The check is a heuristic. It cannot catch: a bare single label (nas01,
+// localhost, a short host name without a dot), a name with a dot and a
+// non-listed ending of two labels (nas.example, router.fritz), a name written
+// with a spaced dot ("nas dot example dot com"), a port or address spelled in
+// words, an address split by prose, a plain word with a 2 or 3 digit tag such
+// as postgres:16 or ssh:22, a lone number that is a port (listens 22, a number
+// with fewer than 2 digits), a two label name ending in ".NET" written in
+// capitals, and reachability or exposure of anything. It is a backstop for a
+// slip, not a review.
 func forbiddenContent(text string) []string {
 	var reasons []string
 	add := func(reason string) { reasons = append(reasons, reason) }
@@ -42,50 +69,111 @@ func forbiddenContent(text string) []string {
 			add("a URL is not allowed")
 		}
 	}
+	if hasEmail(text) {
+		add("an e-mail address is not allowed")
+	}
 	if containsIPv4(text) {
 		add("an IPv4 address is not allowed")
 	}
 	if containsIPv6(text) {
 		add("an IPv6 address is not allowed")
 	}
-	if portPattern.MatchString(text) {
+	if macPattern.MatchString(text) {
+		add("a MAC address is not allowed")
+	}
+	if uncPattern.MatchString(text) {
+		add("a UNC path is not allowed")
+	}
+	if hasPort(text) {
 		add("a port is not allowed")
 	}
-	if host := firstHostname(text); host != "" {
+	if host := hostnameIn(text); host != "" {
 		add("a hostname is not allowed: " + strconv.Quote(host))
 	}
 	return reasons
 }
 
 var (
-	// urlPattern matches a scheme followed by "://" and the rest of the word.
-	urlPattern = regexp.MustCompile(`(?i)\b[a-z][a-z0-9+.-]*://\S*`)
+	// urlPattern matches a scheme followed by "://" and the rest of the word,
+	// or the "mailto:" scheme.
+	urlPattern = regexp.MustCompile(`(?i)\b[a-z][a-z0-9+.-]*://\S*|\bmailto:\S*`)
 
-	// ipv4Pattern matches four dot separated numbers that are not part of a
-	// longer run of numbers and dots.
+	// ipv4Pattern matches four dot separated decimal numbers that are not part
+	// of a longer run of numbers and dots.
 	ipv4Pattern = regexp.MustCompile(`(?:^|[^0-9.])([0-9]{1,3}(?:\.[0-9]{1,3}){3})(?:[^0-9.]|\.(?:[^0-9]|$)|$)`)
 
-	// portPattern matches "name:8080", "]:8080" and ":8080", and "port 22" in
-	// the forms "port 22", "ports: 22" and "port=22". A digit before the
-	// colon does not match, so a time such as "12:30" passes.
-	portPattern = regexp.MustCompile(`(?i)(?:(?:^|[\s\]A-Za-z)]):[0-9]{2,5}\b|\bports?\b[\s:=#]*[0-9]{2,5}\b)`)
+	// hexQuadPattern matches four dot separated parts, each decimal or 0x hex.
+	hexQuadPattern = regexp.MustCompile(`^(?:0[xX][0-9A-Fa-f]{1,8}|[0-9]{1,3})(?:\.(?:0[xX][0-9A-Fa-f]{1,8}|[0-9]{1,3})){3}$`)
 
-	// hostLabels matches a token made only of host labels joined by dots.
-	hostLabels = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$`)
+	// hexIntPattern matches a 32 bit hexadecimal number.
+	hexIntPattern = regexp.MustCompile(`^0[xX][0-9A-Fa-f]{8}$`)
+
+	// emailPattern matches "x@host" with a dotted host or "localhost".
+	emailPattern = regexp.MustCompile(`[^\s@]@((?:[A-Za-z0-9-]+\.)+[A-Za-z0-9-]+|(?i:localhost))`)
+
+	// macPattern matches the three common MAC address notations.
+	macPattern = regexp.MustCompile(`(?:^|[^0-9A-Za-z])(?:[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}|[0-9A-Fa-f]{4}(?:\.[0-9A-Fa-f]{4}){2})(?:[^0-9A-Za-z]|$)`)
+
+	// uncPattern matches a UNC path start, two backslashes and a name.
+	uncPattern = regexp.MustCompile(`\\\\[^\s\\]`)
+
+	// portWordPattern matches "port 22", "ports: 22", "port=22", "22/tcp",
+	// "TCP/22", "udp 5004" and "listens on 8443".
+	portWordPattern = regexp.MustCompile(`(?i)\bports?\b[\s:=#]*[0-9]{2,5}\b|\b[0-9]{1,5}/(?:tcp|udp)\b|\b(?:tcp|udp)[/ :][0-9]{2,5}\b|\blisten(?:s|ing)?(?:\s+on)?\s+:?[0-9]{2,5}\b`)
+
+	// hostLabels matches a word made only of host labels joined by dots. A
+	// label holds letters and digits of any script, so a non ASCII name matches.
+	hostLabels = regexp.MustCompile(`^[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?(?:\.[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?)+$`)
 
 	// onlyLetters matches a label that is a possible top level domain.
 	onlyLetters = regexp.MustCompile(`^[A-Za-z]{2,}$`)
 )
 
 // internalSuffixes are the last labels that mark a private name.
-var internalSuffixes = []string{
-	"local", "lan", "internal", "intranet", "corp", "home", "private", "localdomain", "arpa",
+var internalSuffixes = map[string]bool{
+	"local": true, "lan": true, "internal": true, "intranet": true, "corp": true,
+	"home": true, "private": true, "localdomain": true, "arpa": true,
+	"box": true, "hole": true,
+}
+
+// knownTLDs are the endings that refuse even a two label name (example.com).
+// ".NET" in capitals is exempt, see hostnameIn.
+var knownTLDs = map[string]bool{
+	"com": true, "org": true, "net": true, "de": true, "dev": true, "io": true,
+	"cloud": true, "tech": true, "eu": true, "ch": true, "at": true, "uk": true,
+	"app": true,
+}
+
+// fileExtensions are the last labels of a file name, which passes even with
+// three labels (vite.config.ts). An internal suffix still wins: config.local.
+var fileExtensions = map[string]bool{
+	"ts": true, "js": true, "mjs": true, "json": true, "yaml": true, "yml": true,
+	"toml": true, "md": true, "txt": true, "conf": true, "cfg": true, "sh": true,
+	"go": true, "py": true, "env": true, "lock": true,
+}
+
+// words splits text into the words the word based checks look at.
+func words(text string) []string {
+	return strings.FieldsFunc(text, func(r rune) bool {
+		return strings.ContainsRune(" \t\r\n,;()[]{}\"'<>/\\", r)
+	})
 }
 
 func hasCredentials(url string) bool {
 	_, rest, _ := strings.Cut(url, "://")
 	authority, _, _ := strings.Cut(rest, "/")
 	return strings.Contains(authority, "@")
+}
+
+// hasEmail reports an "@" before a dotted host that has a letter in it, so
+// "node@22" and "go@1.22" pass and "admin@nas.local" does not.
+func hasEmail(text string) bool {
+	for _, m := range emailPattern.FindAllStringSubmatch(text, -1) {
+		if strings.IndexFunc(m[1], unicode.IsLetter) >= 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func containsIPv4(text string) bool {
@@ -100,14 +188,24 @@ func containsIPv4(text string) bool {
 			return true
 		}
 	}
+	for _, w := range words(text) {
+		w = strings.TrimRight(w, ".!?:")
+		switch {
+		case hexIntPattern.MatchString(w):
+			return true
+		case hexQuadPattern.MatchString(w) && strings.Contains(strings.ToLower(w), "0x"):
+			return true
+		case len(w) >= 8 && len(w) <= 10 && allDigits(w):
+			if n, err := strconv.ParseUint(w, 10, 64); err == nil && n <= 4294967295 {
+				return true
+			}
+		}
+	}
 	return false
 }
 
 func containsIPv6(text string) bool {
-	words := strings.FieldsFunc(text, func(r rune) bool {
-		return strings.ContainsRune(" \t\r\n,;()[]{}\"'<>/", r)
-	})
-	for _, w := range words {
+	for _, w := range words(text) {
 		w = strings.TrimRight(w, ".!?")
 		if strings.Count(w, ":") < 2 || strings.Trim(w, ":") == "" {
 			continue
@@ -119,32 +217,83 @@ func containsIPv6(text string) bool {
 	return false
 }
 
-// firstHostname returns the first word of text that is shaped like a host
-// name, or "".
-func firstHostname(text string) string {
-	words := strings.FieldsFunc(text, func(r rune) bool {
-		return strings.ContainsRune(" \t\r\n,;()[]{}\"'<>/", r)
-	})
-	for _, w := range words {
+func allDigits(s string) bool {
+	return s != "" && strings.IndexFunc(s, func(r rune) bool { return r < '0' || r > '9' }) < 0
+}
+
+// hasPort reports a port in any of the notations forbiddenContent lists.
+func hasPort(text string) bool {
+	if portWordPattern.MatchString(text) {
+		return true
+	}
+	for _, w := range words(text) {
+		w = strings.TrimRight(w, ".!?;")
+		if hostPort(w) {
+			return true
+		}
+	}
+	return false
+}
+
+// hostPort decides one word of the form "before:digits", see forbiddenContent.
+func hostPort(w string) bool {
+	before, num, ok := strings.Cut(w, ":")
+	if !ok || strings.Contains(num, ":") || len(num) < 2 || len(num) > 5 || !allDigits(num) {
+		return false
+	}
+	switch {
+	case before == "":
+		return true
+	case allDigits(before):
+		return false
+	case len(num) >= 4, strings.Contains(before, "."):
+		return true
+	}
+	last := before[len(before)-1]
+	hasLetter := strings.IndexFunc(before, unicode.IsLetter) >= 0
+	return hasLetter && last >= '0' && last <= '9'
+}
+
+// hostnameIn returns the first word of text that is shaped like a host name,
+// or "". A word is a host name when its labels are joined by dots and
+//
+//   - a label starts with "xn--" (punycode), or
+//   - the last label is an internal suffix (.local, .lan, .internal, .intranet,
+//     .corp, .home, .private, .localdomain, .arpa, .box, .hole): this wins over
+//     a file extension, so "config.local" and ".env.local" are refused, or
+//   - the last label is a file extension (vite.config.ts, cv.de.yaml): passes, or
+//   - the word has a non ASCII letter: refused, or
+//   - the last label is a known TLD (com, org, net, de, dev, io, cloud, tech,
+//     eu, ch, at, uk, app), also with two labels: "example.com" is refused,
+//     except a last label written exactly ".NET", so "ASP.NET" passes, or
+//   - there are three or more labels and the last has 2 or more letters.
+//
+// Node.js, Vue.js, Ph.D., z.B. and i.d.R. pass. Socket.io and a lowercase
+// asp.net are refused, as is a product written like a domain.
+func hostnameIn(text string) string {
+	for _, w := range words(text) {
 		w = strings.Trim(w, ".:!?-")
 		if !hostLabels.MatchString(w) {
 			continue
 		}
 		labels := strings.Split(strings.ToLower(w), ".")
 		last := labels[len(labels)-1]
-		if hasInternalSuffix(labels) || (len(labels) >= 3 && onlyLetters.MatchString(last)) {
+		punycode := false
+		for _, l := range labels {
+			punycode = punycode || strings.HasPrefix(l, "xn--")
+		}
+		switch {
+		case punycode, internalSuffixes[last]:
+			return w
+		case fileExtensions[last]:
+			continue
+		case strings.IndexFunc(w, func(r rune) bool { return r > unicode.MaxASCII }) >= 0:
+			return w
+		case knownTLDs[last] && !strings.HasSuffix(w, ".NET"):
+			return w
+		case len(labels) >= 3 && onlyLetters.MatchString(last):
 			return w
 		}
 	}
 	return ""
-}
-
-func hasInternalSuffix(labels []string) bool {
-	last := labels[len(labels)-1]
-	for _, s := range internalSuffixes {
-		if last == s {
-			return true
-		}
-	}
-	return false
 }

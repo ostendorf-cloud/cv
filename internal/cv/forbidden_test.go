@@ -3,6 +3,7 @@ package cv
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestForbiddenContentRefuses lists what the rule must catch, one sample per
@@ -43,6 +44,46 @@ func TestForbiddenContentRefuses(t *testing.T) {
 		"url with credentials":        {"Clone https://user:secret@example.com/repo", "credentials"},
 		"url with a user only":        {"ssh://git@example.com/repo", "credentials"},
 		"ftp url":                     {"ftp://example.com", "URL"},
+
+		"upper case url scheme":        {"HTTPS://Example.com", "URL"},
+		"mailto link":                  {"mailto:admin@nas.local", "URL"},
+		"email with a local host":      {"admin@nas.local", "e-mail"},
+		"email with a public host":     {"simon@example.com", "e-mail"},
+		"email at localhost":           {"root@localhost", "e-mail"},
+		"mac with colons":              {"NIC 00:11:22:33:44:55", "MAC"},
+		"mac with hyphens":             {"NIC 00-11-22-33-44-55", "MAC"},
+		"mac in dotted form":           {"NIC 0011.2233.4455", "MAC"},
+		"unc path":                     {`Share \\nas01\share`, "UNC"},
+		"slash tcp":                    {"Opens 22/tcp", "port"},
+		"tcp slash":                    {"Opens TCP/22", "port"},
+		"udp with a space":             {"Stream on udp 5004", "port"},
+		"listens on":                   {"listens on 8443", "port"},
+		"digit host with a port":       {"nas01:22", "port"},
+		"upper digit host with a port": {"NAS01:22", "port"},
+		"dotted word with a port":      {"my.box:22", "port"},
+		"four digit port":              {"node-red:1880", "port"},
+		"four digit number after word": {"Linux:2024", "port"},
+		"port after a path name":       {"example.com:8080/x", "port"},
+		"scheme less path":             {"example.com/path", "hostname"},
+		"two label com":                {"example.com", "hostname"},
+		"two label io":                 {"Socket.io", "hostname"},
+		"two label org upper":          {"EXAMPLE.ORG", "hostname"},
+		"two label lowercase net":      {"asp.net", "hostname"},
+		"fritz box":                    {"fritz.box", "hostname"},
+		"pi hole":                      {"pi.hole", "hostname"},
+		"corp suffix":                  {"mail.corp", "hostname"},
+		"arpa suffix":                  {"1.0.0.127.in-addr.arpa", "hostname"},
+		"capital internal suffix":      {"NAS.LOCAL", "hostname"},
+		"env local file":               {".env.local", "hostname"},
+		"config local file":            {"config.local", "hostname"},
+		"punycode":                     {"xn--nas-abc.xn--def", "hostname"},
+		"non ascii host":               {"bücher.example", "hostname"},
+		"non ascii host with tld":      {"münchen.de", "hostname"},
+		"octet 255":                    {"Mask 255.255.255.255", "IPv4"},
+		"integer ipv4":                 {"Host 3232235777", "IPv4"},
+		"hex integer ipv4":             {"Host 0x7f000001", "IPv4"},
+		"hex dotted ipv4":              {"Host 0x7f.0.0.1", "IPv4"},
+		"ipv6 zone id":                 {"Host fe80::1%eth0", "IPv6"},
 	}
 
 	for name, tc := range tests {
@@ -89,7 +130,31 @@ func TestForbiddenContentAccepts(t *testing.T) {
 		"single digit port wording":     "Thunderbolt port 4",
 		"hardware model":                "Ubiquiti UniFi Dream Machine Pro",
 		"numbers with a unit":           "64 GB RAM, 2 TB NVMe",
-		"two label name":                "example.com",
+		"two label name, odd ending":    "nas.example",
+		"capital NET ending":            "ASP.NET and .NET",
+		"cpp":                           "C++",
+		"k8s":                           "k8s",
+		"wifi":                          "Wi-Fi 6E",
+		"ethernet":                      "10 GbE",
+		"memory":                        "192 GB RAM",
+		"german abbreviation zB":        "z.B.",
+		"german abbreviation uvm":       "u.v.m.",
+		"german abbreviation idR":       "i.d.R.",
+		"academic title":                "Ph.D.",
+		"image tag with letters":        "postgres:16-alpine",
+		"image tag node":                "node:22-alpine",
+		"image tag with a dot":          "ubuntu:24.04",
+		"plain word with a short tag":   "postgres:16",
+		"file name ts":                  "vite.config.ts",
+		"file name json":                "tsconfig.app.json",
+		"file name yaml":                "cv.de.yaml",
+		"file name lock":                "pnpm-lock.yaml and Cargo.lock",
+		"octet 256":                     "Model 10.0.0.256",
+		"short number":                  "Intel 12900K",
+		"npm scoped package":            "@angular/core",
+		"pinned with an at sign":        "node@22 and go@1.22",
+		"hex number in prose":           "Colour 0xFF",
+		"mac like short hex":            "AA:BB:CC",
 		"filename":                      "Edits the config.yaml file",
 		"abbreviation with dots":        "Written in K.I.S.S. style",
 		"homelab platform product name": "Proxmox VE and Talos Linux",
@@ -104,6 +169,35 @@ func TestForbiddenContentAccepts(t *testing.T) {
 				t.Errorf("forbiddenContent(%q) = %v, want nil", text, got)
 			}
 		})
+	}
+}
+
+// TestForbiddenContentIsFastOnLongInput runs twelve inputs of 100000
+// characters. The patterns are RE2, so the time is linear, this confirms it.
+func TestForbiddenContentIsFastOnLongInput(t *testing.T) {
+	t.Parallel()
+
+	const size = 100000
+	inputs := []string{
+		strings.Repeat("a", size),
+		strings.Repeat("a.", size/2),
+		strings.Repeat("1.", size/2),
+		strings.Repeat(":", size),
+		strings.Repeat("a:1", size/3),
+		strings.Repeat("0x", size/2),
+		strings.Repeat("a@", size/2),
+		strings.Repeat("a b ", size/4),
+		strings.Repeat("-", size),
+		strings.Repeat("00:11:", size/6),
+		strings.Repeat(`\`, size),
+		strings.Repeat("ü.", size/3),
+	}
+	start := time.Now()
+	for _, in := range inputs {
+		forbiddenContent(in)
+	}
+	if elapsed := time.Since(start); elapsed > 20*time.Second {
+		t.Errorf("twelve inputs of %d characters took %s, want linear time", size, elapsed)
 	}
 }
 
