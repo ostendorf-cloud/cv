@@ -25,8 +25,8 @@ import (
 // four-step scale, under the skills section, and does not define a separate
 // scale for languages. This package reuses the same scale for skills and
 // languages rather than inventing a second one the concept document never
-// asked for; a future language specific scale, such as CEFR, is a schema
-// change for whoever owns that decision, not something to anticipate here.
+// asked for. The owner decided to keep the four steps, in words, for languages
+// too, and not to use a CEFR scale. The validator refuses any other value.
 type Level string
 
 // The four levels docs/concepts/cv.md defines.

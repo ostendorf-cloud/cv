@@ -2,12 +2,13 @@
 
 ## Problem
 
-- The repository is a scaffold: `cv` answers `version` and `help`, `cvd` answers a placeholder
-  route. No data model, no renderer, no loop exists yet.
+- The repository holds the data model with its validation, `cv render json`, and `cvd`, which
+  serves the JSON document. No PDF or README renderer and no GitHub loop exists yet.
 - Career, education, skill and project facts exist only as hand written text scattered across an
   old résumé, a GitHub bio and memory, not as one structured source.
 - `ostendorf.dev` and `simon-ostendorf.de` have both already committed, in their own concept
-  docs, to consuming this repository's JSON and PDF release artefacts. Neither artefact exists.
+  docs, to consuming this repository's JSON and PDF release artefacts at build time. The owner
+  has since decided they read `cvd`'s API at runtime instead. The PDF does not exist yet.
 - The GitHub profile README is hand maintained and drifts from whatever the actual CV says.
 - A project's GitHub metadata (its real language mix, its latest release) and its hand written
   description live in two places that never compare notes.
@@ -34,10 +35,10 @@
 - A LinkedIn export. There is no write API for one's own profile, and an export nobody pastes is
   dead weight.
 - Editing this data model, its schema or its renderers from `ostendorf.dev` or
-  `simon-ostendorf.de`. Both only ever read a release artefact.
+  `simon-ostendorf.de`. Both only ever read the data and the PDFs, from `cvd`'s API.
 - A CMS or an editing UI. The two YAML files are the only authoring surface.
-- `cvd` serving traffic either sibling site depends on at runtime; both read a release artefact
-  at build time instead, a decision their own concept docs already made.
+- A visitor's browser calling `cvd`. Only the sites' servers call it, see "How the sites read
+  the data" below.
 - Rewriting the committed data files automatically. A detected GitHub fact becomes a suggestion
   for the owner, never a silent edit.
 - A second, private source for an entry that may not belong on the open web: a real need, and
@@ -68,6 +69,17 @@
   `level` is one of `familiar`, `working`, `proficient`, `expert`. `category` is the id of one
   entry in `skill_categories`. `evidence` links back to a `project`, `experience` or
   `certificate` id, which is how the GitHub loop below feeds skills.
+  `languages` reuses the same four values for its `level`. Decided by the owner on 2026-11-20:
+  the four steps stay, in words, and no CEFR scale is used. The validator refuses any other
+  value. The PDF prints them as follows:
+
+  | Value | German | English |
+  | --- | --- | --- |
+  | `expert` | Muttersprache | Native |
+  | `proficient` | Fließend | Fluent |
+  | `working` | Gute Kenntnisse | Good working knowledge |
+  | `familiar` | Grundkenntnisse | Basic |
+
 - `projects`, a hand written description plus a GitHub repository to enrich from. Required:
   `id`, `github_repo`, `description`. `languages`, `stars` and `latest_release` are never stored
   here; they are merged in at render time.
@@ -201,11 +213,12 @@ contact:
   Every entry that exists under `data/` is data the owner has decided belongs in a public
   repository, so every sink, the PDF, the JSON release artefact, the README block and `cvd`'s
   own API, may show every entry unfiltered.
-- This settles the open question both sibling concept docs left open, the same way an earlier,
-  two-level version of this model once claimed to, but for the opposite reason:
-  `ostendorf.dev`, `simon-ostendorf.de` and every other consumer of the JSON release artefact
-  never have to filter anything themselves, not because this repository filters it upstream for
-  them, but because there is nothing left to filter.
+- This settles the open question `simon-ostendorf.de`'s concept doc poses, whether the JSON
+  release artefact already excludes non-public entries. `ostendorf.dev`'s concept doc never
+  raises it. An earlier, two-level version of this model once claimed to settle it, but for
+  the opposite reason: `ostendorf.dev`, `simon-ostendorf.de` and every other consumer of the
+  JSON document never have to filter anything themselves, not because this repository filters
+  it upstream for them, but because there is nothing left to filter.
 - Consequence: the PDF can no longer carry a postal address, a reference's personal contact
   details or an NDA bound client project, since nothing here keeps such an entry off the JSON
   artefact, the README block or `cvd`'s API either. An application that needs a postal address
@@ -213,26 +226,51 @@ contact:
   genuinely may not be public is a real need and its own decision; this model does not reopen
   it.
 
-### Four renderers, no fifth
+### Three renderers, no fourth
 
-- `cv render pdf`, `cv render json` and `cv render readme` each read both data files, merge in
-  GitHub project data, and write one artefact. No `cv render linkedin`: dropped per the non
-  goals above.
+- `cv render pdf`, `cv render json` and `cv render readme` each read both data files and write
+  one artefact. Only `render json` exists today. Merging in GitHub project data is planned, no
+  renderer does it yet. No `cv render linkedin`: dropped per the non goals above.
+- `cvd` is not a fourth renderer. It serves the JSON document `cv render json` also writes,
+  see the next section.
 - The README block is never committed directly to the profile repository. `cv render readme`
   writes the block; the release pipeline opens a pull request against the profile repository with
   it, so the owner reads it before it is public.
 
-### `cvd` serves the same document in cluster, for whatever shows up next
+### `cvd` serves the data to the sites
 
 - `cvd` answers `GET /api/v1/cv` with the same document the JSON release artefact carries, read
   through `internal/cv`, once at start, with the language chosen by a `lang` query
   parameter, default `en`.
-- Neither sibling site calls it: both pull the JSON release artefact at build time instead, a
-  decision their own concept docs already settled and this one does not reopen.
-- What it is still for, given that: a later in-cluster consumer that wants current data without
-  waiting for a release, nothing concrete yet. Until one exists, `cvd` earns its keep as the
-  implementation `internal/cv` is tested against and as a live place to check the current
-  document while working on the data.
+- Decided by the owner on 2026-11-20: `ostendorf.dev` and `simon-ostendorf.de` read the CV data
+  and the PDFs from `cvd`'s API at runtime, server to server. This replaces the build time
+  reading their own concept docs chose. The owner's reasons: no stale artefact sits in a site,
+  and he wants to be able to put the CV API behind his firewall.
+- Serving the PDFs from `cvd` does not exist yet; `cvd` serves the JSON only. It is planned
+  together with `cv render pdf`.
+- The release artefacts stay as the GitHub release for download and audit, and the sites do not
+  read them. On main the release carries the archives, the JSON documents and the checksums
+  file `cv_<version>_checksums.txt` that goreleaser writes. The PDFs and a combined checksum
+  list are planned in the open PDF pull request.
+
+### How the sites read the data
+
+None of this exists yet. Both sites' concept docs still describe build time reading until
+they are changed.
+
+- Decided: each site's Go server will read the CV data and the PDFs from `cvd`, server to
+  server, with a short lived cache and the last good copy as the fallback when `cvd` is
+  unreachable.
+- Decided: the sites will render their pages on the server, never in the browser, and the
+  browser never calls `cvd`.
+- Undecided, per site: whether it polls on an interval or fetches on request into the cache,
+  the interval, and how the PDF bytes are held.
+- Undecided, per site: what a site does before its first successful sync, whether it reports
+  not ready or serves a placeholder.
+- Undecided: where a public Go client package for this lives, in this repository or elsewhere.
+- Privacy consequence: the calls are server to server and carry no visitor data. This is a
+  statement about the design only. What the sites' legal texts say about it is the owner's
+  call.
 
 ### The GitHub loop: automatic enrichment, suggested feedback
 
@@ -249,8 +287,9 @@ contact:
 ### Where the rendered artefacts live
 
 - The PDF and the JSON document attach to `cv`'s GitHub release as release assets, next to the
-  binary archives `.goreleaser.yaml` already builds. `cv render` runs ahead of
-  `goreleaser release`, which attaches both through `release.extra_files`.
+  binary archives `.goreleaser.yaml` already builds. goreleaser runs with `--skip=publish` and
+  never touches the release; `scripts/publish-release-assets.sh` attaches the files with
+  `gh release upload`. Only the JSON documents attach today.
 - The README block is not an artefact of this repository at all: `cv render readme`'s pull
   request against the profile repository is the delivery.
 - `cvd` ships as a container image only, as it does today; it is a service, not a rendered
@@ -310,18 +349,16 @@ contact:
 
 ## Open questions
 
-- Does `cv`'s release workflow send a `repository_dispatch` (or similar) to `ostendorf.dev` and
-  `simon-ostendorf.de` so a new release reaches them without a manual bump? Owner: whoever specs
-  each site's own rebuild trigger; this repository only needs to fire the event once something
-  listens.
 - Where does the GitHub token `cv render` authenticates with live, and at what scope? Owner:
   whoever wires the release workflow.
 - Does `cv suggest-skills` need to remember an already-declined suggestion, so a repeat run does
   not resurface it? Owner: whoever implements it.
 - The exact typst template and page layout; this document settles the tool, not the design.
   Owner: whoever implements `cv render pdf`.
-- Whether `cvd`'s API ever gets an actual consumer, and if not, when to drop it. Owner: revisit
-  once both sibling sites have shipped against the JSON release artefact for a while.
+- How `cvd` reloads data without a restart, and how it serves the PDFs, now that the sites read
+  from it. Owner: whoever implements the PDF renderer and the sites' sync.
+- Polling or fetch on request, the interval, the cache lifetime, the PDF handling and the not
+  ready behaviour of each site. Owner: whoever specs each site's sync.
 - Where an entry that may not belong on the open web, a postal address, a reference's personal
   contact details, an NDA bound client project, lives instead, now that this repository holds
   only publishable data. Owner: whoever specs that second, private source, if the need turns out
