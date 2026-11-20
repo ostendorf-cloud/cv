@@ -14,6 +14,16 @@ COPY internal/ internal/
 
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/cvd ./cmd/cvd
 
+# The PDFs `cv render pdf` wrote into rendered/, when the build context has
+# them. CI and the release run `task render:pdf` before the image build; a
+# local build without typst has none, and cvd then answers 503 on the PDF
+# route only. typst never runs in the image or at container start.
+RUN --mount=type=bind,source=.,target=/context \
+    mkdir -p /out/pdf \
+    && for f in /context/rendered/cv.de.pdf /context/rendered/cv.en.pdf; do \
+      if [ -f "$f" ]; then cp "$f" /out/pdf/; fi; \
+    done
+
 # distroless/static-debian12 carries only a minimal root filesystem,
 # ca-certificates and tzdata, no shell, no package manager. The ":nonroot" tag
 # runs as uid/gid 65532, not root.
@@ -30,6 +40,11 @@ COPY --from=build /out/cvd /usr/local/bin/cvd
 # wants other data mounts it over DATA_DIR; see charts/cv.
 COPY data/ /data/
 ENV DATA_DIR=/data
+
+# The pre-rendered PDFs, possibly none; see the build stage. cvd reads them
+# once at start from PDF_DIR.
+COPY --from=build /out/pdf/ /pdf/
+ENV PDF_DIR=/pdf
 
 # Matches ADDR's and ADMIN_ADDR's defaults, the public listener and
 # govue's own admin listener (health, readiness, metrics).

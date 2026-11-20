@@ -45,11 +45,13 @@ It validates both files first and writes nothing when they are invalid.
 
 Usage:
   cv render json [--dir data] [--out rendered]
-  cv render pdf [--dir data] [--out rendered] [--typst typst]
+  cv render pdf [--dir data] [--out rendered] [--typst typst] [--photo assets/portrait.jpg]
 
 json writes cv.de.json and cv.en.json into --out.
 pdf writes cv.de.pdf and cv.en.pdf into --out. It fills a typst template and runs
-"typst compile" with the binary --typst names, found on PATH by default.
+"typst compile" with the binary --typst names, found on PATH by default. --photo
+is the JPEG portrait in the header; a missing file fails the render, and an
+empty value renders without a photo.
 `
 
 func main() {
@@ -103,13 +105,14 @@ func runValidate(args []string, stdout, stderr io.Writer) int {
 }
 
 // renderPDF fills the typst template for lang and compiles it with typstBin.
-// Expiry is judged against today's date in UTC.
-func renderPDF(doc cv.Document, lang, typstBin string) ([]byte, error) {
-	source, err := cv.RenderTypst(doc, lang, time.Now().UTC())
+// Expiry and the footer's date are judged against today's date in UTC. A nil
+// photo renders the header without one.
+func renderPDF(doc cv.Document, lang, typstBin string, photo []byte) ([]byte, error) {
+	source, err := cv.RenderTypst(doc, lang, cv.TypstOptions{Now: time.Now().UTC(), Photo: photo != nil})
 	if err != nil {
 		return nil, err
 	}
-	return cv.CompilePDF(context.Background(), typstBin, source)
+	return cv.CompilePDF(context.Background(), typstBin, source, photo)
 }
 
 // runRender dispatches "cv render <artefact>": json or pdf. It validates both data files first and writes nothing when they fail.
@@ -126,6 +129,7 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 	dir := fs.String("dir", "data", "directory holding cv.de.yaml and cv.en.yaml")
 	out := fs.String("out", "rendered", "directory the "+artefact+" documents are written to")
 	typst := fs.String("typst", "typst", "typst binary, pdf only")
+	photoPath := fs.String("photo", "assets/portrait.jpg", "JPEG portrait for the header, pdf only; empty for none")
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -134,6 +138,15 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
+	}
+
+	var photo []byte
+	if artefact == "pdf" && *photoPath != "" {
+		photo, err = cv.LoadPhoto(*photoPath)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
 	}
 
 	// Render both before writing either, so a failure leaves no half set.
@@ -147,7 +160,7 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 		var data []byte
 		var err error
 		if artefact == "pdf" {
-			data, err = renderPDF(docs[lang], lang, *typst)
+			data, err = renderPDF(docs[lang], lang, *typst, photo)
 		} else {
 			data, err = cv.RenderJSON(docs[lang], lang)
 		}

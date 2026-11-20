@@ -15,6 +15,11 @@ The direct dependencies, and the licence each one carries:
 - `github.com/prometheus/client_golang`, reached through govue: Apache
   License 2.0
 
+The PDF embeds the Go fonts, Go Regular and Go Bold, copied from
+`golang.org/x/image/font/gofont/ttfs` into `internal/cv/templates/fonts/`.
+They carry the BSD 3-Clause licence of the Go project, reproduced in full in
+`internal/cv/templates/fonts/LICENSE`.
+
 Each dependency's full licence text ships with the dependency itself, in the
 Go module cache, and is not reproduced here. The complete set, including
 transitive dependencies, is whatever `go.mod` and `go.sum` resolve to at a

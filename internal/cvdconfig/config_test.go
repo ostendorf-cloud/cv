@@ -56,6 +56,22 @@ func TestLoad(t *testing.T) {
 			wantErrs: []string{"is not a directory"},
 		},
 		{
+			name:      "a pdf directory is optional and accepted when it exists",
+			env:       map[string]string{"DATA_DIR": dir, "PDF_DIR": dir},
+			wantAddr:  ":8080",
+			wantAdmin: ":8081",
+		},
+		{
+			name:     "a pdf directory that does not exist is reported",
+			env:      map[string]string{"DATA_DIR": dir, "PDF_DIR": filepath.Join(dir, "missing")},
+			wantErrs: []string{"PDF_DIR", "no such file"},
+		},
+		{
+			name:     "a pdf path that is a file is reported",
+			env:      map[string]string{"DATA_DIR": dir, "PDF_DIR": file},
+			wantErrs: []string{"PDF_DIR", "is not a directory"},
+		},
+		{
 			name:     "every problem is reported together",
 			env:      map[string]string{"LOG_LEVEL": "nope", "DATA_DIR": filepath.Join(dir, "missing")},
 			wantErrs: []string{"level", "DATA_DIR", "no such file"},
@@ -89,6 +105,9 @@ func TestLoad(t *testing.T) {
 			}
 			if cfg.DataDir != tt.env["DATA_DIR"] {
 				t.Errorf("DataDir = %q, want %q", cfg.DataDir, tt.env["DATA_DIR"])
+			}
+			if cfg.PDFDir != tt.env["PDF_DIR"] {
+				t.Errorf("PDFDir = %q, want %q", cfg.PDFDir, tt.env["PDF_DIR"])
 			}
 		})
 	}

@@ -20,6 +20,10 @@ type Config struct {
 	// DataDir holds cv.de.yaml and cv.en.yaml, the data cvd serves. It is a
 	// path, not a secret, so it has no _FILE twin.
 	DataDir string
+	// PDFDir holds cv.de.pdf and cv.en.pdf, rendered at build time. It is
+	// optional: without it, or without a file in it, the PDF route answers
+	// 503 and everything else works.
+	PDFDir string
 }
 
 // Load reads Config from the environment through envconf, aggregating every
@@ -35,6 +39,7 @@ func Load(getenv func(string) string) (Config, error) {
 		// listener httpserver.Run would serve instead.
 		AdminAddr: l.String("ADMIN_ADDR", ":8081"),
 		DataDir:   l.Required("DATA_DIR"),
+		PDFDir:    l.String("PDF_DIR", ""),
 	}
 
 	var problems []error
@@ -53,15 +58,28 @@ func Load(getenv func(string) string) (Config, error) {
 	// problem, so a bad mount shows up on the first start. The two files in
 	// it are read and validated by cvd.App.Load.
 	if cfg.DataDir != "" {
-		if info, err := os.Stat(cfg.DataDir); err != nil {
-			problems = append(problems, fmt.Errorf("DATA_DIR: %w", err))
-		} else if !info.IsDir() {
-			problems = append(problems, fmt.Errorf("DATA_DIR: %s is not a directory", cfg.DataDir))
-		}
+		problems = append(problems, checkDir("DATA_DIR", cfg.DataDir)...)
+	}
+	// A set PDF_DIR must exist: a typo would otherwise turn the PDF route
+	// into a silent 503.
+	if cfg.PDFDir != "" {
+		problems = append(problems, checkDir("PDF_DIR", cfg.PDFDir)...)
 	}
 
 	if err := errors.Join(problems...); err != nil {
 		return Config{}, fmt.Errorf("cvdconfig: %w", err)
 	}
 	return cfg, nil
+}
+
+// checkDir reports a path that is missing, unreadable or not a directory.
+func checkDir(name, path string) []error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return []error{fmt.Errorf("%s: %w", name, err)}
+	}
+	if !info.IsDir() {
+		return []error{fmt.Errorf("%s: %s is not a directory", name, path)}
+	}
+	return nil
 }
