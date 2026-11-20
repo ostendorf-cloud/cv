@@ -178,14 +178,14 @@ func TestRenderTypstSkillCategories(t *testing.T) {
 	src := renderSource(t, doc, "en")
 
 	for _, want := range []string{
-		`category("Code", ("Go", "Bash", ))`,
-		`category("Cloud", ("Kubernetes", "Ansible", "Helm", ))`,
+		`side-skills("Code", ("Go", "Bash", ))`,
+		`side-skills("Cloud", ("Kubernetes", "Ansible", "Helm", ))`,
 	} {
 		if !strings.Contains(src, want) {
 			t.Errorf("source lacks %s:\n%s", want, src)
 		}
 	}
-	if strings.Index(src, `category("Code"`) > strings.Index(src, `category("Cloud"`) {
+	if strings.Index(src, `side-skills("Code"`) > strings.Index(src, `side-skills("Cloud"`) {
 		t.Errorf("Code (order 1) does not come before Cloud:\n%s", src)
 	}
 	if strings.Contains(src, "Nobody Here") {
@@ -201,7 +201,8 @@ func TestRenderTypstSkillCategories(t *testing.T) {
 		t.Parallel()
 
 		doc := Document{SkillCategories: []SkillCategoryEntry{{ID: "empty", Name: "Nobody Here"}}}
-		if src := renderSource(t, doc, "en"); strings.Contains(src, "#section(") || strings.Contains(src, "Nobody") {
+		src := renderSource(t, doc, "en")
+		if strings.Contains(src, `caps("Skills"`) || strings.Contains(src, `side-skills("`) || strings.Contains(src, "Nobody") {
 			t.Errorf("source prints a skills section without skills:\n%s", src)
 		}
 	})
@@ -232,8 +233,8 @@ func TestRenderTypstOmitsEmptySections(t *testing.T) {
 	}
 }
 
-// TestRenderTypstHeader covers the header: the headline, the info row and
-// the footer's date line.
+// TestRenderTypstHeader covers the sidebar of page one: the headline, the
+// info blocks, the photo, and the footer's date line.
 func TestRenderTypstHeader(t *testing.T) {
 	t.Parallel()
 
@@ -250,7 +251,7 @@ func TestRenderTypstHeader(t *testing.T) {
 		t.Parallel()
 
 		src := renderSource(t, doc, "en")
-		if !strings.Contains(src, `text(size: 11.5pt, fill: muted, "Platform Engineer")`) {
+		if !strings.Contains(src, `text(size: 9pt, fill: muted, "Platform Engineer")`) {
 			t.Errorf("headline is not the first ongoing title:\n%s", src)
 		}
 	})
@@ -259,19 +260,18 @@ func TestRenderTypstHeader(t *testing.T) {
 		t.Parallel()
 
 		past := Document{Experience: doc.Experience[:1], Contact: doc.Contact}
-		if src := renderSource(t, past, "en"); strings.Contains(src, "size: 11.5pt") {
+		if src := renderSource(t, past, "en"); strings.Contains(src, `text(size: 9pt, fill: muted, "`) {
 			t.Errorf("source prints a headline:\n%s", src)
 		}
 	})
 
-	t.Run("the info row holds what the data has", func(t *testing.T) {
+	t.Run("the info blocks hold what the data has", func(t *testing.T) {
 		t.Parallel()
 
 		src := renderSource(t, doc, "de")
 		for _, want := range []string{
-			`info("Ort", ("Aachen", ))`,
-			`info("E-Mail", (link("mailto:a@example.com", "a@example.com"), ))`,
-			`columns: (1fr,) * 2`,
+			`side-block("Ort", ("Aachen", ))`,
+			`side-block("E-Mail", (link("mailto:a@example.com", "a@example.com"), ))`,
 		} {
 			if !strings.Contains(src, want) {
 				t.Errorf("source lacks %s:\n%s", want, src)
@@ -302,16 +302,30 @@ func TestRenderTypstHeader(t *testing.T) {
 		}
 	})
 
-	t.Run("without a photo the header has one column", func(t *testing.T) {
+	t.Run("without a photo the sidebar places none", func(t *testing.T) {
 		t.Parallel()
 
 		got, err := RenderTypst(doc, "en", TypstOptions{Now: pdfNow})
 		if err != nil {
 			t.Fatal(err)
 		}
-		src := string(got)
-		if strings.Contains(src, "image(") || !strings.Contains(src, "columns: (1fr,),") {
+		if src := string(got); strings.Contains(src, "image(") {
 			t.Errorf("source without a photo still places one:\n%s", src)
+		}
+	})
+
+	t.Run("the first section sits beside the sidebar, the rest below", func(t *testing.T) {
+		t.Parallel()
+
+		full := doc
+		full.Education = []EducationEntry{{ID: "u", Institution: "Uni", Degree: "BSc", Start: "2015-10"}}
+		src := renderSource(t, full, "en")
+		grid := strings.Index(src, "\n#grid(\n  columns: (6cm, 1fr),")
+		experience := strings.Index(src, `#section("Experience")`)
+		closing := strings.Index(src, "\n  ],\n)")
+		education := strings.Index(src, `#section("Education")`)
+		if grid < 0 || experience < grid || closing < experience || education < closing {
+			t.Errorf("want Experience inside the page one grid and Education after it:\n%s", src)
 		}
 	})
 }

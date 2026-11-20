@@ -125,14 +125,14 @@ var pdfLabels = map[string]labels{
 // levelRank orders the skills of one category: the highest level first.
 var levelRank = map[Level]int{LevelExpert: 4, LevelProficient: 3, LevelWorking: 2, LevelFamiliar: 1}
 
-// pdfLink is one link of the info row: its text and its target.
+// pdfLink is one link of an info block: its text and its target.
 type pdfLink struct {
 	Text string
 	URL  string
 }
 
-// pdfInfo is one label and value pair of the info row under the header.
-// Values holds plain texts, Links links; one of the two is set.
+// pdfInfo is one labelled block of the sidebar: location, email, profiles
+// or languages. Values holds plain texts, Links links; one of the two is set.
 type pdfInfo struct {
 	Label  string
 	Values []string
@@ -140,8 +140,10 @@ type pdfInfo struct {
 }
 
 // pdfItem is one printed entry. Dates, Title and the rest are already final
-// text; the template only places them. Marker prints as a small outlined
-// badge after the title, such as an expired certificate's note.
+// text; the template only places them: the dates above the title, the
+// subtitle (organisation, sector) on its own line under it, then the body.
+// Marker prints as a small outlined badge after the title, such as an
+// expired certificate's note.
 type pdfItem struct {
 	Dates    string
 	Title    string
@@ -158,25 +160,28 @@ type pdfCategory struct {
 	Skills []string
 }
 
-// pdfSection is one printed section. Kind "entries" prints Items as dated
-// entries, "skills" prints Categories as groups of pills.
+// pdfSection is one section of the main column: a title and its entries.
 type pdfSection struct {
-	Title      string
-	Kind       string
-	Items      []pdfItem
-	Categories []pdfCategory
+	Title string
+	Items []pdfItem
 }
 
+// pdfData is what the template places. Page one is a sidebar (photo, name,
+// Headline, Info, Skills) beside Lead, the first section. Rest follows at
+// full width.
 type pdfData struct {
-	Lang      string
-	Name      string
-	Document  string
-	Headline  string
-	AsOf      string
-	Photo     bool
-	PhotoFile string
-	Info      []pdfInfo
-	Sections  []pdfSection
+	Lang        string
+	Name        string
+	Document    string
+	Headline    string
+	AsOf        string
+	Photo       bool
+	PhotoFile   string
+	Info        []pdfInfo
+	SkillsTitle string
+	Skills      []pdfCategory
+	Lead        []pdfSection
+	Rest        []pdfSection
 }
 
 // TypstOptions is what a typst render needs besides the data.
@@ -274,9 +279,19 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 	}
 	d.Info = info
 
+	categories, err := skillCategories(doc)
+	if err != nil {
+		return pdfData{}, err
+	}
+	d.SkillsTitle = l.Skills
+	d.Skills = categories
+
+	// The main column's sections in print order. The first one sits beside
+	// the sidebar on page one, see pdfData.
+	var sections []pdfSection
 	add := func(title string, items []pdfItem) {
 		if len(items) > 0 {
-			d.Sections = append(d.Sections, pdfSection{Title: title, Kind: "entries", Items: items})
+			sections = append(sections, pdfSection{Title: title, Items: items})
 		}
 	}
 
@@ -320,14 +335,6 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 		})
 	}
 	add(l.Education, items)
-
-	categories, err := skillCategories(doc)
-	if err != nil {
-		return pdfData{}, err
-	}
-	if len(categories) > 0 {
-		d.Sections = append(d.Sections, pdfSection{Title: l.Skills, Kind: "skills", Categories: categories})
-	}
 
 	items = nil
 	currentMonth := opts.Now.Format("2006-01")
@@ -419,6 +426,9 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 	}
 	add(l.References, items)
 
+	if len(sections) > 0 {
+		d.Lead, d.Rest = sections[:1], sections[1:]
+	}
 	return d, nil
 }
 
@@ -434,9 +444,9 @@ func headline(doc Document) string {
 	return ""
 }
 
-// infoRow is the label and value pairs under the header: location, email,
-// languages and profiles, each left out when the data holds nothing for it.
-// The model has no phone number, so the row has none.
+// infoRow is the labelled blocks of the sidebar: location, email, profiles
+// and languages, each left out when the data holds nothing for it. The model
+// has no phone number, so there is none.
 func infoRow(doc Document, l labels) ([]pdfInfo, error) {
 	var row []pdfInfo
 	if a := doc.Contact.Address; a != nil {
@@ -446,6 +456,13 @@ func infoRow(doc Document, l labels) ([]pdfInfo, error) {
 	}
 	if email := strings.TrimSpace(doc.Contact.Email); email != "" {
 		row = append(row, pdfInfo{Label: l.Email, Links: []pdfLink{{Text: email, URL: "mailto:" + email}}})
+	}
+	var links []pdfLink
+	for _, p := range doc.Contact.Profiles {
+		links = append(links, pdfLink{Text: p.Platform, URL: p.URL})
+	}
+	if len(links) > 0 {
+		row = append(row, pdfInfo{Label: l.Profiles, Links: links})
 	}
 	var languages []string
 	for _, e := range doc.Languages {
@@ -457,13 +474,6 @@ func infoRow(doc Document, l labels) ([]pdfInfo, error) {
 	}
 	if len(languages) > 0 {
 		row = append(row, pdfInfo{Label: l.Languages, Values: languages})
-	}
-	var links []pdfLink
-	for _, p := range doc.Contact.Profiles {
-		links = append(links, pdfLink{Text: p.Platform, URL: p.URL})
-	}
-	if len(links) > 0 {
-		row = append(row, pdfInfo{Label: l.Profiles, Links: links})
 	}
 	return row, nil
 }

@@ -150,7 +150,7 @@ go test ./internal/cv -run TestRenderJSONGolden -update
   cause, the award summaries and a long location after its first comma. See
   `docs/concepts/cv.md`, "PDF production".
 - The layout is described in `docs/concepts/cv.md`, "PDF production".
-- The header photo is `--photo`, default `assets/portrait.jpg`. A missing file or one that
+- The sidebar photo is `--photo`, default `assets/portrait.jpg`. A missing file or one that
   is not a JPEG fails the render. `--photo ""` renders without a photo.
 - The font is Go Regular and Go Bold, embedded in the binary from
   `internal/cv/templates/fonts/` (BSD 3-Clause, see the `LICENSE` there).
@@ -174,7 +174,7 @@ go test ./internal/cv -run TestRenderTypstGolden -update
 
 To look at the PDFs, run `task render:pdf`, or download the `cv-pdf-preview` artefact of
 the `render-pdf` job in the `checks` workflow. That job fails when a PDF has fewer than one
-or more than three pages.
+or more than four pages.
 
 ## Configuration
 

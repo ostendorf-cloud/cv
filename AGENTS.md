@@ -9,7 +9,7 @@ service that serves it. The baseline rules apply and are not repeated here.
   and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
   `mise.toml`) on the path, or `--typst <binary>`, and reads the portrait from
   `assets/portrait.jpg` (`--photo`; a missing file fails, `--photo ""` renders without).
-- `assets/portrait.jpg`: the owner's portrait for the PDF header, 600x600, made from the
+- `assets/portrait.jpg`: the owner's portrait for the PDF sidebar, 600x600, made from the
   920 pixel portrait of `ostendorf.tech`.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
@@ -93,7 +93,7 @@ milestones:
   `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
   The image job runs `task render:pdf` before the build, so the image serves the tag's PDFs.
 - The golden test pins the typst source only. The `render-pdf` job in `checks.yaml` compiles
-  the template with the real data, checks one to three pages with
+  the template with the real data, checks one to four pages with
   `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look
   there after a template change, or run `task render:pdf`.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
