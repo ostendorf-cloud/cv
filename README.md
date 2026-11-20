@@ -135,6 +135,9 @@ docker compose up --build
 Builds and runs `cvd` from the root `Dockerfile`. `cv` is a release artefact, not a
 container image; see `.goreleaser.yaml`.
 
+The published image `ghcr.io/ostendorf-cloud/cv` is one manifest list for `linux/amd64`
+and `linux/arm64`.
+
 ## Development
 
 ```sh
