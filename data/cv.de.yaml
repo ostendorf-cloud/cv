@@ -119,23 +119,15 @@ skill_categories:
 skills:
   - id: isms
     category: security
-    name: Information Security Management System (ISMS)
-    level: familiar
-  - id: informationssicherheit
-    category: security
-    name: Informationssicherheit
+    name: Informationssicherheitsmanagement (ISMS)
     level: working
-  - id: informationssicherheitsmanagement
-    category: security
-    name: Informationssicherheitsmanagement
-    level: familiar
   - id: iso-27001
     category: security
     name: ISO 27001
     level: familiar
   - id: webentwicklung
     category: programming
-    name: Webentwicklung
+    name: Frontend-Entwicklung
     level: working
     evidence:
       - {type: project, ref: ostendorf-dev}
@@ -163,15 +155,9 @@ skills:
     level: working
     evidence:
       - {type: experience, ref: cancom-working-student}
-  - id: containerization
-    category: devops-cloud
-    name: Containerization
-    level: proficient
-    evidence:
-      - {type: experience, ref: cancom-working-student}
   - id: helm-charts
     category: devops-cloud
-    name: Helm Charts
+    name: Helm
     level: proficient
     evidence:
       - {type: experience, ref: cancom-working-student}
@@ -197,10 +183,6 @@ skills:
     evidence:
       - {type: experience, ref: cancom-internship-semester}
       - {type: experience, ref: cancom-working-student}
-  - id: informatik
-    category: methods
-    name: Informatik
-    level: proficient
   - id: ansible
     category: devops-cloud
     name: Ansible
@@ -209,7 +191,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: ci-cd
     category: devops-cloud
-    name: Continuous Integration und Continuous Delivery (CI/CD)
+    name: CI/CD
     level: proficient
     evidence:
       - {type: experience, ref: cancom-working-student}
@@ -237,7 +219,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: it-infrastruktur-management
     category: platforms
-    name: IT-Infrastruktur-Management
+    name: IT-Infrastruktur
     level: working
     evidence:
       - {type: experience, ref: cancom-internship-semester}
@@ -264,18 +246,11 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: yaml
     category: tools
-    name: YAML
+    name: YAML und JSON
     level: proficient
     evidence:
       - {type: experience, ref: cancom-working-student}
       - {type: project, ref: cv}
-  - id: terraform
-    category: devops-cloud
-    name: Terraform
-    level: proficient
-    evidence:
-      - {type: experience, ref: cancom-working-student}
-      - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: kubernetes
     category: devops-cloud
     name: Kubernetes
@@ -298,7 +273,7 @@ skills:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: python
     category: programming
-    name: Python (Programmiersprache)
+    name: Python
     level: working
     evidence:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
@@ -329,13 +304,6 @@ skills:
     evidence:
       - {type: experience, ref: cancom-internship-semester}
       - {type: experience, ref: cancom-working-student}
-      - {type: certificate, ref: linux-essentials}
-  - id: linux-server
-    category: platforms
-    name: Linux-Server
-    level: proficient
-    evidence:
-      - {type: experience, ref: cancom-internship-semester}
       - {type: certificate, ref: linux-essentials}
   - id: linux
     category: platforms
@@ -369,15 +337,9 @@ skills:
     evidence:
       - {type: project, ref: workflows}
       - {type: project, ref: govue}
-  - id: json
-    category: tools
-    name: JSON
-    level: working
-    evidence:
-      - {type: project, ref: cv}
   - id: opentofu
     category: devops-cloud
-    name: OpenTofu
+    name: OpenTofu und Terraform
     level: proficient
     evidence:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
@@ -386,12 +348,6 @@ skills:
     category: devops-cloud
     name: Kolla-Ansible
     level: working
-    evidence:
-      - {type: experience, ref: stackmeister-devops-cloud-engineer}
-  - id: openstack-magnum
-    category: devops-cloud
-    name: OpenStack Magnum
-    level: familiar
     evidence:
       - {type: experience, ref: stackmeister-devops-cloud-engineer}
   - id: vmware
@@ -504,6 +460,299 @@ skills:
     level: familiar
     evidence:
       - {type: project, ref: solobill}
+  - id: cloud-migration
+    category: devops-cloud
+    name: Cloud-Migration
+    level: proficient
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: cloud-architecture
+    category: devops-cloud
+    name: Cloud-Architektur
+    level: working
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: docker-compose
+    category: devops-cloud
+    name: Docker Compose
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: qarr}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: wishlist}
+  - id: multi-arch-images
+    category: devops-cloud
+    name: Multi-Architektur-Containerimages (Buildx)
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: qarr}
+      - {type: project, ref: burnlink}
+  - id: gateway-api
+    category: devops-cloud
+    name: Kubernetes Gateway API
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: qarr}
+      - {type: project, ref: burnlink}
+  - id: cilium
+    category: devops-cloud
+    name: Cilium
+    level: working
+  - id: cert-manager
+    category: devops-cloud
+    name: cert-manager
+    level: working
+  - id: external-secrets-operator
+    category: devops-cloud
+    name: External Secrets Operator
+    level: working
+  - id: kubevirt
+    category: devops-cloud
+    name: KubeVirt
+    level: familiar
+  - id: cloudflare
+    category: devops-cloud
+    name: Cloudflare
+    level: working
+  - id: talos-linux
+    category: platforms
+    name: Talos Linux
+    level: working
+  - id: longhorn
+    category: platforms
+    name: Longhorn
+    level: working
+  - id: valkey-redis
+    category: platforms
+    name: Valkey und Redis
+    level: working
+    evidence:
+      - {type: project, ref: burnlink}
+  - id: tailwind-css
+    category: programming
+    name: Tailwind CSS
+    level: working
+    evidence:
+      - {type: project, ref: wishlist}
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: qarr}
+      - {type: project, ref: ostendorf-tech}
+  - id: vite
+    category: programming
+    name: Vite
+    level: working
+    evidence:
+      - {type: project, ref: wishlist}
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: qarr}
+      - {type: project, ref: ostendorf-tech}
+  - id: vue-router
+    category: programming
+    name: Vue Router
+    level: working
+    evidence:
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: ostendorf-tech}
+  - id: internationalisation
+    category: programming
+    name: Internationalisierung (vue-i18n)
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: ostendorf-tech}
+  - id: web-accessibility
+    category: programming
+    name: Web-Barrierefreiheit (WCAG)
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: wishlist}
+  - id: nodejs-pnpm
+    category: programming
+    name: Node.js und pnpm
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: wishlist}
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: qarr}
+  - id: rest-apis
+    category: programming
+    name: REST-APIs und Webservices
+    level: proficient
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: wishlist}
+      - {type: project, ref: solobill}
+      - {type: project, ref: calbridge}
+  - id: supply-chain-security
+    category: security
+    name: Lieferkettensicherheit (gepinnte Action-Digests, CodeQL)
+    level: working
+    evidence:
+      - {type: project, ref: workflows}
+      - {type: project, ref: cv}
+      - {type: project, ref: release-me}
+  - id: secret-scanning
+    category: security
+    name: Secret-Scanning (gitleaks)
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: wishlist}
+  - id: web-application-security
+    category: security
+    name: Sicherheit von Webanwendungen (CSP, HSTS, CSRF)
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+  - id: openbao
+    category: security
+    name: OpenBao
+    level: working
+  - id: system-hardening
+    category: security
+    name: Systemhärtung
+    level: working
+    evidence:
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: taskfile
+    category: tools
+    name: Taskfile (go-task)
+    level: proficient
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: govue}
+      - {type: project, ref: release-me}
+  - id: mise
+    category: tools
+    name: mise
+    level: proficient
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: govue}
+      - {type: project, ref: release-me}
+  - id: golangci-lint
+    category: tools
+    name: golangci-lint
+    level: proficient
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: govue}
+      - {type: project, ref: release-me}
+  - id: goreleaser
+    category: tools
+    name: GoReleaser
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: release-me}
+  - id: infrastructure-linters
+    category: tools
+    name: Linter für Infrastrukturcode (actionlint, yamllint, hadolint, ShellCheck, kubeconform)
+    level: working
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: qarr}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: wishlist}
+      - {type: project, ref: ostendorf-tech}
+  - id: eslint-prettier
+    category: tools
+    name: ESLint und Prettier
+    level: working
+    evidence:
+      - {type: project, ref: wishlist}
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+      - {type: project, ref: qarr}
+  - id: sqlc-migrations
+    category: tools
+    name: sqlc und Datenbankmigrationen (dbmate, golang-migrate)
+    level: working
+    evidence:
+      - {type: project, ref: calbridge}
+      - {type: project, ref: solobill}
+  - id: ai-coding-agents
+    category: tools
+    name: KI-Coding-Agenten (Claude Code, AGENTS.md)
+    level: proficient
+    evidence:
+      - {type: project, ref: skills}
+      - {type: project, ref: cv}
+  - id: conventional-commits-semver
+    category: methods
+    name: Conventional Commits und Semantic Versioning
+    level: proficient
+    evidence:
+      - {type: project, ref: release-me}
+      - {type: project, ref: cv}
+  - id: release-automation
+    category: methods
+    name: Release-Automatisierung
+    level: proficient
+    evidence:
+      - {type: project, ref: release-me}
+      - {type: project, ref: workflows}
+  - id: adr
+    category: methods
+    name: Architecture Decision Records (ADR)
+    level: working
+    evidence:
+      - {type: project, ref: release-me}
+      - {type: project, ref: burnlink}
+      - {type: project, ref: skills}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: technical-documentation
+    category: methods
+    name: Technische Dokumentation
+    level: proficient
+    evidence:
+      - {type: project, ref: cv}
+      - {type: project, ref: govue}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: open-source-maintenance
+    category: methods
+    name: Open-Source-Pflege
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: release-me}
+      - {type: project, ref: gitcd}
+      - {type: certificate, ref: lfc102-inclusive-open-source}
+      - {type: experience, ref: cancom-working-student}
+  - id: test-automation
+    category: methods
+    name: Testautomatisierung
+    level: working
+    evidence:
+      - {type: project, ref: govue}
+      - {type: project, ref: cv}
+      - {type: project, ref: wishlist}
+      - {type: experience, ref: stackmeister-devops-cloud-engineer}
+  - id: teaching-tutoring
+    category: methods
+    name: Lehre und Tutorium
+    level: working
+    evidence:
+      - {type: experience, ref: fh-tutor-math-precourse-2022}
+      - {type: experience, ref: fh-tutor-hoehere-mathematik-2}
+      - {type: experience, ref: fh-tutor-informatik-grundlagen}
+      - {type: experience, ref: fh-tutor-hoehere-mathematik-1}
+      - {type: experience, ref: fh-tutor-math-precourse-2021}
 
 projects:
   - id: cv
