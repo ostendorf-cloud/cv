@@ -1,8 +1,12 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-# Digest for golang:1.27.4-bookworm (linux/amd64), matching mise.toml's pinned
-# Go patch exactly; resolved against Docker Hub's API.
-FROM golang:1.27.4-bookworm@sha256:fb7cceb528b47141eccd9b60bf3cbd27d5ef5f8cf5b7d338bec866da495b50dc AS build
+# Digest for golang:1.27.4-bookworm is the multi-platform image index
+# (linux/amd64, linux/arm64, linux/386, linux/arm/v7, linux/ppc64le),
+# matching mise.toml's pinned Go patch exactly; resolved against Docker
+# Hub's API. Re-resolve with
+# "docker buildx imagetools inspect golang:1.27.4-bookworm" if this patch
+# version ever moves; that command reports the index digest below.
+FROM golang:1.27.4-bookworm@sha256:4fa7c968ba93f1635670522dbb01a2c78150443e1385746924566079f36570ea AS build
 
 WORKDIR /src
 
@@ -18,10 +22,12 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/cvd ./cmd/cvd
 # ca-certificates and tzdata, no shell, no package manager. The ":nonroot" tag
 # runs as uid/gid 65532, not root.
 #
-# Digest for gcr.io/distroless/static-debian12:nonroot (linux/amd64), resolved
-# against gcr.io's registry API; re-resolve with "docker buildx imagetools
-# inspect gcr.io/distroless/static-debian12:nonroot" if this needs refreshing.
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:52dcfbabb7457ea47c82f6e13af8c8a4a1d9f7b0145142b3ecab20f2b888411d
+# Digest for gcr.io/distroless/static-debian12:nonroot is the multi-platform
+# image index (linux/amd64, linux/arm64, linux/arm/v7, linux/s390x,
+# linux/ppc64le), resolved against gcr.io's registry API; re-resolve with
+# "docker buildx imagetools inspect gcr.io/distroless/static-debian12:nonroot"
+# if this needs refreshing; that command reports the index digest below.
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
 
 COPY --from=build /out/cvd /usr/local/bin/cvd
 
