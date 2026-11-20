@@ -269,9 +269,11 @@ func TestForbiddenContentSeesThroughFormatting(t *testing.T) {
 	}
 }
 
-// TestForbiddenContentIsFastOnLongInput runs adversarial inputs of 50000
-// and 100000 characters and logs both times. The patterns are RE2 and the word
-// splitting is one pass, so doubling the input doubles the time.
+// TestForbiddenContentIsFastOnLongInput runs adversarial inputs of 5000
+// and 20000 characters and logs both times. The patterns are RE2 and the word
+// splitting is one pass, so four times the input takes about four times as
+// long. The test fails on a ratio above 8, which a quadratic scan reaches, and
+// on an absolute bound far above the measured time.
 func TestForbiddenContentIsFastOnLongInput(t *testing.T) {
 	t.Parallel()
 
@@ -279,21 +281,34 @@ func TestForbiddenContentIsFastOnLongInput(t *testing.T) {
 		"a", "a.", "1.", ":", "a:1", "0x", "a@", "a b ", "-", "_", "a-", "a_", "a.b-", "1-", "::-",
 		"00:11:", `\`, "ü.", string(rune(0x200b)) + ".", string(rune(0xff0e)),
 	}
-	const size = 50000
-	var total time.Duration
-	for _, unit := range units {
-		var took [2]time.Duration
-		for i, n := range []int{size, 2 * size} {
-			in := strings.Repeat(unit, n/len([]rune(unit)))
+	const (
+		size       = 5000
+		factor     = 4                     // the large input is factor times the small one
+		noise      = 20 * time.Millisecond // below this the ratio says nothing
+		ratioLimit = 8                     // linear is about 4, quadratic about 16
+		bound      = 2 * time.Second       // absolute bound per input, far above the measured time
+	)
+	// measure takes the fastest of two runs, which removes scheduler noise.
+	measure := func(in string) time.Duration {
+		best := time.Duration(1<<63 - 1)
+		for range 2 {
 			start := time.Now()
 			forbiddenContent(in)
-			took[i] = time.Since(start)
-			total += took[i]
+			best = min(best, time.Since(start))
 		}
-		t.Logf("%q: %d characters %s, %d characters %s", unit, size, took[0], 2*size, took[1])
+		return best
 	}
-	if total > 30*time.Second {
-		t.Errorf("%d inputs took %s in all, want linear time", 2*len(units), total)
+	for _, unit := range units {
+		unit := unit
+		small := measure(strings.Repeat(unit, size/len([]rune(unit))))
+		large := measure(strings.Repeat(unit, factor*size/len([]rune(unit))))
+		t.Logf("%q: %d characters %s, %d characters %s", unit, size, small, factor*size, large)
+		if large > bound {
+			t.Errorf("%q: %d characters took %s, want under %s", unit, factor*size, large, bound)
+		}
+		if small > noise && large > ratioLimit*small {
+			t.Errorf("%q: %dx the input took %s to %s, want linear time", unit, factor, small, large)
+		}
 	}
 }
 

@@ -49,9 +49,18 @@ import (
 // reachable from the internet, and a validator cannot know what is reachable.
 // Keeping such a version out is the owner's duty.
 //
+// The text is normalised first (see normalize): format characters such as a
+// zero width space or a soft hyphen are removed, every space separator becomes
+// a plain space, the dot lookalikes (U+2024, U+3002, U+FE52, U+FF61) become "."
+// and the fullwidth ASCII block becomes plain ASCII. The reasons below quote
+// the normalised text, so a fullwidth name is reported in plain ASCII. The
+// field path of the error still points to the entry.
+//
 // Words are cut at every character that is not a letter, a digit or one of
 // ". : - _", so backticks, emphasis, quotes, "=", "@", "|" and the like around
-// a name do not hide it.
+// a name do not hide it. A word with a hyphen or an underscore is checked
+// whole and again per part between those characters, so "nas.local-Rechner" is
+// seen while "Node.js-Server" and "node:22-alpine" pass.
 //
 // IPv4 short forms follow inet_aton: two to four numeric parts, each decimal,
 // leading zero octal or 0x hex. Four parts that parse are refused (0177.0.0.1).
@@ -76,8 +85,10 @@ import (
 // ending in a digit with a number tag (Python3:10), a name written like a domain
 // (Socket.io, asp.net), a file such as archive.tar.gz, a dotted package or
 // namespace name (com.example.app, Microsoft.AspNetCore.App) and a version
-// pinned with a letter and digit (pnpm@9x). It is a backstop for a slip, not a
-// review.
+// pinned with a letter and digit (pnpm@9x). A refused name glued to prose with
+// a hyphen (Kubernetes.io-Doku) and a number tag of four digits before a hyphen
+// (redis:6379-alpine) are refused on purpose, the rule prefers a false alarm
+// over a leak. It is a backstop for a slip, not a review.
 func forbiddenContent(text string) []string {
 	text = normalize(text)
 	var reasons []string

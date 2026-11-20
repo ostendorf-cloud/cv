@@ -173,6 +173,8 @@
   - Before the checks, format characters (a zero width space, a soft hyphen) are removed, every
     space separator becomes a plain space, the dot lookalikes (U+2024, U+3002, U+FE52, U+FF61)
     become `.` and the fullwidth ASCII block becomes plain ASCII.
+  - The error quotes the normalised text, so a fullwidth name such as `ｎａｓ．ｌｏｃａｌ` is
+    reported as `nas.local`. The field path in the error still points to the entry.
   - The check is a best effort filter and can never be complete. The owner reads every tools
     entry before it is merged.
   - What the check cannot catch:
