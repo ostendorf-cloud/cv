@@ -59,6 +59,16 @@ type jsonDocument struct {
 
 	// SkillCategories comes last, so every key above keeps its place.
 	SkillCategories []jsonSkillCategory `json:"skill_categories"`
+
+	// Tools follows skill_categories, again without moving an earlier key.
+	Tools []jsonTool `json:"tools"`
+}
+
+type jsonTool struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Group       string `json:"group"`
+	Description string `json:"description"`
 }
 
 // jsonSkillCategory is one skill group. The list is in display order: by
@@ -256,6 +266,11 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		Engagements:   make([]jsonEngagement, 0, len(doc.Engagements)),
 
 		SkillCategories: make([]jsonSkillCategory, 0, len(doc.SkillCategories)),
+		Tools:           make([]jsonTool, 0, len(doc.Tools)),
+	}
+
+	for _, e := range doc.Tools {
+		out.Tools = append(out.Tools, jsonTool{ID: e.ID, Name: e.Name, Group: string(e.Group), Description: e.Description})
 	}
 
 	for _, e := range sortedCategories(doc.SkillCategories) {

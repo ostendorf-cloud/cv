@@ -6,5 +6,10 @@ skills:
     category: devops-cloud
     name: Kubernetes
     level: expert
+tools:
+  - id: editor
+    name: Neovim
+    group: editor-shell
+    description: Editor fuer Code und Notizen.
 contact:
   email: contact@example.com

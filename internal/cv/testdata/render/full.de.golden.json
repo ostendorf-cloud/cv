@@ -278,5 +278,19 @@
       "name": "Unused de",
       "order": null
     }
+  ],
+  "tools": [
+    {
+      "id": "tool-1",
+      "name": "Example Editor",
+      "group": "editor-shell",
+      "description": "Editor text de."
+    },
+    {
+      "id": "tool-2",
+      "name": "Example Cluster",
+      "group": "homelab-platform",
+      "description": "Platform text de."
+    }
   ]
 }

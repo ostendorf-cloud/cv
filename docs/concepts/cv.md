@@ -124,6 +124,34 @@
   - One level only. A category has no parent.
   - Both are additive to schema version 1: the new key comes last, the skill's `category`
     comes after `evidence`.
+- Beyond LinkedIn parity, `tools` holds the tools the owner uses, so the uses page of
+  `ostendorf.dev` has a source. Required: `id`, `name`, `group`, `description`. The section is
+  optional as a whole, absent or empty means no tools.
+  - `group` is one of five enumerated values, in the order a uses page shows them:
+    `workstation`, `editor-shell` (editor and shell), `command-line` (command line tools),
+    `homelab-hardware` and `homelab-platform`. An unknown or empty group is refused. A new
+    group is a new enum value, so it needs its own versioning decision.
+  - `name` is a product name and is the same in both files in practice. `description` says what
+    the tool is used for: German in `data/cv.de.yaml`, English in `data/cv.en.yaml`. The `id` is
+    shared and matched by the drift rule.
+  - The homelab is a real network and this repository is public. Validation refuses, in `name`
+    and `description`, a URL (with or without credentials: an entry has no link field), an IPv4
+    or IPv6 address, a port (`host:8080`, `:8080`, `port 22`) and a hostname: three or more dot
+    separated labels ending in letters (`nas.example.com`) or any name ending in an internal
+    suffix (`.local`, `.lan`, `.internal`, `.intranet`, `.corp`, `.home`, `.private`,
+    `.localdomain`, `.arpa`, so `.home.arpa` too). Product names pass: `Home Assistant`,
+    `Node.js`, `ASP.NET`, `Vue.js 3`, `v1.2`, `Talos 1.9.2`. The check is a heuristic and a
+    backstop: it cannot see a bare name such as `nas01`.
+  - Versions: the rule forbids the exact version of anything reachable from the internet, and a
+    validator cannot know what is reachable. So the validator refuses no version, with one side
+    effect: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address and are
+    refused. Keeping the exact version of an exposed service out of an entry is the owner's duty.
+  - The real data files carry `tools: []` until the owner supplies the entries. Example entries
+    live in the test fixtures only.
+  - `tools` is the last JSON key, after `skill_categories`, a list of `id`, `name`, `group` and
+    `description`, in file order. A new key a consumer can ignore does not raise the schema
+    version (policy in `README.md`), so it is additive to version 1, which stays 1 until the
+    first release. `cvd` serves it as part of the same document at `GET /api/v1/cv`.
 - Three optional free text fields join existing sections: `grade` on `education`, `location` and
   `employment_type` on `experience`.
 - The date fields of the new sections are `YYYY-MM`, checked by validation. LinkedIn holds month
@@ -133,7 +161,8 @@
 - `certificates[].valid_until` is optional: a certificate without it has no expiry, and the JSON
   value is `null`.
 - The JSON document carries the new sections after `contact`, so the older keys keep their order.
-  `engagements` follows `organisations`, and `skill_categories` is the last key.
+  `engagements` follows `organisations`, `skill_categories` follows `engagements` and `tools`
+  is the last key.
 - Decision: no `engagement` evidence type for skills. Evidence already reaches a position
   through `experience`, and an engagement belongs to exactly one position. A new type adds a
   value every consumer must resolve, for a link nobody asked for yet. Adding it later is a new

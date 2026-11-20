@@ -808,3 +808,7 @@ engagements:
       Anforderungsanalyse und Entwicklung eines Kubelet Credential Providers in Go auf Basis neuer
       Kubernetes-Funktionen für Credential Provider. Für die Tests entstand eine eigene Umgebung
       aus Kubernetes-Cluster, Vault und Harbor Registry.
+
+# Die Werkzeuge liegen noch nicht vor. Einträge (id, name, group, description) nur mit echten
+# Daten ergänzen, nie mit Hostname, Adresse oder Port: `cv validate` lehnt diese ab.
+tools: []
