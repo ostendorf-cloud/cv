@@ -26,7 +26,8 @@ func (v *validator) err() error {
 }
 
 // Validate checks doc against every rule docs/concepts/cv.md states: the
-// required fields per section, the four skill levels, a duplicate id within
+// required fields per section, the four skill levels, a skill's category
+// against the skill categories that exist, a duplicate id within
 // a section, and a skill's evidence against the project, experience and
 // certificate ids that actually exist. source names the file doc came from,
 // for the error messages only.
@@ -35,6 +36,7 @@ func (v *validator) err() error {
 // it never stops at the first one.
 func Validate(doc Document, source string) error {
 	v := &validator{source: source}
+	categoryIDs := toSet(ids(doc.SkillCategories))
 
 	for i, e := range doc.Experience {
 		ref := entryRef("experience", i, e.ID)
@@ -64,6 +66,18 @@ func Validate(doc Document, source string) error {
 		v.required(ref, "id", e.ID)
 		v.required(ref, "name", e.Name)
 		v.level(ref, e.Level)
+		v.required(ref, "category", e.Category)
+		if strings.TrimSpace(e.Category) != "" && !categoryIDs[e.Category] {
+			v.fail(ref, "category: no skill category with id %q exists", e.Category)
+		}
+	}
+	for i, e := range doc.SkillCategories {
+		ref := entryRef("skill_categories", i, e.ID)
+		v.required(ref, "id", e.ID)
+		v.required(ref, "name", e.Name)
+		if e.Order != nil && *e.Order < 1 {
+			v.fail(ref, "order: %d is not a positive number", *e.Order)
+		}
 	}
 	for i, e := range doc.Projects {
 		ref := entryRef("projects", i, e.ID)

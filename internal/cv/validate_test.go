@@ -2,6 +2,9 @@ package cv
 
 import "testing"
 
+// testCategories is the one category the small test documents' skills name.
+var testCategories = []SkillCategoryEntry{{ID: "cat-1", Name: "Cloud"}}
+
 func TestValidate(t *testing.T) {
 	t.Parallel()
 
@@ -20,8 +23,9 @@ func TestValidate(t *testing.T) {
 				Certificates: []CertificateEntry{{
 					ID: "cert-1", Name: "CKAD", Issuer: "Linux Foundation", Issued: "2024-05", ValidUntil: "2027-05",
 				}},
+				SkillCategories: testCategories,
 				Skills: []SkillEntry{{
-					ID: "skill-1", Name: "Kubernetes", Level: LevelExpert,
+					ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1",
 					Evidence: []Evidence{
 						{Type: EvidenceTypeProject, Ref: "proj-1"},
 						{Type: EvidenceTypeExperience, Ref: "exp-1"},
@@ -68,8 +72,9 @@ func TestValidate(t *testing.T) {
 		},
 		"an unknown skill level fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: "guru"}},
-				Contact: Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: "guru", Category: "cat-1"}},
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
@@ -82,9 +87,10 @@ func TestValidate(t *testing.T) {
 		},
 		"a duplicate id within a section fails": {
 			doc: Document{
+				SkillCategories: testCategories,
 				Skills: []SkillEntry{
-					{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert},
-					{ID: "skill-1", Name: "Kubernetes, again", Level: LevelWorking},
+					{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1"},
+					{ID: "skill-1", Name: "Kubernetes, again", Level: LevelWorking, Category: "cat-1"},
 				},
 				Contact: Contact{Email: "contact@example.com"},
 			},
@@ -92,9 +98,53 @@ func TestValidate(t *testing.T) {
 		},
 		"a duplicate id across different sections passes": {
 			doc: Document{
-				Skills:   []SkillEntry{{ID: "shared", Name: "Kubernetes", Level: LevelExpert}},
-				Projects: []ProjectEntry{{ID: "shared", GithubRepo: "acme/cv", Description: "A CV"}},
-				Contact:  Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "shared", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1"}},
+				Projects:        []ProjectEntry{{ID: "shared", GithubRepo: "acme/cv", Description: "A CV"}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+		},
+		"a duplicate category id fails": {
+			doc: Document{
+				SkillCategories: []SkillCategoryEntry{{ID: "cat-1", Name: "Cloud"}, {ID: "cat-1", Name: "Cloud again"}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+			wantErr: true,
+		},
+		"a category without a name fails": {
+			doc: Document{
+				SkillCategories: []SkillCategoryEntry{{ID: "cat-1"}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+			wantErr: true,
+		},
+		"a category order below one fails": {
+			doc: Document{
+				SkillCategories: []SkillCategoryEntry{{ID: "cat-1", Name: "Cloud", Order: new(int)}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+			wantErr: true,
+		},
+		"a skill with an unknown category fails": {
+			doc: Document{
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "no-such-category"}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+			wantErr: true,
+		},
+		"a skill with an empty category fails": {
+			doc: Document{
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert}},
+				Contact:         Contact{Email: "contact@example.com"},
+			},
+			wantErr: true,
+		},
+		"a category without skills passes": {
+			doc: Document{
+				SkillCategories: testCategories,
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 		},
 		"a duplicate profile id within contact fails": {
@@ -111,29 +161,33 @@ func TestValidate(t *testing.T) {
 		},
 		"skill evidence against a project id that exists passes": {
 			doc: Document{
-				Skills:   []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "proj-1"}}}},
-				Projects: []ProjectEntry{{ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV"}},
-				Contact:  Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1", Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "proj-1"}}}},
+				Projects:        []ProjectEntry{{ID: "proj-1", GithubRepo: "acme/cv", Description: "A CV"}},
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 		},
 		"skill evidence against a project id that does not exist fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "no-such-project"}}}},
-				Contact: Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1", Evidence: []Evidence{{Type: EvidenceTypeProject, Ref: "no-such-project"}}}},
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"skill evidence of an unknown type fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}}},
-				Contact: Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1", Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}}},
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
 		"skill evidence with no ref fails": {
 			doc: Document{
-				Skills:  []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: EvidenceTypeProject}}}},
-				Contact: Contact{Email: "contact@example.com"},
+				SkillCategories: testCategories,
+				Skills:          []SkillEntry{{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1", Evidence: []Evidence{{Type: EvidenceTypeProject}}}},
+				Contact:         Contact{Email: "contact@example.com"},
 			},
 			wantErr: true,
 		},
@@ -161,9 +215,10 @@ func TestValidateReportsEveryProblemTogether(t *testing.T) {
 	t.Parallel()
 
 	doc := Document{
+		SkillCategories: testCategories,
 		Skills: []SkillEntry{
-			{ID: "skill-1", Level: "guru"},
-			{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}},
+			{ID: "skill-1", Level: "guru", Category: "cat-1"},
+			{ID: "skill-1", Name: "Kubernetes", Level: LevelExpert, Category: "cat-1", Evidence: []Evidence{{Type: "blog-post", Ref: "x"}}},
 		},
 		Contact: Contact{Email: "contact@example.com"},
 	}

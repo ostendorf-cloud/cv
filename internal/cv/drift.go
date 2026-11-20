@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 )
 
 // Drift compares de (data/cv.de.yaml) and en (data/cv.en.yaml)'s id sets,
@@ -36,7 +37,48 @@ func Drift(de, en Document) error {
 			}
 		}
 	}
+	problems = append(problems, groupingDrift(de, en)...)
 	return errors.Join(problems...)
+}
+
+// groupingDrift reports a skill whose category differs, and a category whose
+// order differs, between the two files, so the grouping cannot depend on the
+// language. Ids present on one side only are reported by Drift itself.
+func groupingDrift(de, en Document) []error {
+	var problems []error
+
+	enSkills := make(map[string]SkillEntry, len(en.Skills))
+	for _, s := range en.Skills {
+		enSkills[s.ID] = s
+	}
+	for _, s := range de.Skills {
+		if other, ok := enSkills[s.ID]; ok && s.Category != other.Category {
+			problems = append(problems, fmt.Errorf(
+				"cv: drift: skills %q has category %q in the German file but %q in the English one",
+				s.ID, s.Category, other.Category))
+		}
+	}
+
+	enCategories := make(map[string]SkillCategoryEntry, len(en.SkillCategories))
+	for _, c := range en.SkillCategories {
+		enCategories[c.ID] = c
+	}
+	for _, c := range de.SkillCategories {
+		if other, ok := enCategories[c.ID]; ok && orderText(c.Order) != orderText(other.Order) {
+			problems = append(problems, fmt.Errorf(
+				"cv: drift: skill_categories %q has order %s in the German file but %s in the English one",
+				c.ID, orderText(c.Order), orderText(other.Order)))
+		}
+	}
+	return problems
+}
+
+// orderText names an optional order for a message and for comparison.
+func orderText(order *int) string {
+	if order == nil {
+		return "unset"
+	}
+	return strconv.Itoa(*order)
 }
 
 // sortedKeys returns set's keys in a stable order, so Drift's error

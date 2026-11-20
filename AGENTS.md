@@ -14,7 +14,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`, with
   `YYYY-MM` dates), the optional `engagements` section (projects of a position without a
   repository, with `YYYY-MM` or `YYYY` dates; engagements are anonymised: never a customer
-  name or NDA bound detail), the four skill levels, a duplicate id within a section, a
+  name or NDA bound detail), the `skill_categories` section (each skill names one category
+  by id; the JSON lists the categories in display order and consumers omit an empty one),
+  the four skill levels, a duplicate id within a section, a
   skill's evidence checked against the project, experience and certificate ids that
   actually exist, and the two-file drift check between `data/cv.de.yaml` and
   `data/cv.en.yaml`. Every problem one load finds is aggregated into one error, the same

@@ -2,9 +2,11 @@ package cv
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -54,6 +56,17 @@ type jsonDocument struct {
 	Patents       []jsonPatent       `json:"patents"`
 	Organisations []jsonOrganisation `json:"organisations"`
 	Engagements   []jsonEngagement   `json:"engagements"`
+
+	// SkillCategories comes last, so every key above keeps its place.
+	SkillCategories []jsonSkillCategory `json:"skill_categories"`
+}
+
+// jsonSkillCategory is one skill group. The list is in display order: by
+// order where set, then file order.
+type jsonSkillCategory struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Order *int   `json:"order"`
 }
 
 type jsonExperience struct {
@@ -164,6 +177,7 @@ type jsonSkill struct {
 	Name     string         `json:"name"`
 	Level    string         `json:"level"`
 	Evidence []jsonEvidence `json:"evidence"`
+	Category string         `json:"category"`
 }
 
 type jsonProject struct {
@@ -240,6 +254,12 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		Patents:       make([]jsonPatent, 0, len(doc.Patents)),
 		Organisations: make([]jsonOrganisation, 0, len(doc.Organisations)),
 		Engagements:   make([]jsonEngagement, 0, len(doc.Engagements)),
+
+		SkillCategories: make([]jsonSkillCategory, 0, len(doc.SkillCategories)),
+	}
+
+	for _, e := range sortedCategories(doc.SkillCategories) {
+		out.SkillCategories = append(out.SkillCategories, jsonSkillCategory(e))
 	}
 
 	for _, e := range doc.Experience {
@@ -311,6 +331,7 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		}
 		out.Skills = append(out.Skills, jsonSkill{
 			ID: e.ID, Name: e.Name, Level: string(e.Level), Evidence: evidence,
+			Category: e.Category,
 		})
 	}
 	for _, e := range doc.Projects {
@@ -339,6 +360,24 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		return nil, fmt.Errorf("cv: render json: %w", err)
 	}
 	return buf.Bytes(), nil
+}
+
+// sortedCategories returns a copy of entries in display order: entries with
+// an order first, ascending, then the rest, each group in file order.
+func sortedCategories(entries []SkillCategoryEntry) []SkillCategoryEntry {
+	out := slices.Clone(entries)
+	slices.SortStableFunc(out, func(a, b SkillCategoryEntry) int {
+		switch {
+		case a.Order != nil && b.Order != nil:
+			return cmp.Compare(*a.Order, *b.Order)
+		case a.Order != nil:
+			return -1
+		case b.Order != nil:
+			return 1
+		}
+		return 0
+	})
+	return out
 }
 
 // trimStrings removes leading and trailing whitespace from every string in

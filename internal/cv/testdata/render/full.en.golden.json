@@ -73,13 +73,15 @@
           "type": "project",
           "ref": "proj-1"
         }
-      ]
+      ],
+      "category": "cat-1"
     },
     {
       "id": "skill-2",
       "name": "Go en",
       "level": "working",
-      "evidence": []
+      "evidence": [],
+      "category": "cat-2"
     }
   ],
   "projects": [
@@ -258,6 +260,23 @@
       "start": null,
       "end": null,
       "summary": "Other engagement text en."
+    }
+  ],
+  "skill_categories": [
+    {
+      "id": "cat-2",
+      "name": "Programming en",
+      "order": 1
+    },
+    {
+      "id": "cat-1",
+      "name": "Cloud en",
+      "order": 2
+    },
+    {
+      "id": "cat-3",
+      "name": "Unused en",
+      "order": null
     }
   ]
 }

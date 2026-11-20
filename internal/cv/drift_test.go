@@ -41,6 +41,49 @@ func TestDrift(t *testing.T) {
 			en:      Document{Skills: []SkillEntry{skill("kubernetes"), skill("terraform")}},
 			wantErr: true,
 		},
+		"a category id only in the German file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}, {ID: "tools", Name: "Werkzeuge"}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+			wantErr: true,
+		},
+		"a category id only in the English file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}, {ID: "tools", Name: "Tools"}}},
+			wantErr: true,
+		},
+		"matching category ids with differing names have no drift": {
+			de: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke"}}},
+			en: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+		},
+		"a skill in another category in the English file is drift": {
+			de:      Document{Skills: []SkillEntry{{ID: "go", Name: "Go", Level: LevelWorking, Category: "programming"}}},
+			en:      Document{Skills: []SkillEntry{{ID: "go", Name: "Go", Level: LevelWorking, Category: "tools"}}},
+			wantErr: true,
+		},
+		"a skill in another category in the German file is drift": {
+			de:      Document{Skills: []SkillEntry{{ID: "go", Name: "Go", Level: LevelWorking, Category: "tools"}}},
+			en:      Document{Skills: []SkillEntry{{ID: "go", Name: "Go", Level: LevelWorking, Category: "programming"}}},
+			wantErr: true,
+		},
+		"a category order only in the German file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke", Order: new(1)}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud"}}},
+			wantErr: true,
+		},
+		"a category order only in the English file is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke"}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud", Order: new(1)}}},
+			wantErr: true,
+		},
+		"a differing category order value is drift": {
+			de:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke", Order: new(1)}}},
+			en:      Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud", Order: new(2)}}},
+			wantErr: true,
+		},
+		"equal category orders have no drift": {
+			de: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Wolke", Order: new(2)}}},
+			en: Document{SkillCategories: []SkillCategoryEntry{{ID: "cloud", Name: "Cloud", Order: new(2)}}},
+		},
 		"a contact profile only on one side is drift": {
 			de:      Document{Contact: Contact{Profiles: []Profile{profile("github")}}},
 			en:      Document{},
