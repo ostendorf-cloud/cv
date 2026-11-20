@@ -71,8 +71,9 @@ bytes, so the same `schema_version`.
 
 - The current schema version is `1`. It is the integer `schema_version` at the top of every
   document, and `SchemaVersion` in `internal/cv/render_json.go`.
-- `ostendorf.dev` and `simon-ostendorf.de` read these two names and this version. A consumer
-  refuses a document whose `schema_version` it does not know.
+- `ostendorf.dev` and `simon-ostendorf.de` read this document, in the same two languages and
+  this version, from `cvd`'s API at runtime, server to server. The release assets stay for
+  download and audit. A consumer refuses a document whose `schema_version` it does not know.
 - A rename, a removed key, a changed type or a changed meaning raises the version. A new key
   that a consumer can ignore does not.
 - Top level keys, in order: `schema_version`, `language`, `experience`, `education`,
