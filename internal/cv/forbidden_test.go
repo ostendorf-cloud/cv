@@ -97,6 +97,49 @@ func TestForbiddenContentRefuses(t *testing.T) {
 		"single label host at":       {"root@nas01", "e-mail"},
 		"single label host with git": {"git@nas01:org/repo", "e-mail"},
 		"one digit mac group":        {"NIC 0:11:22:33:44:55", "MAC"},
+
+		"host glued with a hyphen":      {"Der nas.local-Rechner", "hostname"},
+		"fqdn glued with a hyphen":      {"nas.example.com-Instanz", "hostname"},
+		"lan glued with a hyphen":       {"router.lan-Zugang", "hostname"},
+		"internal glued with a hyphen":  {"git.internal-Repo", "hostname"},
+		"tld name glued with a hyphen":  {"example.com-Domain", "hostname"},
+		"host glued with an underscore": {"nas.local_backup", "hostname"},
+		"ipv6 glued with a hyphen":      {"fe80::1-Adresse", "IPv6"},
+		"loopback glued with a hyphen":  {"::1-Loopback", "IPv6"},
+		"ipv6 glued, long":              {"2001:db8::1-Netz", "IPv6"},
+		"ipv6 glued with an underscore": {"fe80::1_x", "IPv6"},
+		"port glued with a hyphen":      {":8080-Port", "port"},
+		"host port glued with a hyphen": {"nas01:22-Port", "port"},
+		"dotted host port glued":        {"nas.local:22-Weiterleitung", "port"},
+		"ipv4 glued with a hyphen":      {"10.0.0.1-Netz", "IPv4"},
+		"zero width space in a host":    {"nas\u200b.local", "hostname"},
+		"soft hyphen in a host":         {"nas.lo\u00adcal", "hostname"},
+		"fullwidth host":                {"ｎａｓ．ｌｏｃａｌ", "hostname"},
+		"fullwidth dot":                 {"nas\uff0elocal", "hostname"},
+		"ideographic dot":               {"nas。local", "hostname"},
+		"halfwidth ideographic dot":     {"nas｡local", "hostname"},
+		"one dot leader":                {"nas․local", "hostname"},
+		"dot leader address":            {"10․0․0․1", "IPv4"},
+		"fullwidth dot address":         {"192．168．1．1", "IPv4"},
+		"small full stop":               {"nas\ufe52local", "hostname"},
+		"zero width space in a scheme":  {"https\u200b://x", "URL"},
+		"no break space in port":        {"Port\u00a022", "port"},
+		"no break space before tcp":     {"22\u00a0/tcp", "port"},
+		"no break space after udp":      {"udp\u00a05004", "port"},
+		"no break space in listens":     {"listens\u00a0on\u00a08443", "port"},
+		"ideographic space after port":  {"port\u300022", "port"},
+		"two label dev":                 {"nas.dev", "hostname"},
+		"two label cloud":               {"nas.cloud", "hostname"},
+		"two label tech":                {"nas.tech", "hostname"},
+		"two label eu":                  {"nas.eu", "hostname"},
+		"two label ch":                  {"nas.ch", "hostname"},
+		"two label at":                  {"nas.at", "hostname"},
+		"two label uk":                  {"nas.uk", "hostname"},
+		"two label app":                 {"nas.app", "hostname"},
+		"two label de":                  {"nas.de", "hostname"},
+		"two label org":                 {"nas.org", "hostname"},
+		"two label net":                 {"nas.net", "hostname"},
+		"two label io, ascii name":      {"nas.io", "hostname"},
 	}
 
 	for name, tc := range tests {
@@ -168,6 +211,16 @@ func TestForbiddenContentAccepts(t *testing.T) {
 		"pinned with an at sign":        "node@22 and go@1.22",
 		"hex number in prose":           "Colour 0xFF",
 		"mac like short hex":            "AA:BB:CC",
+		"product glued with a hyphen":   "Node.js-Server and Vue.js-Projekte",
+		"version glued with a hyphen":   "Python 3.12-Umgebung and Ubuntu 24.04-LTS",
+		"cpp scope glued":               "std::vector-Typen",
+		"cpp glued":                     "C++-Code",
+		"dotnet glued":                  ".NET-Anwendung and ASP.NET-Server",
+		"k8s glued":                     "k8s-Cluster",
+		"ci cd glued":                   "CI/CD-Pipeline",
+		"hyphenated names":              "Kolla-Ansible, Open-Source, Apache-2.0, GPL-3.0-or-later",
+		"emoji with a joiner":           "Familie " + string([]rune{0x1F468, 0x200d, 0x1F469, 0x200d, 0x1F467}) + " z.B. so",
+		"no break space in prose":       "Port und Adapter, 10 GbE",
 		"two part version":              "Kubernetes 1.31 and v1.2",
 		"version with a leading zero":   "Ubuntu 24.04",
 		"three part version, small":     "Go 3.14.15",
@@ -204,7 +257,7 @@ func TestForbiddenContentSeesThroughFormatting(t *testing.T) {
 	wrappers := []string{
 		"`%s`", "*%s*", "**%s**", "_%s_", "=%s", "host=%s", "„%s“", "«%s»", "%s…", "%s|", "@%s",
 		"~%s", "#%s", "$%s", "%%%s", "&%s", "+%s", "(%s)", "[%s]", "\"%s\"", "'%s'", "<%s>", "%s.",
-		"%s!", "%s?", "%s;", "%s,",
+		"%s!", "%s?", "%s;", "%s,", "%s-Zusatz", "%s_x", "Neu-%s", "x_%s",
 	}
 	for _, b := range bare {
 		for _, w := range wrappers {
@@ -216,32 +269,31 @@ func TestForbiddenContentSeesThroughFormatting(t *testing.T) {
 	}
 }
 
-// TestForbiddenContentIsFastOnLongInput runs twelve inputs of 100000
-// characters. The patterns are RE2, so the time is linear, this confirms it.
+// TestForbiddenContentIsFastOnLongInput runs adversarial inputs of 50000
+// and 100000 characters and logs both times. The patterns are RE2 and the word
+// splitting is one pass, so doubling the input doubles the time.
 func TestForbiddenContentIsFastOnLongInput(t *testing.T) {
 	t.Parallel()
 
-	const size = 100000
-	inputs := []string{
-		strings.Repeat("a", size),
-		strings.Repeat("a.", size/2),
-		strings.Repeat("1.", size/2),
-		strings.Repeat(":", size),
-		strings.Repeat("a:1", size/3),
-		strings.Repeat("0x", size/2),
-		strings.Repeat("a@", size/2),
-		strings.Repeat("a b ", size/4),
-		strings.Repeat("-", size),
-		strings.Repeat("00:11:", size/6),
-		strings.Repeat(`\`, size),
-		strings.Repeat("ü.", size/3),
+	units := []string{
+		"a", "a.", "1.", ":", "a:1", "0x", "a@", "a b ", "-", "_", "a-", "a_", "a.b-", "1-", "::-",
+		"00:11:", `\`, "ü.", string(rune(0x200b)) + ".", string(rune(0xff0e)),
 	}
-	start := time.Now()
-	for _, in := range inputs {
-		forbiddenContent(in)
+	const size = 50000
+	var total time.Duration
+	for _, unit := range units {
+		var took [2]time.Duration
+		for i, n := range []int{size, 2 * size} {
+			in := strings.Repeat(unit, n/len([]rune(unit)))
+			start := time.Now()
+			forbiddenContent(in)
+			took[i] = time.Since(start)
+			total += took[i]
+		}
+		t.Logf("%q: %d characters %s, %d characters %s", unit, size, took[0], 2*size, took[1])
 	}
-	if elapsed := time.Since(start); elapsed > 20*time.Second {
-		t.Errorf("twelve inputs of %d characters took %s, want linear time", size, elapsed)
+	if total > 30*time.Second {
+		t.Errorf("%d inputs took %s in all, want linear time", 2*len(units), total)
 	}
 }
 

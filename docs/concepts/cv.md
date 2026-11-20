@@ -167,11 +167,23 @@
     `ASP.NET` passes and `asp.net` does not.
   - Words are cut at every character that is not a letter, a digit or one of `. : - _`, so
     backticks, emphasis, quotes, `=`, `|`, an ellipsis and the like around a name do not hide
-    it. A label may hold an underscore.
+    it. A label may hold an underscore. A word with a hyphen or an underscore is checked whole
+    and again per part, so `nas.local-Rechner`, `fe80::1-Adresse` and `nas01:22-Port` are seen
+    while `Node.js-Server` and `node:22-alpine` pass.
+  - Before the checks, format characters (a zero width space, a soft hyphen) are removed, every
+    space separator becomes a plain space, the dot lookalikes (U+2024, U+3002, U+FE52, U+FF61)
+    become `.` and the fullwidth ASCII block becomes plain ASCII.
+  - The check is a best effort filter and can never be complete. The owner reads every tools
+    entry before it is merged.
   - What the check cannot catch:
     - a bare single label: `nas01`, `localhost`, a host name without a dot
     - `user@host` with a host of letters only
-    - a two label name that ends in none of the listed suffixes or TLDs (`nas.example`)
+    - a two label name that ends in none of the listed suffixes or TLDs (`nas.example`,
+      `nas.lokal`): a false negative by design
+    - an encoded name: percent encoding (`nas%2Elocal`), base64 or any escaping
+    - a name broken across a line or split by prose
+    - other lookalike characters: Cyrillic or Greek letters that look Latin, combining marks
+      inside a label (`nas.lo` plus U+0301 plus `cal`), and any dot lookalike not listed above
     - a name with a spaced or defanged dot (`nas dot example`, `nas[.]local`)
     - an address with other separators (`192 168 1 1`, `192-168-1-1`), a MAC address without
       separators, and a version shaped short IPv4 form such as `10.1`
@@ -190,6 +202,9 @@
     - a file such as `archive.tar.gz`, and a dotted package or namespace name with three or
       more labels (`com.example.app`, `Microsoft.AspNetCore.App`)
     - a version pinned with letters and a digit after an at sign (`pnpm@9x`)
+    - a refused name glued to prose with a hyphen or an underscore (`Kubernetes.io-Doku`), and
+      a plain word with a four digit number tag before a hyphen (`redis:6379-alpine`)
+    - a non ASCII word with a dot and no space after it (`Größe.Das`)
   - Versions: the rule forbids the exact version of anything reachable from the internet, and a
     validator cannot know what is reachable. So the validator refuses no version, with two side
     effects: four numbers separated by dots, such as `1.2.3.4`, look like an IPv4 address, and a

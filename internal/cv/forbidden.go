@@ -79,6 +79,7 @@ import (
 // pinned with a letter and digit (pnpm@9x). It is a backstop for a slip, not a
 // review.
 func forbiddenContent(text string) []string {
+	text = normalize(text)
 	var reasons []string
 	add := func(reason string) { reasons = append(reasons, reason) }
 
@@ -143,7 +144,7 @@ var (
 
 	// portWordPattern matches "port 22", "ports: 22", "port=22", "22/tcp",
 	// "TCP/22", "udp 5004" and "listens on 8443".
-	portWordPattern = regexp.MustCompile(`(?i)\bports?\b[\s:=#]*[0-9]{2,5}\b|\b[0-9]{1,5}/(?:tcp|udp)\b|\b(?:tcp|udp)[/ :][0-9]{2,5}\b|\blisten(?:s|ing)?(?:\s+on)?\s+:?[0-9]{2,5}\b`)
+	portWordPattern = regexp.MustCompile(`(?i)\bports?\b[\s:=#]*[0-9]{2,5}\b|\b[0-9]{1,5}\s*/\s*(?:tcp|udp)\b|\b(?:tcp|udp)(?:\s*[/:]\s*|\s+)[0-9]{2,5}\b|\blisten(?:s|ing)?(?:\s+on)?\s+:?[0-9]{2,5}\b`)
 
 	// hostLabels matches a word made only of host labels joined by dots. A
 	// label holds letters and digits of any script, so a non ASCII name matches.
@@ -180,10 +181,43 @@ var fileExtensions = map[string]bool{
 // run of letters, digits and ". : - _": every other character, such as a
 // backtick, an asterisk, a quote, "=", "@", "|", a bracket or an ellipsis, ends
 // a word, so formatting around a name does not hide it.
+//
+// A word that holds a hyphen or an underscore is listed whole and, after it,
+// once per part between those characters, so a name glued to prose with a
+// hyphen ("nas.local-Rechner") is seen. The whole word stays for punycode.
 func words(text string) []string {
-	return strings.FieldsFunc(text, func(r rune) bool {
+	whole := strings.FieldsFunc(text, func(r rune) bool {
 		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(".:-_", r)
 	})
+	out := make([]string, 0, len(whole))
+	for _, w := range whole {
+		out = append(out, w)
+		if strings.ContainsAny(w, "-_") {
+			out = append(out, strings.FieldsFunc(w, func(r rune) bool { return r == '-' || r == '_' })...)
+		}
+	}
+	return out
+}
+
+// normalize removes what hides a name from the checks: format characters such
+// as a zero width space or a soft hyphen, and maps every space separator to a
+// plain space, the dot lookalikes (U+2024, U+3002, U+FE52, U+FF61) to ".", and
+// the fullwidth ASCII block (U+FF01 to U+FF5E, which holds fullwidth letters,
+// digits, colon and full stop) to plain ASCII.
+func normalize(text string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case unicode.Is(unicode.Cf, r):
+			return -1
+		case unicode.Is(unicode.Zs, r):
+			return ' '
+		case r == 0x2024 || r == 0x3002 || r == 0xFE52 || r == 0xFF61:
+			return '.'
+		case r >= 0xFF01 && r <= 0xFF5E:
+			return r - 0xFEE0
+		}
+		return r
+	}, text)
 }
 
 // trimEdges removes the characters a word may carry at its ends but that are
