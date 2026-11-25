@@ -667,7 +667,13 @@ func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]b
 	// to have, such as a runner's Liberation Sans.
 	cmd := exec.CommandContext(ctx, bin, "compile", "--font-path", fontPath, in, out, "--ignore-system-fonts")
 	cmd.Stderr = &stderr
+	// When ctx ends, the process is killed. A child it started could still
+	// hold stderr open; WaitDelay bounds how long Wait waits for it.
+	cmd.WaitDelay = time.Second
 	if err := cmd.Run(); err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, fmt.Errorf("cv: render pdf: typst compile stopped: %w", ctxErr)
+		}
 		return nil, fmt.Errorf("cv: render pdf: typst compile: %w\n%s", err, strings.TrimSpace(stderr.String()))
 	}
 	pdf, err := os.ReadFile(out)

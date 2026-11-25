@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // portrait is the repository's own portrait, the default of --photo.
@@ -136,6 +137,39 @@ func TestRunRenderPDF(t *testing.T) {
 		}
 		if _, err := os.Stat(out); !os.IsNotExist(err) {
 			t.Errorf("the output directory exists after a failed render: %v", err)
+		}
+	})
+
+	t.Run("a typst that hangs fails after the timeout and writes nothing", func(t *testing.T) {
+		t.Parallel()
+
+		bin := fakeTypst(t, `exec sleep 30`)
+		out := filepath.Join(t.TempDir(), "out")
+		var stdout, stderr bytes.Buffer
+		start := time.Now()
+		code := run(renderPDFArgs(bin, out, "--photo", "", "--typst-timeout", "200ms"), &stdout, &stderr)
+		if code != 1 {
+			t.Fatalf("code = %d, want 1, stderr = %q", code, stderr.String())
+		}
+		// The fake sleeps 30 seconds; returning long before that shows the
+		// timeout stopped it, not the fake's own end.
+		if took := time.Since(start); took > 10*time.Second {
+			t.Errorf("render returned after %s, want shortly after the timeout", took)
+		}
+		if _, err := os.Stat(out); !os.IsNotExist(err) {
+			t.Errorf("the output directory exists after a timed out render: %v", err)
+		}
+	})
+
+	t.Run("a timeout that is not positive is a usage error", func(t *testing.T) {
+		t.Parallel()
+
+		for _, timeout := range []string{"0s", "-1s"} {
+			var stdout, stderr bytes.Buffer
+			code := run(renderPDFArgs("/nonexistent", filepath.Join(t.TempDir(), "out"), "--typst-timeout", timeout), &stdout, &stderr)
+			if code != 2 {
+				t.Errorf("--typst-timeout %s: code = %d, want 2", timeout, code)
+			}
 		}
 	})
 

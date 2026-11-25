@@ -162,6 +162,8 @@ go test ./internal/cv -run TestRenderJSONGolden -update
 - The layout is described in `docs/concepts/cv.md`, "PDF production".
 - The sidebar photo is `--photo`, default `assets/portrait.jpg`. A missing file or one that
   is not a JPEG fails the render. `--photo ""` renders without a photo.
+- `--typst-timeout`, default `1m`, stops one typst compile that runs longer and fails the
+  render. A compile of the real data takes well under a second.
 - The font is Go Regular and Go Bold, embedded in the binary from
   `internal/cv/templates/fonts/` (BSD 3-Clause, see the `LICENSE` there).
 - A certificate whose `valid_until` month is before the current month is marked as expired.
