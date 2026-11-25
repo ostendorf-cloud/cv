@@ -1,0 +1,9 @@
+projects:
+  - id: alpha
+    github_repo: example/alpha
+    description: Das erste Projekt.
+  - id: gone
+    github_repo: example/gone
+    description: Ein Projekt, dessen Repository nicht existiert.
+contact:
+  email: contact@example.com

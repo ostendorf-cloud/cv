@@ -190,10 +190,35 @@ type jsonSkill struct {
 	Category string         `json:"category"`
 }
 
-type jsonProject struct {
+// jsonProjectCore is the hand written part of a project. It matches the YAML
+// model field for field, so a new model field breaks the build.
+type jsonProjectCore struct {
 	ID          string `json:"id"`
 	GithubRepo  string `json:"github_repo"`
 	Description string `json:"description"`
+}
+
+// jsonProject is the hand written part plus the two keys merged in from
+// GitHub at render time. Both keys are absent, not null, for a project with
+// no enrichment: no Enrichment was passed, the lookup failed, or GitHub
+// reports no language. The encoder flattens the embedded core.
+type jsonProject struct {
+	jsonProjectCore
+
+	Languages     []jsonProjectLanguage `json:"languages,omitempty"`
+	LatestRelease *jsonProjectRelease   `json:"latest_release,omitempty"`
+}
+
+type jsonProjectLanguage struct {
+	Name  string `json:"name"`
+	Bytes int64  `json:"bytes"`
+}
+
+type jsonProjectRelease struct {
+	Tag         string  `json:"tag"`
+	Name        *string `json:"name"`
+	URL         *string `json:"url"`
+	PublishedAt *string `json:"published_at"`
 }
 
 type jsonReference struct {
@@ -234,6 +259,14 @@ type jsonContact struct {
 // reaches the output. RenderJSON does not validate doc; the caller does,
 // through Load or LoadPair, before it renders.
 func RenderJSON(doc Document, lang string) ([]byte, error) {
+	return RenderJSONEnriched(doc, lang, nil)
+}
+
+// RenderJSONEnriched is RenderJSON with the GitHub facts of enr merged into
+// each project that has some: the keys languages and latest_release. A
+// project without an entry in enr renders exactly as RenderJSON renders it.
+// cvd calls RenderJSON, never this, so the service makes no GitHub call.
+func RenderJSONEnriched(doc Document, lang string, enr Enrichment) ([]byte, error) {
 	known := false
 	for _, l := range Languages {
 		known = known || l == lang
@@ -350,7 +383,18 @@ func RenderJSON(doc Document, lang string) ([]byte, error) {
 		})
 	}
 	for _, e := range doc.Projects {
-		out.Projects = append(out.Projects, jsonProject(e))
+		p := jsonProject{jsonProjectCore: jsonProjectCore(e)}
+		if info, ok := enr.For(e); ok {
+			for _, l := range info.Languages {
+				p.Languages = append(p.Languages, jsonProjectLanguage{Name: l.Name, Bytes: l.Bytes})
+			}
+			if r := info.LatestRelease; r != nil {
+				p.LatestRelease = &jsonProjectRelease{
+					Tag: r.Tag, Name: optional(r.Name), URL: optional(r.URL), PublishedAt: optional(r.PublishedAt),
+				}
+			}
+		}
+		out.Projects = append(out.Projects, p)
 	}
 	for _, e := range doc.References {
 		out.References = append(out.References, jsonReference(e))

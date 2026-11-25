@@ -3,7 +3,8 @@
 ## Problem
 
 - The repository holds the data model with its validation, `cv render json`, and `cvd`, which
-  serves the JSON document. No PDF or README renderer and no GitHub loop exists yet.
+  serves the JSON document. `cv render json` merges each project's languages and latest release
+  from GitHub. No PDF or README renderer and no skills suggestion exists yet.
 - Career, education, skill and project facts exist only as hand written text scattered across an
   old résumé, a GitHub bio and memory, not as one structured source.
 - `ostendorf.dev` and `simon-ostendorf.de` have both already committed, in their own concept
@@ -326,8 +327,9 @@ contact:
 ### Three renderers, no fourth
 
 - `cv render pdf`, `cv render json` and `cv render readme` each read both data files and write
-  one artefact. Only `render json` exists today. Merging in GitHub project data is planned, no
-  renderer does it yet. No `cv render linkedin`: dropped per the non goals above.
+  one artefact. Only `render json` exists today, and it merges in GitHub project data. The
+  other renderers take the same `cv.Enrichment`. No `cv render linkedin`: dropped per the non
+  goals above.
 - `cvd` is not a fourth renderer. It serves the JSON document `cv render json` also writes,
   see the next section.
 - The README block is never committed directly to the profile repository. `cv render readme`
@@ -446,8 +448,8 @@ they are changed.
 
 ## Open questions
 
-- Where does the GitHub token `cv render` authenticates with live, and at what scope? Owner:
-  whoever wires the release workflow.
+- Decided in issue 8: no dedicated token for public repositories, the release job's own
+  token lifts the rate limit. See `AGENTS.md`, "The GitHub token".
 - Does `cv suggest-skills` need to remember an already-declined suggestion, so a repeat run does
   not resurface it? Owner: whoever implements it.
 - The exact typst template and page layout; this document settles the tool, not the design.

@@ -111,7 +111,13 @@ tasks:
       - go build -o bin/cvd ./cmd/cvd
 
   render:json:
-    desc: Render cv.de.json and cv.en.json into rendered/
+    desc: Render cv.de.json and cv.en.json into rendered/, offline, without GitHub data
+    cmds:
+      - go run ./cmd/cv render json --no-github --out rendered
+
+  render:json:github:
+    desc: Render cv.de.json and cv.en.json into rendered/ with GitHub data, the release path
+    # GITHUB_TOKEN and GITHUB_TOKEN_FILE are inherited from the environment.
     cmds:
       - go run ./cmd/cv render json --out rendered
 

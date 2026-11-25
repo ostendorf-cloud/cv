@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/ostendorf-cloud/cv/internal/github"
 )
 
 // validator collects every problem found while checking one Document,
@@ -84,6 +86,9 @@ func Validate(doc Document, source string) error {
 		ref := entryRef("projects", i, e.ID)
 		v.required(ref, "id", e.ID)
 		v.required(ref, "github_repo", e.GithubRepo)
+		if strings.TrimSpace(e.GithubRepo) != "" && !github.ValidRepo(e.GithubRepo) {
+			v.fail(ref, "github_repo: %q is not spelled owner/name", e.GithubRepo)
+		}
 		v.required(ref, "description", e.Description)
 	}
 	for i, e := range doc.References {
