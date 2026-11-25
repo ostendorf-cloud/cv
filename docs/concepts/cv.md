@@ -427,10 +427,11 @@ they are changed.
   template field the model lacks fails the render. The golden test pins the generated typst
   source, not the PDF bytes.
 - The design is the project's own: a sidebar on page one and a timeline in the main column.
-  It aims at three pages, four at most. Colours: a deep ink blue (`#1e3a5f`) for names and
-  headings, a warm orange (`#c2410c`) used sparingly for the timeline dots and the skill
-  category labels, greys for text, and a pale blue grey panel (`#eef2f7`) behind the
-  sidebar. Body text is 9.5 pt, descriptions 9 pt.
+  With the real data both PDFs have four pages, the most the page check allows. The issue
+  asked for two or three, so the owner decides whether to shorten or to keep four. Colours:
+  a deep ink blue (`#1e3a5f`) for names and headings, a warm orange (`#c2410c`) used
+  sparingly for the timeline dots and the skill category labels, greys for text, and a pale
+  blue grey panel (`#eef2f7`) behind the sidebar. Body text is 9.5 pt, descriptions 9 pt.
   - Page one is a grid of two columns. The left one, 6 cm wide on the tinted panel, is the
     sidebar. The right one holds the first section of the main column. Every later section
     flows below the grid at full width. The sidebar is a flow of separate blocks: when it is
@@ -450,17 +451,17 @@ they are changed.
     first.
   - Main column sections, in this order: experience, engagements, education, certificates,
     exam results, awards, volunteering, then courses, publications, patents, memberships
-    and references when the data has them. A section heading is a small uppercase, letter
-    spaced label over a thin full width rule. There is no profile text in the model, so no
+    and references when the data has them. A section heading is a small uppercase label
+    over a thin full width rule. There is no profile text in the model, so no
     profile section.
   - Entries are a timeline: a small orange dot in the gutter, the dates small and grey above
     the title, the title in bold, the organisation (for an engagement the sector and the
     employer) on its own grey line, a gap, then the description.
   - A certificate past its `valid_until` month carries an `expired` badge. Engagements keep
     their full description.
-- If the PDF ever needs more than four pages, the PDF leaves out content, never the data:
-  first the exam results, then the volunteering entries that started before 2022. Neither
-  is cut today.
+- If the PDF ever needs more than four pages, or the owner wants three, the PDF leaves out
+  content, never the data: first the exam results, then the volunteering entries that
+  started before 2022. Neither is cut today.
 - What the PDF leaves out, to stay within the page budget. The data and the JSON keep all
   of it, and nothing is cut from the data files.
   - The repository `projects` list. The websites show it with its GitHub data, and on paper

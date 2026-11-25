@@ -186,7 +186,7 @@ go test ./internal/cv -run TestRenderTypstGolden -update
 
 To look at the PDFs, run `task render:pdf`, or download the `cv-pdf-preview` artefact of
 the `render-pdf` job in the `checks` workflow. That job fails when a PDF has fewer than one
-or more than four pages.
+or more than four pages. With the real data both PDFs have four pages today.
 
 ## Configuration
 
