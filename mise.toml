@@ -23,6 +23,9 @@ goreleaser = "2"
 # copy the new digests from the release page into mise.lock by hand, never computed from a
 # download. TestTypstLockMatchesMisePin in cmd/cv fails while the two versions differ.
 typst = "0.14.2"
+# pdftotext and pdfinfo: the PDF tests read the text layer the way an applicant tracking system
+# does, and scripts/check-pdf-pages.sh counts the pages. The registry maps poppler to conda.
+poppler = "26.11.0"
 # Pinned to the 3.x line, not 4.x: the helm-unittest plugin used to verify
 # charts/cv targets Helm 3's plugin API.
 helm = "4.3.2"
