@@ -417,10 +417,13 @@ they are changed.
 - CI also calls `cv validate` directly, in its own job, on every push: a change to `data/*.yaml`
   is checked before it is exercised by any render.
 
-### PDF production: typst, through mise
+### PDF production: typst, pinned with a checksum
 
 - `cv render pdf` fills a typst template with the data and shells out to `typst compile`. `typst`
-  is in the mise registry and gets pinned in `mise.toml` like every other tool here.
+  is in the mise registry, but `mise.toml` cannot check its archive without a `mise.lock` for
+  every tool, and the release job that runs it can write to the repository. So
+  `scripts/install-typst.sh` pins the version and the sha256 of each linux archive instead.
+  Once the repository has a full `mise.lock`, typst can move back into `mise.toml`.
 - The template is `internal/cv/templates/cv.typ.tmpl`, one design, one A4 layout for both
   languages. Go's `text/template` fills it, and every text reaches typst as a string literal
   argument, never as markup, so data cannot inject typst code. A blank required text or a

@@ -12,17 +12,26 @@ import (
 
 // realTool returns the path of a binary the real PDF tests need. Outside CI a
 // missing binary skips the test. In CI it fails it: the test job installs
-// typst and poppler from mise.toml, so a missing one is a broken job, not a
-// reason to pass.
+// typst with scripts/install-typst.sh and pdftotext with apt, so a missing
+// one is a broken job, not a reason to pass.
 func realTool(t *testing.T, name string) string {
 	t.Helper()
 
 	path, err := exec.LookPath(name)
+	if err == nil {
+		// A binary that cannot print its version is as good as missing,
+		// such as a mise shim without a version for this directory.
+		versionFlag := "-v"
+		if name == "typst" {
+			versionFlag = "--version"
+		}
+		err = exec.CommandContext(t.Context(), path, versionFlag).Run()
+	}
 	if err != nil {
 		if os.Getenv("CI") != "" {
-			t.Fatalf("%s is not on PATH: the CI test job installs it from mise.toml", name)
+			t.Fatalf("%s is not usable on PATH: the CI test job must install it: %v", name, err)
 		}
-		t.Skipf("%s is not on PATH, skipped outside CI", name)
+		t.Skipf("%s is not usable on PATH, skipped outside CI: %v", name, err)
 	}
 	return path
 }

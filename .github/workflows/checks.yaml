@@ -147,7 +147,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
         with:
-          install_args: go task typst poppler
+          install_args: go task
+      # typst is not in mise.toml: the script checks the archive's sha256.
+      - name: Install typst
+        run: |
+          scripts/install-typst.sh "${RUNNER_TEMP}/typst"
+          echo "${RUNNER_TEMP}/typst" >> "${GITHUB_PATH}"
+      # pdfinfo, so the page check reads the count instead of guessing it.
+      - name: Install poppler-utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends poppler-utils
+          pdfinfo -v
       - id: render
         run: task render:pdf
       - name: Check that each PDF has one to four pages
@@ -242,7 +253,29 @@ jobs:
             ${{ runner.os }}-build-cv-
             ${{ runner.os }}-build-cvd-
             ${{ runner.os }}-validate-cv-
+      # The real PDF tests compile with typst and read the text layer with
+      # pdftotext. Under CI they fail, not skip, when either is missing.
+      - name: Install typst
+        run: |
+          scripts/install-typst.sh "${RUNNER_TEMP}/typst"
+          echo "${RUNNER_TEMP}/typst" >> "${GITHUB_PATH}"
+      - name: Install poppler-utils
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends poppler-utils
+          pdftotext -v
       - run: task test:go
+
+  # The shell scripts' own unit tests, with fake binaries and no network.
+  test-scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
+        with:
+          install_args: task
+      - run: task test:scripts
 
   hadolint:
     runs-on: ubuntu-latest
@@ -275,7 +308,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d  # v5.2.9
         with:
-          install_args: go task typst
+          install_args: go task
+      # typst is not in mise.toml: the script checks the archive's sha256 for
+      # this runner's architecture.
+      - name: Install typst
+        run: |
+          scripts/install-typst.sh "${RUNNER_TEMP}/typst"
+          echo "${RUNNER_TEMP}/typst" >> "${GITHUB_PATH}"
       # The image copies rendered/cv.*.pdf in, like the published one, so the
       # smoke test reaches the PDF route.
       - run: task render:pdf

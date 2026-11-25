@@ -59,7 +59,15 @@ jobs:
       - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78  # v5.3.0
         if: steps.release-me.outputs.tags != ''
         with:
-          install_args: go goreleaser task typst
+          install_args: go goreleaser task
+
+      # This job holds a token that can write to the repository, so typst
+      # comes from the script that checks the archive's pinned sha256.
+      - name: Install typst
+        if: steps.release-me.outputs.tags != ''
+        run: |
+          scripts/install-typst.sh "${RUNNER_TEMP}/typst"
+          echo "${RUNNER_TEMP}/typst" >> "${GITHUB_PATH}"
 
       # Renders the JSON documents and the PDFs, which fails on invalid data and leaves the
       # draft unpublished, builds the archives, attaches everything and

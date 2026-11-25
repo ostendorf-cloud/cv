@@ -7,7 +7,8 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 - `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
   and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
-  `mise.toml`) on the path, or `--typst <binary>`, and reads the portrait from
+  `scripts/install-typst.sh`, see Deviations) on the path, or `--typst <binary>`, and reads
+  the portrait from
   `assets/portrait.jpg` (`--photo`; a missing file fails, `--photo ""` renders without).
 - `assets/portrait.jpg`: the owner's portrait for the PDF sidebar, 600x600, made from the
   920 pixel portrait of `ostendorf.tech`.
@@ -138,11 +139,25 @@ Decision for issue 8, closing the concept's open question.
   the template with the real data, checks one to four pages with
   `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look
   there after a template change, or run `task render:pdf`.
-- `mise.lock` locks typst only, with the sha256 of its linux x64 and arm64 archives, because
-  typst runs in the release job with a token that can write to the repository. mise refuses
-  an archive that does not match. The other tools are not locked yet, and macOS has no
-  entry, so a local install of typst is not verified. `TestTypstLockMatchesMisePin` fails when
-  the pin in `mise.toml` and the lock differ.
+- typst is not in `mise.toml`. It runs in the release job, which holds a token that can
+  write to the repository, so its archive must be checked, and mise checks an archive only
+  through a `mise.lock`. A `mise.lock` that holds only typst makes the mise action install
+  with `--locked` and fail every other tool, and a full one needs `mise lock` with network.
+  `scripts/install-typst.sh <dir>` is the one typst pin instead: it downloads the linux musl
+  archive for x86_64 or aarch64, checks the pinned sha256 and fails closed otherwise.
+  `scripts/install-typst_test.sh` (`task test:scripts`) covers it with fakes. On a bump,
+  copy the new digests from the GitHub release page into the script by hand. Once the
+  repository has a full `mise.lock`, typst can move back into `mise.toml`.
+- Locally on Linux, run `scripts/install-typst.sh ~/.local/bin` (or any directory on the
+  path). macOS has no pinned archive: install typst at the version
+  `scripts/install-typst.sh --print-version` prints, for example with
+  `mise use -g typst@<version>`, which is not checked against a sha256. `task render:pdf`
+  stops with a hint when typst is missing or another version. A global mise typst shim
+  without a version shadows the binary on the path: pass `--typst <path>` then.
+- poppler (`pdftotext`, `pdfinfo`) is not in `mise.toml` either, so the jobs that do not read
+  a PDF do not install it. The `test` and `render-pdf` jobs install the runner's
+  `poppler-utils` with apt. Locally the real PDF tests skip without `typst` or `pdftotext`.
+  Under `CI` they fail instead.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.

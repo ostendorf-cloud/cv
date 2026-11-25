@@ -16,16 +16,10 @@ hadolint = "2"
 shellcheck = "0.11"
 shfmt = "3"
 goreleaser = "2"
-# Renders the PDFs: `cv render pdf` shells out to `typst compile`. Pinned to the patch, like
-# golangci-lint, so a typesetting change never arrives unannounced: Renovate proposes bumps.
-# mise.lock holds the sha256 of the linux archives (x64 and arm64), the asset digests GitHub's
-# release API reports for v0.14.2, and mise refuses an archive that does not match. On a bump,
-# copy the new digests from the release page into mise.lock by hand, never computed from a
-# download. TestTypstLockMatchesMisePin in cmd/cv fails while the two versions differ.
-typst = "0.14.2"
-# pdftotext and pdfinfo: the PDF tests read the text layer the way an applicant tracking system
-# does, and scripts/check-pdf-pages.sh counts the pages. The registry maps poppler to conda.
-poppler = "26.11.0"
+# Two tools are deliberately not here. typst is pinned with a sha256 per archive in
+# scripts/install-typst.sh, because mise checks an archive only through a mise.lock, and a
+# partial mise.lock fails every other tool. poppler (pdftotext, pdfinfo) comes from the
+# runner's apt in the jobs that read a PDF, so no other job installs it.
 # Pinned to the 3.x line, not 4.x: the helm-unittest plugin used to verify
 # charts/cv targets Helm 3's plugin API.
 helm = "4.3.2"

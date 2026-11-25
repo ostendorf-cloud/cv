@@ -648,7 +648,7 @@ func LoadPhoto(path string) ([]byte, error) {
 
 // CompilePDF compiles typst source to PDF bytes with the typst binary at
 // typstBin, which is "typst" resolved through PATH when empty. The binary
-// comes from mise: see mise.toml. It writes the source, the bundled fonts
+// comes from scripts/install-typst.sh. It writes the source, the bundled fonts
 // and, when photo is not nil, the portrait as PhotoFileName into a temporary
 // directory, passes the fonts with --font-path and ignores the system fonts.
 func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]byte, error) {
@@ -657,7 +657,7 @@ func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]b
 	}
 	bin, err := exec.LookPath(typstBin)
 	if err != nil {
-		return nil, fmt.Errorf("cv: render pdf: typst not found (run through mise, see mise.toml): %w", err)
+		return nil, fmt.Errorf("cv: render pdf: typst not found (install it with scripts/install-typst.sh): %w", err)
 	}
 
 	dir, err := os.MkdirTemp("", "cv-pdf-")

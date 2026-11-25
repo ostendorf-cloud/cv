@@ -153,7 +153,9 @@ go test ./internal/cv -run TestRenderJSONGolden -update
 
 `cv render pdf` validates both data files, fills the typst template
 `internal/cv/templates/cv.typ.tmpl` and runs `typst compile`. It writes `cv.de.pdf` and
-`cv.en.pdf` into `--out` (default `rendered/`). `typst` is pinned in `mise.toml`.
+`cv.en.pdf` into `--out` (default `rendered/`). `typst` is pinned in
+`scripts/install-typst.sh`, which checks the archive's sha256: on Linux run
+`scripts/install-typst.sh <dir>` and put `<dir>` on the path. For macOS see `AGENTS.md`.
 
 - It prints what the JSON shows, empty sections and empty skill categories omitted, with
   a few omissions for the page budget: the repository `projects` list, the volunteering
