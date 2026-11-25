@@ -16,7 +16,7 @@ func TestRunRenderJSON(t *testing.T) {
 
 		out := filepath.Join(t.TempDir(), "out")
 		var stdout, stderr bytes.Buffer
-		code := run([]string{"render", "json", "--dir", "testdata/render-pair", "--out", out}, &stdout, &stderr)
+		code := run([]string{"render", "json", "--no-github", "--dir", "testdata/render-pair", "--out", out}, &stdout, &stderr)
 		if code != 0 {
 			t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 		}
@@ -53,7 +53,7 @@ func TestRunRenderJSON(t *testing.T) {
 		outB := t.TempDir()
 		for _, out := range []string{outA, outB} {
 			var stdout, stderr bytes.Buffer
-			if code := run([]string{"render", "json", "--dir", "testdata/render-pair", "--out", out}, &stdout, &stderr); code != 0 {
+			if code := run([]string{"render", "json", "--no-github", "--dir", "testdata/render-pair", "--out", out}, &stdout, &stderr); code != 0 {
 				t.Fatalf("code = %d, stderr = %q", code, stderr.String())
 			}
 		}

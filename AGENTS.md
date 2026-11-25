@@ -43,6 +43,19 @@ service that serves it. The baseline rules apply and are not repeated here.
   `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
   the bytes; the handler serves them. Startup logs problems with positions, ids and
   enumerated values; free text excerpts of YAML type errors are redacted, best effort.
+- `internal/github/`: a small `net/http` client for a repository's languages and latest
+  release, and the token lookup. Each call has a timeout, the client has a call budget, a
+  result is cached for the life of the client (a missing repository is asked and reported
+  once), nothing is retried and a rate limit ends all further calls. No third party SDK.
+- `internal/cv/enrich.go`: the merge point for every renderer. `cv.Enrich` looks up each
+  distinct `github_repo` of the documents once and returns an `Enrichment`, a derived view
+  keyed by repository. It is never written to a data file and a `Document` never holds it.
+  A renderer takes it as a parameter and shows a project without an entry from its hand
+  written fields alone. `RenderJSONEnriched` is the JSON renderer's use of it, adding
+  `languages` and `latest_release` to a project. `cvd` calls `RenderJSON` and makes no
+  GitHub call, so the document it serves lacks those keys. `cmd/cv/enrich.go` holds the
+  shared `--no-github` and `--github-url` flags and the token wiring every render
+  subcommand reuses.
 - `charts/cv/`: the Helm chart, for `cvd` only. `cv` ships as a release artefact, not a
   container image.
 
@@ -56,11 +69,30 @@ data. Left out, tracked as later milestones:
 - `cv`'s other renderers: a PDF and the block for the GitHub profile README. A LinkedIn
   export is a non goal of the concept. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
-- Fetching a GitHub repository's language and latest release and merging it with hand
-  maintained project descriptions, so the stack a project actually uses feeds back into
-  the skills and tools the CV claims.
+- Feeding the detected stack back into the skills and tools the CV claims. The fetch and
+  the merge into project descriptions exist, see "The GitHub token" below.
 - The consumers: `simon-ostendorf.de` rendering the CV page, `ostendorf.dev` rendering
   projects, skills and tools, and the profile README written from here.
+
+## The GitHub token
+
+Decision for issue 8, closing the concept's open question.
+
+- No dedicated secret for public repositories. Every repository in `projects` is public, so
+  the render works with no token at all, at GitHub's lower anonymous rate limit.
+- The release job already exports `GITHUB_TOKEN`, the short lived installation token of the
+  release app, to `scripts/publish-release-assets.sh`, and `task render:json` inherits it.
+  That gives the higher authenticated limit with no new secret and no new permission, since
+  reading public data needs no scope. `cv` reads `GITHUB_TOKEN`, or the file named by
+  `GITHUB_TOKEN_FILE`, which wins. Neither is ever committed or logged.
+- Why not a personal access token: a long lived secret to rotate, for data anyone can read.
+- If a private repository is ever listed in `projects`, add a fine grained token limited to
+  that repository with read only `Contents` and `Metadata`, supplied through
+  `GITHUB_TOKEN_FILE`, and record it here. Not needed today.
+- A set but unreadable or empty `GITHUB_TOKEN_FILE` fails the render, because the operator
+  asked for a token. A GitHub outage, a missing repository or a rate limit never does: that
+  project renders from its hand written fields and a warning goes to stderr.
+- Bounds: 10 seconds per call, 60 calls per render, which covers thirty repositories.
 
 ## Deviations
 

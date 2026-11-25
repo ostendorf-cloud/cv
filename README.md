@@ -81,6 +81,13 @@ bytes, so the same `schema_version`.
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`,
   `engagements`, `skill_categories`, `tools`.
+- A `projects` entry may carry two more keys, merged in from GitHub at render time by
+  `cv render json`: `languages`, a list of `name` and `bytes`, largest first, and
+  `latest_release`, an object with `tag`, `name`, `url` and `published_at` (each but `tag`
+  `null` when unset). Both keys are absent, not `null`, when GitHub gave nothing: the
+  lookup failed, the repository has no language or no release, or the document comes from
+  `cvd`, which makes no GitHub call. A consumer must not assume either key. Added without a
+  version bump.
 - `tools` is the last key: a list of `id`, `name`, `group` and `description`, in file order.
   `group` is one of `workstation`, `editor-shell`, `command-line`, `homelab-hardware` and
   `homelab-platform`. Added without a version bump.

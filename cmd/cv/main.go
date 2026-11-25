@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -42,9 +43,14 @@ const renderUsage = `cv render writes one artefact from data/cv.de.yaml and data
 It validates both files first and writes nothing when they are invalid.
 
 Usage:
-  cv render json [--dir data] [--out rendered]
+  cv render json [--dir data] [--out rendered] [--no-github] [--github-url URL]
 
 json writes cv.de.json and cv.en.json into --out.
+
+Each project is enriched with its repository's languages and latest release
+from GitHub. A failed or rate limited call logs a warning and the project is
+rendered from its hand written fields. The token comes from GITHUB_TOKEN or the
+file named by GITHUB_TOKEN_FILE and is optional. --no-github skips every call.
 `
 
 func main() {
@@ -110,6 +116,7 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 	fs.Usage = func() { fmt.Fprint(stderr, renderUsage) }
 	dir := fs.String("dir", "data", "directory holding cv.de.yaml and cv.en.yaml")
 	out := fs.String("out", "rendered", "directory the JSON documents are written to")
+	gh := addGithubFlags(fs)
 	if err := fs.Parse(args[1:]); err != nil {
 		return 2
 	}
@@ -120,11 +127,17 @@ func runRender(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
+	enr, err := gh.enrich(context.Background(), stderr, de, en)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+
 	// Render both before writing either, so a failure leaves no half set.
 	docs := map[string]cv.Document{"de": de, "en": en}
 	rendered := make(map[string][]byte, len(cv.Languages))
 	for _, lang := range cv.Languages {
-		data, err := cv.RenderJSON(docs[lang], lang)
+		data, err := cv.RenderJSONEnriched(docs[lang], lang, enr)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1

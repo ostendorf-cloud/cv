@@ -68,6 +68,8 @@ jobs:
         if: steps.release-me.outputs.tags != ''
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          # Also the token of cv's GitHub enrichment: it lifts the rate limit
+          # and needs no secret of its own. See AGENTS.md, "The GitHub token".
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           TAGS: ${{ steps.release-me.outputs.tags }}
         run: ./scripts/publish-release-assets.sh
