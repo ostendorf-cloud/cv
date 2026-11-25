@@ -137,6 +137,11 @@ Decision for issue 8, closing the concept's open question.
   the template with the real data, checks one to four pages with
   `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look
   there after a template change, or run `task render:pdf`.
+- `mise.lock` locks typst only, with the sha256 of its linux x64 and arm64 archives, because
+  typst runs in the release job with a token that can write to the repository. mise refuses
+  an archive that does not match. The other tools are not locked yet, and macOS has no
+  entry, so a local install of typst is not verified. `TestTypstLockMatchesMisePin` fails when
+  the pin in `mise.toml` and the lock differ.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.
