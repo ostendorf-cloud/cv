@@ -3,7 +3,7 @@ module github.com/ostendorf-cloud/cv
 go 1.27
 
 require (
-	github.com/ostendorf-cloud/govue v0.5.0
+	github.com/ostendorf-cloud/govue v0.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
