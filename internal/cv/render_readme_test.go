@@ -57,7 +57,25 @@ func readmeDocument() Document {
 			{ID: "t1", Name: "SENTINEL-TOOL", Group: GroupCommandLine, Description: "SENTINEL-TOOL-DESCRIPTION"},
 		},
 		Volunteering: []VolunteeringEntry{
-			{ID: "v1", Organisation: "SENTINEL-VOLUNTEERING", Role: "Helper", Start: "2020-01"},
+			{ID: "v1", Organisation: "SENTINEL-VOLUNTEERING", Role: "SENTINEL-VOLUNTEERING-ROLE", Start: "2020-01"},
+		},
+		Awards: []AwardEntry{
+			{ID: "a1", Title: "SENTINEL-AWARD", Issuer: "SENTINEL-AWARD-ISSUER", Date: "2021-01", Summary: "SENTINEL-AWARD-SUMMARY"},
+		},
+		ExamResults: []ExamResultEntry{
+			{ID: "x1", Name: "SENTINEL-EXAM", Score: "SENTINEL-SCORE", Date: "2017-01", Summary: "SENTINEL-EXAM-SUMMARY"},
+		},
+		Courses: []CourseEntry{
+			{ID: "c1", Name: "SENTINEL-COURSE", Provider: "SENTINEL-COURSE-PROVIDER", Date: "2019-01"},
+		},
+		Publications: []PublicationEntry{
+			{ID: "pu1", Title: "SENTINEL-PUBLICATION", Publisher: "SENTINEL-PUBLISHER", Date: "2020-01", URL: "https://sentinel-publication.example.org", Summary: "SENTINEL-PUBLICATION-SUMMARY"},
+		},
+		Patents: []PatentEntry{
+			{ID: "pa1", Title: "SENTINEL-PATENT", Number: "SENTINEL-PATENT-NUMBER", Date: "2020-01", URL: "https://sentinel-patent.example.org", Summary: "SENTINEL-PATENT-SUMMARY"},
+		},
+		Organisations: []OrganisationEntry{
+			{ID: "o1", Name: "SENTINEL-ORGANISATION", Role: "SENTINEL-ORGANISATION-ROLE", Start: "2019-01"},
 		},
 	}
 }
@@ -183,6 +201,36 @@ func TestRenderReadmeRefusals(t *testing.T) {
 			lang:    "en",
 			wantErr: ErrReadmeMarkerInContent,
 		},
+		{
+			name:    "an unclosed comment opener in a project description",
+			doc:     Document{Projects: []ProjectEntry{{ID: "p", GithubRepo: "example/repo", Description: "Fine <!-- hides the rest"}}},
+			lang:    "en",
+			wantErr: ErrReadmeUnsafeContent,
+		},
+		{
+			name:    "a comment opener in a skill name",
+			doc:     Document{Skills: []SkillEntry{{ID: "x", Name: "<!--", Category: "c"}}, SkillCategories: []SkillCategoryEntry{{ID: "c", Name: "C"}}},
+			lang:    "en",
+			wantErr: ErrReadmeUnsafeContent,
+		},
+		{
+			name:    "a comment opener in a date",
+			doc:     Document{Experience: []ExperienceEntry{{ID: "x", Employer: "E", Title: "T", Start: "<!--"}}},
+			lang:    "en",
+			wantErr: ErrReadmeUnsafeContent,
+		},
+		{
+			name:    "a repository that is not owner/name",
+			doc:     Document{Projects: []ProjectEntry{{ID: "p", GithubRepo: "example/repo/../x", Description: "d"}}},
+			lang:    "en",
+			wantErr: ErrReadmeUnsafeContent,
+		},
+		{
+			name:    "a repository with a link closing character",
+			doc:     Document{Projects: []ProjectEntry{{ID: "p", GithubRepo: "example/repo)x", Description: "d"}}},
+			lang:    "en",
+			wantErr: ErrReadmeUnsafeContent,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -227,6 +275,16 @@ func TestReplaceReadmeBlock(t *testing.T) {
 			name:   "no newline after the end marker",
 			readme: "a\n" + ReadmeBeginMarker + "\nOLD\n" + ReadmeEndMarker,
 			want:   "a\n" + ReadmeBeginMarker + "\nNEW\n" + ReadmeEndMarker,
+		},
+		{
+			name:   "a CRLF README gets a CRLF block",
+			readme: "a\r\n" + ReadmeBeginMarker + "\r\nOLD\r\n" + ReadmeEndMarker + "\r\nb\r\n",
+			want:   "a\r\n" + ReadmeBeginMarker + "\r\nNEW\r\n" + ReadmeEndMarker + "\r\nb\r\n",
+		},
+		{
+			name:   "a CRLF after the end marker only",
+			readme: ReadmeBeginMarker + "OLD" + ReadmeEndMarker + "\r\n",
+			want:   ReadmeBeginMarker + "\r\nNEW\r\n" + ReadmeEndMarker + "\r\n",
 		},
 		{name: "no marker at all", readme: "# Hi\n", wantErr: ErrReadmeMarkerMissing},
 		{name: "empty readme", readme: "", wantErr: ErrReadmeMarkerMissing},
@@ -299,5 +357,21 @@ func TestReplaceReadmeBlockIsIdempotent(t *testing.T) {
 	}
 	if !bytes.HasPrefix(once, []byte("intro\n\n")) || !bytes.HasSuffix(once, []byte("\n\noutro\n")) {
 		t.Errorf("text around the block changed:\n%s", once)
+	}
+
+	crlf := []byte("intro\r\n" + ReadmeBeginMarker + "\r\nstale\r\n" + ReadmeEndMarker + "\r\noutro\r\n")
+	first, err := ReplaceReadmeBlock(crlf, block)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := ReplaceReadmeBlock(first, block)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Errorf("second replacement changed the CRLF README")
+	}
+	if bytes.Contains(bytes.ReplaceAll(first, []byte("\r\n"), nil), []byte("\n")) {
+		t.Errorf("a bare LF is left in the CRLF README:\n%q", first)
 	}
 }

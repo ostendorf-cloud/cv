@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -27,7 +28,14 @@ var (
 	// ErrReadmeMarkerInContent means CV text carries a marker, which would
 	// split the block on the next replacement.
 	ErrReadmeMarkerInContent = errors.New("cv text contains a readme marker")
+	// ErrReadmeUnsafeContent means CV text would break the README around the
+	// block: an HTML comment opener, or a project repository that is not
+	// owner/name.
+	ErrReadmeUnsafeContent = errors.New("cv text unsafe in a readme")
 )
+
+// repoName is the shape of a GitHub repository, owner/name.
+var repoName = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$`)
 
 // RenderReadme renders the block for the GitHub profile README from doc, the
 // data file of language lang, including both markers and a trailing newline.
@@ -77,6 +85,9 @@ func RenderReadme(doc Document, lang string) ([]byte, error) {
 		b.WriteString("\n### Projects\n\n")
 		for _, e := range doc.Projects {
 			repo := oneLine(e.GithubRepo)
+			if !repoName.MatchString(repo) {
+				return nil, fmt.Errorf("cv: render readme: project %q: github_repo is not owner/name: %w", e.ID, ErrReadmeUnsafeContent)
+			}
 			fmt.Fprintf(&b, "- [%s](https://github.com/%s): %s\n", repo, repo, oneLine(e.Description))
 		}
 	}
@@ -92,6 +103,12 @@ func RenderReadme(doc Document, lang string) ([]byte, error) {
 	// The two markers each occur exactly once: the ones written above.
 	if strings.Count(out, ReadmeBeginMarker) != 1 || strings.Count(out, ReadmeEndMarker) != 1 {
 		return nil, fmt.Errorf("cv: render readme: %w", ErrReadmeMarkerInContent)
+	}
+	// Besides the two markers the block holds one comment of its own. Any
+	// further opener comes from CV text, and an unclosed one hides the rest of
+	// the README on GitHub.
+	if strings.Count(out, "<!--") != 3 {
+		return nil, fmt.Errorf("cv: render readme: text contains an HTML comment opener: %w", ErrReadmeUnsafeContent)
 	}
 	return []byte(out), nil
 }
@@ -158,6 +175,14 @@ func ReplaceReadmeBlock(readme, block []byte) ([]byte, error) {
 	// The block ends in a newline of its own. The README keeps its own bytes
 	// after the end marker, so that newline is not written twice.
 	body := bytes.TrimSuffix(block, []byte("\n"))
+
+	// The block has LF endings. A README whose marker lines end in CRLF gets
+	// a CRLF block, so the file keeps one style.
+	crlf := bytes.HasPrefix(readme[from+len(begin):], []byte("\r\n")) ||
+		bytes.HasPrefix(readme[to:], []byte("\r\n"))
+	if crlf {
+		body = bytes.ReplaceAll(body, []byte("\n"), []byte("\r\n"))
+	}
 
 	out := make([]byte, 0, len(readme)-(to-from)+len(body))
 	out = append(out, readme[:from]...)
