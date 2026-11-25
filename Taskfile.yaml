@@ -137,6 +137,11 @@ tasks:
     cmds:
       - go test -race -count=1 ./...
 
+  test:shell:
+    desc: Tests of the profile README script, against a fake gh
+    cmds:
+      - scripts/test-update-profile-readme.sh
+
   check:
     desc: Every check, one after another
     cmds:
@@ -159,6 +164,7 @@ tasks:
       - task: build:cv
       - task: build:cvd
       - task: test:go
+      - task: test:shell
 
   fmt:
     desc: Format Go code
