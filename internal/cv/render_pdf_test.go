@@ -330,6 +330,48 @@ func TestRenderTypstHeader(t *testing.T) {
 	})
 }
 
+// TestRenderTypstFormatsNumbersPerLanguage covers a grade or score that is a
+// plain decimal number: it prints with the decimal separator of the PDF's
+// language, whatever the data file wrote. Anything else prints as written.
+func TestRenderTypstFormatsNumbersPerLanguage(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		lang  string
+		input string
+		want  string
+	}{
+		{name: "comma in english", lang: "en", input: "1,6", want: "1.6"},
+		{name: "point in english", lang: "en", input: "1.6", want: "1.6"},
+		{name: "point in german", lang: "de", input: "1.6", want: "1,6"},
+		{name: "comma in german", lang: "de", input: "1,6", want: "1,6"},
+		{name: "whole number", lang: "en", input: "1", want: "1"},
+		{name: "text with a number", lang: "en", input: "sehr gut (1,3)", want: "sehr gut (1,3)"},
+		{name: "two separators", lang: "en", input: "1,2,3", want: "1,2,3"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := Document{
+				Education:   []EducationEntry{{ID: "u", Institution: "Uni", Degree: "BSc", Start: "2015-10", Grade: tc.input}},
+				ExamResults: []ExamResultEntry{{ID: "x", Name: "Exam", Score: tc.input, Date: "2019-01"}},
+			}
+			src := renderSource(t, doc, tc.lang)
+			grade := pdfLabels[tc.lang].Grade
+			for _, want := range []string{
+				`org: "Uni · ` + grade + ` ` + tc.want + `"`,
+				`org: "` + tc.want + `"`,
+			} {
+				if !strings.Contains(src, want) {
+					t.Errorf("source lacks %s:\n%s", want, src)
+				}
+			}
+		})
+	}
+}
+
 func TestRenderTypstEscapesData(t *testing.T) {
 	t.Parallel()
 
