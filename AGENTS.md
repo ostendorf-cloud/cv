@@ -145,8 +145,10 @@ Decision for issue 8, closing the concept's open question.
   with `--locked` and fail every other tool, and a full one needs `mise lock` with network.
   `scripts/install-typst.sh <dir>` is the one typst pin instead: it downloads the linux musl
   archive for x86_64 or aarch64, checks the pinned sha256 and fails closed otherwise.
-  `scripts/install-typst_test.sh` (`task test:scripts`) covers it with fakes. On a bump,
-  copy the new digests from the GitHub release page into the script by hand. Once the
+  `scripts/install-typst_test.sh` (`task test:scripts`) covers it with fakes. Renovate
+  moves `TYPST_VERSION` through the regex manager in `renovate.json`, not the checksums: on
+  a bump, copy the new digests from the GitHub release page into the script by hand. Until
+  then the script refuses the new archives. Once the
   repository has a full `mise.lock`, typst can move back into `mise.toml`.
 - Locally on Linux, run `scripts/install-typst.sh ~/.local/bin` (or any directory on the
   path). macOS has no pinned archive: install typst at the version

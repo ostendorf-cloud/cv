@@ -186,6 +186,31 @@ else
   echo "PASS mise.toml pins no typst"
 fi
 
+# Renovate's regex manager in renovate.json must find the pin: its match
+# string, applied to the script, yields the datasource, the package and the
+# pinned version, and its extractVersionTemplate strips the tag's "v". perl
+# reads the same named group syntax Renovate's regex does.
+case_dir="${work}/case-renovate"
+mkdir -p "${case_dir}"
+: >"${case_dir}/stdout"
+: >"${case_dir}/stderr"
+manager="$(jq -c '.customManagers[] | select(.managerFilePatterns == ["/^scripts/install-typst\\.sh$/"])' "${repo_dir}/renovate.json")"
+if [ -z "${manager}" ]; then
+  fail "renovate reads the typst pin" "renovate.json has no regex manager for scripts/install-typst.sh"
+else
+  match="$(jq -r '.matchStrings[0]' <<<"${manager}")"
+  extract="$(jq -r '.extractVersionTemplate' <<<"${manager}")"
+  found="$(RE="${match}" perl -0777 -ne 'print "$+{datasource} $+{depName} $+{currentValue}" if /$ENV{RE}/' "${script}")"
+  stripped="$(RE="${extract}" perl -ne 'chomp; print $+{version} if /$ENV{RE}/' <<<"v${version}")"
+  if [ "${found}" != "github-releases typst/typst ${version}" ]; then
+    fail "renovate reads the typst pin" "the manager matched '${found}', want 'github-releases typst/typst ${version}'"
+  elif [ "${stripped}" != "${version}" ]; then
+    fail "renovate reads the typst pin" "extractVersionTemplate turns v${version} into '${stripped}'"
+  else
+    echo "PASS renovate reads the typst pin"
+  fi
+fi
+
 if [ "${failures}" -ne 0 ]; then
   echo "${failures} test(s) failed"
   exit 1

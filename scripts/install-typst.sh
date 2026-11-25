@@ -10,7 +10,10 @@
 # not hold every tool makes the mise action fail them all.
 #
 # Only the statically linked musl archives for linux x86_64 and aarch64 are
-# pinned. On a bump, copy the "sha256:" digests GitHub shows for
+# pinned. Renovate moves TYPST_VERSION through the regex manager in
+# renovate.json, but not the two checksums: a bump without new checksums
+# fails closed here until they are copied by hand. On a bump, copy the
+# "sha256:" digests GitHub shows for
 # typst-x86_64-unknown-linux-musl.tar.xz and
 # typst-aarch64-unknown-linux-musl.tar.xz on the release page of the new
 # version. Never compute them from a download. The 0.14.2 digests below are
