@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -71,10 +72,12 @@ type labels struct {
 	Organisation string
 	References   string
 	PatentNo     string
-	LangLevels   map[Level]string
-	Months       [12]string
-	MonthsLong   [12]string
-	Lang         string
+	// Decimal separates the integer and the fraction of a grade or score.
+	Decimal    string
+	LangLevels map[Level]string
+	Months     [12]string
+	MonthsLong [12]string
+	Lang       string
 }
 
 var pdfLabels = map[string]labels{
@@ -86,6 +89,7 @@ var pdfLabels = map[string]labels{
 		Volunteering: "Volunteering", Awards: "Honors and awards",
 		ExamResults: "Exam results", Courses: "Courses", Publications: "Publications",
 		Patents: "Patents", Organisation: "Memberships", References: "References", PatentNo: "No.",
+		Decimal: ".",
 		LangLevels: map[Level]string{
 			LevelFamiliar: "Basic", LevelWorking: "Good working knowledge",
 			LevelProficient: "Fluent", LevelExpert: "Native",
@@ -107,6 +111,7 @@ var pdfLabels = map[string]labels{
 		Volunteering: "Ehrenamt", Awards: "Auszeichnungen",
 		ExamResults: "Prüfungsergebnisse", Courses: "Kurse", Publications: "Veröffentlichungen",
 		Patents: "Patente", Organisation: "Mitgliedschaften", References: "Referenzen", PatentNo: "Nr.",
+		Decimal: ",",
 		LangLevels: map[Level]string{
 			LevelFamiliar: "Grundkenntnisse", LevelWorking: "Gute Kenntnisse",
 			LevelProficient: "Fließend", LevelExpert: "Muttersprache",
@@ -330,7 +335,7 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 		items = append(items, pdfItem{
 			Dates:    l.period(e.Start, e.End, true),
 			Title:    e.Degree,
-			Subtitle: joinNonBlank(e.Institution, labelled(l.Grade, e.Grade)),
+			Subtitle: joinNonBlank(e.Institution, labelled(l.Grade, l.number(e.Grade))),
 			Body:     e.Summary,
 		})
 	}
@@ -354,7 +359,7 @@ func buildPDFData(doc Document, l labels, opts TypstOptions) (pdfData, error) {
 	items = nil
 	for _, e := range doc.ExamResults {
 		items = append(items, pdfItem{
-			Dates: l.month(e.Date), Title: e.Name, Subtitle: e.Score, Body: e.Summary,
+			Dates: l.month(e.Date), Title: e.Name, Subtitle: l.number(e.Score), Body: e.Summary,
 		})
 	}
 	add(l.ExamResults, items)
@@ -551,6 +556,22 @@ func (l labels) period(start, end string, ongoing bool) string {
 	default:
 		return l.month(start)
 	}
+}
+
+// decimalNumber is a whole value that is a decimal number with one
+// separator, a point or a comma, such as the grade "1,6".
+var decimalNumber = regexp.MustCompile(`^([0-9]+)[.,]([0-9]+)$`)
+
+// number prints a grade or score that is a plain decimal number with the
+// language's decimal separator: "1,6" prints as "1.6" in English. Anything
+// else, a whole number or a text, is returned as it is.
+func (l labels) number(s string) string {
+	s = strings.TrimSpace(s)
+	m := decimalNumber.FindStringSubmatch(s)
+	if m == nil {
+		return s
+	}
+	return m[1] + l.Decimal + m[2]
 }
 
 func labelled(label, value string) string {

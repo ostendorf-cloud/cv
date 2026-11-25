@@ -155,7 +155,7 @@
 #entry("May 2021", "Lifetime Certificate en", org: "Other Body en")
 
 #section("Exam results")
-#entry("Jun 2019", "Thesis en", org: "0,0", body: "Exam text en.")
+#entry("Jun 2019", "Thesis en", org: "0.0", body: "Exam text en.")
 #entry("Feb 2018", "Test en", org: "passed")
 
 #section("Honors and awards")
