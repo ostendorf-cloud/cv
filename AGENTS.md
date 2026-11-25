@@ -81,10 +81,16 @@ Decision for issue 8, closing the concept's open question.
 - No dedicated secret for public repositories. Every repository in `projects` is public, so
   the render works with no token at all, at GitHub's lower anonymous rate limit.
 - The release job already exports `GITHUB_TOKEN`, the short lived installation token of the
-  release app, to `scripts/publish-release-assets.sh`, and `task render:json` inherits it.
-  That gives the higher authenticated limit with no new secret and no new permission, since
-  reading public data needs no scope. `cv` reads `GITHUB_TOKEN`, or the file named by
-  `GITHUB_TOKEN_FILE`, which wins. Neither is ever committed or logged.
+  release app, to `scripts/publish-release-assets.sh`, and `task render:json:github`
+  inherits it. That gives the higher authenticated limit with no new secret. The token is
+  not read only: it carries the app's own write scopes, which the render does not need.
+  The render accepts that because the token is short lived, `cv` sends it only to
+  `https://api.github.com` (never to a `--github-url` of another host, and Go's HTTP client
+  drops it on a redirect to another host), and it is never logged. Reading public data needs
+  no scope, so a token of fewer rights would do the same. `cv` reads `GITHUB_TOKEN`, or the
+  file named by `GITHUB_TOKEN_FILE`, which wins. Neither is ever committed or logged.
+- `task render:json`, which `task check` and CI run, passes `--no-github` and stays offline.
+  Only `task render:json:github` calls GitHub.
 - Why not a personal access token: a long lived secret to rotate, for data anyone can read.
 - If a private repository is ever listed in `projects`, add a fine grained token limited to
   that repository with read only `Contents` and `Metadata`, supplied through
@@ -92,7 +98,9 @@ Decision for issue 8, closing the concept's open question.
 - A set but unreadable or empty `GITHUB_TOKEN_FILE` fails the render, because the operator
   asked for a token. A GitHub outage, a missing repository or a rate limit never does: that
   project renders from its hand written fields and a warning goes to stderr.
-- Bounds: 10 seconds per call, 60 calls per render, which covers thirty repositories.
+- Bounds: 10 seconds per call, 60 calls and 60 seconds (`--github-timeout`) per render, which
+  covers thirty repositories. The first timeout or transport error, like a rate limit, ends
+  all further calls, so a dead upstream costs one timeout.
 
 ## Deviations
 
@@ -106,7 +114,7 @@ Decision for issue 8, closing the concept's open question.
 - Releases are drafts until their assets attach: `release-me.yaml` sets
   `github-release-draft-until-assets-attach`, and `release.yaml` runs
   `scripts/publish-release-assets.sh` after the release-me step. The script renders the JSON
-  documents in the tag's own worktree (`task render:json`, which validates first), builds the
+  documents in the tag's own worktree (`task render:json:github`, which validates first), builds the
   archives with `goreleaser release --skip=announce,validate,publish`, uploads the archives,
   the checksums and `rendered/cv.*.json` with `gh release upload`, then publishes with
   `gh release edit --draft=false`. goreleaser never touches the GitHub release, so

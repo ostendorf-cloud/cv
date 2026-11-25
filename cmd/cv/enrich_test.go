@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 // githubFake serves example/alpha and answers 404 for everything else. It
@@ -145,10 +146,62 @@ func TestRenderJSONNoGithubMakesNoCall(t *testing.T) {
 	}
 }
 
+func TestTokenFor(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{name: "the real API gets the token", url: "https://api.github.com", want: "tok"},
+		{name: "another host gets none", url: "http://127.0.0.1:8080", want: ""},
+		{name: "a lookalike host gets none", url: "https://api.github.com.evil.example", want: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tokenFor(tc.url, "tok"); got != tc.want {
+				t.Errorf("tokenFor(%q) = %q, want %q", tc.url, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestRenderJSONOverallDeadline proves --github-timeout ends a render whose
+// upstream stalls: each call alone may take 10 seconds, so only the overall
+// deadline can finish this one quickly. The render still exits zero.
+func TestRenderJSONOverallDeadline(t *testing.T) {
+	t.Setenv("GITHUB_TOKEN", "")
+	t.Setenv("GITHUB_TOKEN_FILE", "")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+
+	var stdout, stderr bytes.Buffer
+	args := []string{
+		"render", "json", "--github-url", srv.URL, "--github-timeout", "100ms",
+		"--dir", "testdata/projects-pair", "--out", t.TempDir(),
+	}
+	start := time.Now()
+	code := run(args, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, stderr = %q", code, stderr.String())
+	}
+	if d := time.Since(start); d > 5*time.Second {
+		t.Errorf("render took %v, the overall deadline did not apply", d)
+	}
+	if !strings.Contains(stderr.String(), "level=WARN") {
+		t.Errorf("stderr = %q, want a warning", stderr.String())
+	}
+}
+
 func TestRenderJSONToken(t *testing.T) {
 	const token = "ghp_notarealtoken0123456789"
 
-	t.Run("the token from the environment is sent and never logged", func(t *testing.T) {
+	t.Run("a token is never sent to a custom API URL and never logged", func(t *testing.T) {
 		t.Setenv("GITHUB_TOKEN", token)
 		t.Setenv("GITHUB_TOKEN_FILE", "")
 		g := &githubFake{}
@@ -156,15 +209,20 @@ func TestRenderJSONToken(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("code = %d, stderr = %q", code, stderr)
 		}
-		if len(g.auths) == 0 || g.auths[0] != "Bearer "+token {
-			t.Errorf("auths = %v", g.auths)
+		if len(g.auths) == 0 {
+			t.Fatal("no request seen")
+		}
+		for i, a := range g.auths {
+			if a != "" {
+				t.Errorf("request %d sent Authorization to the fake host", i)
+			}
 		}
 		if strings.Contains(stderr, token) {
 			t.Errorf("stderr carries the token: %q", stderr)
 		}
 	})
 
-	t.Run("the token file wins and a rate limited render never logs it", func(t *testing.T) {
+	t.Run("a rate limited render with a token file never logs the token", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "token")
 		if err := os.WriteFile(path, []byte(token+"\n"), 0o600); err != nil {
 			t.Fatal(err)
@@ -175,9 +233,6 @@ func TestRenderJSONToken(t *testing.T) {
 		_, stderr, code := renderProjects(t, g, "en")
 		if code != 0 {
 			t.Fatalf("code = %d, stderr = %q", code, stderr)
-		}
-		if g.auths[0] != "Bearer "+token {
-			t.Errorf("the file did not win: %v", g.auths)
 		}
 		if strings.Contains(stderr, token) || strings.Contains(stderr, "ghp_other") {
 			t.Errorf("stderr carries a token: %q", stderr)

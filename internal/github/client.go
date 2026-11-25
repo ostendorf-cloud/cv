@@ -264,4 +264,5 @@ func bodyNamesRateLimit(r io.Reader) bool {
 // rateLimitHeaders reports whether a 403 is a rate limit: the primary limit
 // is spent, or GitHub asks to wait (the secondary limit).
 func rateLimitHeaders(h http.Header) bool {
-	return h.Get("X-RateLimit-Remaining") == "0" || h.Get("Retry-After") != ""}
+	return h.Get("X-RateLimit-Remaining") == "0" || h.Get("Retry-After") != ""
+}

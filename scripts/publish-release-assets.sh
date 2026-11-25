@@ -69,8 +69,11 @@ while IFS= read -r tag; do
     cd "${worktree_dir}"
     mise trust --quiet
 
+    # The enriched render: it reads GITHUB_TOKEN from the environment the
+    # workflow sets, and degrades to the hand written fields on any GitHub
+    # failure, so it never fails the release.
     echo "rendering the JSON documents for ${tag}"
-    task render:json
+    task render:json:github
 
     echo "building archives for ${tag}"
     GORELEASER_CURRENT_TAG="${tag}" goreleaser release --clean --skip=announce,validate,publish

@@ -117,7 +117,8 @@ bytes, so the same `schema_version`.
 - Nothing is filtered. The repository holds only public data, see `docs/concepts/cv.md`.
 
 ```sh
-task render:json
+task render:json         # offline, no GitHub data, what CI runs
+task render:json:github  # with GitHub data, what the release runs
 ```
 
 `internal/cv/testdata/render/*.golden.json` pins the exact output. After a deliberate change
