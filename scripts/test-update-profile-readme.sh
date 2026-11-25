@@ -27,12 +27,14 @@ cat >"${tmp}/bin/gh" <<'FAKE'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"${FAKE_DIR}/calls.log"
 args="$*"
+default="$(cat "${FAKE_DIR}/default_branch")"
 case "${args}" in
+  "pr close "*) ;;
   "repo view "*) cat "${FAKE_DIR}/default_branch" ;;
   "pr list "*) cat "${FAKE_DIR}/open_pr" ;;
   "pr create "*) echo "https://example.invalid/pull/1" ;;
   *"--method "*) ;;
-  *"git/ref/heads/main"*) cat "${FAKE_DIR}/default_sha" ;;
+  *"git/ref/heads/${default}"*) cat "${FAKE_DIR}/default_sha" ;;
   *"git/ref/heads/cv/readme-block"*)
     [[ -f "${FAKE_DIR}/branch_sha" ]] || {
       echo "Not Found" >&2
@@ -40,7 +42,7 @@ case "${args}" in
     }
     cat "${FAKE_DIR}/branch_sha"
     ;;
-  *Accept*"ref=main"*) cat "${FAKE_DIR}/readme_main" ;;
+  *Accept*"ref=${default}"*) cat "${FAKE_DIR}/readme_main" ;;
   *Accept*"ref=cv/readme-block"*) cat "${FAKE_DIR}/readme_branch" ;;
   *"contents/"*) cat "${FAKE_DIR}/file_sha" ;;
   *)
@@ -83,7 +85,7 @@ run_script() {
     GH_TOKEN="SECRET-TOKEN-VALUE" "$@" "${script}" >"${fake}/out" 2>&1 || status=$?
 }
 
-writes() { grep -cE -- '--method|pr create' "${fake}/calls.log" || true; }
+writes() { grep -cE -- '--method|pr create|pr close' "${fake}/calls.log" || true; }
 
 expect_status() {
   [[ "${status}" -eq "$1" ]] || fail "$name: status ${status}, want $1: $(cat "${fake}/out")"
@@ -129,13 +131,50 @@ expect_status 0
 expect_writes 0
 expect_out "unchanged"
 
-name="an unchanged block leaves an open pull request alone"
+name="an unchanged block leaves an open pull request that equals the default branch alone"
 scenario unchanged-open
 cp "${tmp}/fresh.md" "${fake}/readme_main"
+cp "${tmp}/fresh.md" "${fake}/readme_branch"
+echo "cccc3333" >"${fake}/branch_sha"
 echo 7 >"${fake}/open_pr"
 run_script PROFILE_REPO=me/me DRY_RUN=false
 expect_status 0
 expect_writes 0
+
+name="an unchanged block closes an open pull request that carries an older block"
+scenario unchanged-stale
+cp "${tmp}/fresh.md" "${fake}/readme_main"
+printf 'older block\n' >"${fake}/readme_branch"
+echo "cccc3333" >"${fake}/branch_sha"
+echo 7 >"${fake}/open_pr"
+run_script PROFILE_REPO=me/me DRY_RUN=false
+expect_status 0
+expect_writes 1
+expect_call "pr close 7 --repo me/me --comment"
+expect_no_call "--method"
+expect_no_call "pr create"
+expect_out "closed the stale pull request #7"
+
+name="a dry run warns about a stale pull request and closes nothing"
+scenario unchanged-stale-dry
+cp "${tmp}/fresh.md" "${fake}/readme_main"
+printf 'older block\n' >"${fake}/readme_branch"
+echo "cccc3333" >"${fake}/branch_sha"
+echo 7 >"${fake}/open_pr"
+run_script PROFILE_REPO=me/me DRY_RUN=true
+expect_status 0
+expect_writes 0
+expect_out "a real run closes it"
+
+name="a master default branch is read, branched from and targeted"
+scenario master
+echo master >"${fake}/default_branch"
+run_script PROFILE_REPO=me/me DRY_RUN=false
+expect_status 0
+expect_call "--method POST repos/me/me/git/refs -f ref=refs/heads/cv/readme-block -f sha=aaaa1111"
+expect_call "pr create --repo me/me --base master --head cv/readme-block"
+expect_no_call "branch=master"
+expect_no_call "base main"
 
 name="a changed block creates the branch, writes it and opens a pull request"
 scenario create

@@ -6,8 +6,9 @@
 # What it does, in order:
 #   1. reads the README on the profile repository's default branch,
 #   2. replaces the block between the cv markers with "cv render readme",
-#   3. stops when the README does not change: no pull request, and a pull
-#      request that is already open is left alone,
+#   3. stops when the README does not change: no pull request. An open pull
+#      request that carries an older block is closed with a comment, since
+#      merging it would undo the current block. One that matches is left alone,
 #   4. stops after printing the diff when DRY_RUN is true,
 #   5. otherwise writes the README to the dedicated branch BRANCH through the
 #      contents API and opens the pull request, or updates the open one.
@@ -63,8 +64,22 @@ raw() {
 raw "${default_branch}" >"${workdir}/current.md"
 "${cv_bin}" render readme --dir "${data_dir}" --into "${workdir}/current.md" >"${workdir}/proposed.md"
 
+open_pr="$(gh pr list --repo "${repo}" --head "${branch}" --state open --json number --jq '.[0].number // empty')"
+
 if cmp -s "${workdir}/current.md" "${workdir}/proposed.md"; then
   echo "the block in ${repo} is unchanged, no pull request"
+  # An open pull request that carries an older block is stale: merging it would
+  # undo the current block. Close it. One that equals the default branch stays.
+  if [[ -n "${open_pr}" ]] && raw "${branch}" >"${workdir}/branch.md" 2>/dev/null &&
+    ! cmp -s "${workdir}/branch.md" "${workdir}/current.md"; then
+    if [[ "${dry_run}" == "true" ]]; then
+      echo "dry run: pull request #${open_pr} carries an older block, a real run closes it"
+    else
+      gh pr close "${open_pr}" --repo "${repo}" \
+        --comment "The block on ${default_branch} is already current. This proposal is stale, closing it. A later change of the CV data opens a new one."
+      echo "closed the stale pull request #${open_pr}"
+    fi
+  fi
   exit 0
 fi
 
@@ -76,8 +91,6 @@ if [[ "${dry_run}" == "true" ]]; then
   echo "dry run, nothing written"
   exit 0
 fi
-
-open_pr="$(gh pr list --repo "${repo}" --head "${branch}" --state open --json number --jq '.[0].number // empty')"
 
 branch_sha=""
 if branch_sha="$(gh api "repos/${repo}/git/ref/heads/${branch}" --jq .object.sha 2>/dev/null)"; then
