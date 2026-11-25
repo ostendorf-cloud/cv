@@ -153,6 +153,107 @@ func TestClient_Repo(t *testing.T) {
 		}
 	})
 
+	t.Run("403 with only a retry header is a rate limit", func(t *testing.T) {
+		t.Parallel()
+		routes := map[string]http.HandlerFunc{
+			languagesPath: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Retry-After", "30")
+				w.WriteHeader(http.StatusForbidden)
+			},
+		}
+		c, _ := newClient(t, routes, Config{})
+		if _, err := c.Repo(context.Background(), "example/alpha"); !errors.Is(err, ErrRateLimited) {
+			t.Fatalf("err = %v, want ErrRateLimited", err)
+		}
+	})
+
+	t.Run("403 whose body names a rate limit is a rate limit", func(t *testing.T) {
+		t.Parallel()
+		routes := map[string]http.HandlerFunc{
+			languagesPath: body(403, `{"message":"You have exceeded a secondary Rate Limit. Please wait."}`),
+		}
+		c, f := newClient(t, routes, Config{})
+		for _, repo := range []string{"example/alpha", "example/beta"} {
+			if _, err := c.Repo(context.Background(), repo); !errors.Is(err, ErrRateLimited) {
+				t.Fatalf("%s: err = %v, want ErrRateLimited", repo, err)
+			}
+		}
+		if n := f.count(); n != 1 {
+			t.Errorf("calls = %d, want 1", n)
+		}
+	})
+
+	t.Run("equal bytes sort by name, whatever the map order", func(t *testing.T) {
+		t.Parallel()
+		routes := okRoutes()
+		routes[languagesPath] = body(200, `{"H":5,"G":5,"F":5,"E":5,"D":5,"C":5,"B":5,"A":5}`)
+		c, _ := newClient(t, routes, Config{})
+		info, err := c.Repo(context.Background(), "example/alpha")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var names []string
+		for _, l := range info.Languages {
+			names = append(names, l.Name)
+		}
+		if got := strings.Join(names, ""); got != "ABCDEFGH" {
+			t.Errorf("order = %s, want ABCDEFGH", got)
+		}
+	})
+
+	t.Run("a release without a tag keeps the languages", func(t *testing.T) {
+		t.Parallel()
+		routes := okRoutes()
+		routes[releasePath] = body(200, `{"name":"x"}`)
+		c, _ := newClient(t, routes, Config{})
+		info, err := c.Repo(context.Background(), "example/alpha")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.LatestRelease != nil || len(info.Languages) == 0 {
+			t.Errorf("info = %+v, want languages and no release", info)
+		}
+	})
+
+	t.Run("the first timeout stops every further call", func(t *testing.T) {
+		t.Parallel()
+		release := make(chan struct{})
+		routes := map[string]http.HandlerFunc{
+			languagesPath: func(_ http.ResponseWriter, r *http.Request) {
+				select {
+				case <-release:
+				case <-r.Context().Done():
+				}
+			},
+		}
+		c, f := newClient(t, routes, Config{CallTimeout: 50 * time.Millisecond})
+		t.Cleanup(func() { close(release) })
+		for _, repo := range []string{"example/alpha", "example/beta", "example/gamma"} {
+			if _, err := c.Repo(context.Background(), repo); !errors.Is(err, context.DeadlineExceeded) {
+				t.Fatalf("%s: err = %v, want context.DeadlineExceeded", repo, err)
+			}
+		}
+		if n := f.count(); n != 1 {
+			t.Errorf("calls = %d, want 1: a dead upstream costs one timeout", n)
+		}
+	})
+
+	t.Run("a refused connection stops every further call", func(t *testing.T) {
+		t.Parallel()
+		srv := httptest.NewServer(http.NotFoundHandler())
+		url := srv.URL
+		srv.Close()
+		c := New(Config{BaseURL: url})
+		for _, repo := range []string{"example/alpha", "example/beta"} {
+			if _, err := c.Repo(context.Background(), repo); err == nil {
+				t.Fatalf("%s: want an error", repo)
+			}
+		}
+		if c.calls != 1 {
+			t.Errorf("calls = %d, want 1", c.calls)
+		}
+	})
+
 	t.Run("403 without rate limit headers is not a rate limit", func(t *testing.T) {
 		t.Parallel()
 		c, _ := newClient(t, map[string]http.HandlerFunc{languagesPath: body(403, `{}`)}, Config{})
@@ -197,9 +298,9 @@ func TestClient_Repo(t *testing.T) {
 				languagesPath: body(200, `{"Go": 1}`),
 				releasePath:   body(200, `<html>`),
 			},
-			"release without a tag": {
-				languagesPath: body(200, `{"Go": 1}`),
-				releasePath:   body(200, `{"name":"x"}`),
+			"oversized body": {
+				// More than 1 MiB of leading whitespace before an otherwise valid value.
+				languagesPath: body(200, strings.Repeat(" ", maxBodyBytes+1)+`{"Go": 1}`),
 			},
 			"languages of the wrong type": {languagesPath: body(200, `{"Go": "many"}`)},
 		} {
@@ -247,7 +348,7 @@ func TestClient_Repo(t *testing.T) {
 	t.Run("an invalid name makes no call", func(t *testing.T) {
 		t.Parallel()
 		c, f := newClient(t, okRoutes(), Config{})
-		for _, repo := range []string{"", "alpha", "a/b/c", "../x/y", "example/alpha?x=1", "example/al pha"} {
+		for _, repo := range []string{"", "alpha", "a/b/c", "../x/y", "example/alpha?x=1", "example/al pha", "example/.", "example/..", "example/..."} {
 			if _, err := c.Repo(context.Background(), repo); !errors.Is(err, ErrInvalidRepo) {
 				t.Errorf("%q: err = %v, want ErrInvalidRepo", repo, err)
 			}

@@ -55,7 +55,15 @@ var (
 	ErrUnexpectedStatus = errors.New("unexpected status")
 )
 
-var repoName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+$`)
+var repoName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]*/([A-Za-z0-9._-]+)$`)
+
+// ValidRepo reports whether repo is spelled owner/name, the one pattern the
+// client and the data validation share. A name made only of dots is refused,
+// so no path segment can climb out of /repos/<owner>/<name>.
+func ValidRepo(repo string) bool {
+	m := repoName.FindStringSubmatch(repo)
+	return m != nil && strings.Trim(m[1], ".") != ""
+}
 
 // Language is one language of a repository and the bytes of code in it.
 type Language struct {
@@ -98,9 +106,13 @@ type Client struct {
 	timeout time.Duration
 	max     int
 
-	mu      sync.Mutex
-	calls   int
-	limited bool
+	mu    sync.Mutex
+	calls int
+	// stopped is the reason no further call is made: a rate limit, or the
+	// first transport failure (a timeout, a refused or reset connection).
+	// Once set, every later lookup fails without a request, so a dead
+	// network costs one timeout, not one per call.
+	stopped error
 	cache   map[string]result
 }
 
@@ -145,7 +157,7 @@ func (c *Client) Repo(ctx context.Context, repo string) (Info, error) {
 }
 
 func (c *Client) fetch(ctx context.Context, repo string) (Info, error) {
-	if !repoName.MatchString(repo) {
+	if !ValidRepo(repo) {
 		return Info{}, fmt.Errorf("github: %q: %w", repo, ErrInvalidRepo)
 	}
 
@@ -176,7 +188,9 @@ func (c *Client) fetch(ctx context.Context, repo string) (Info, error) {
 	case err != nil:
 		return Info{}, err
 	case rel.Tag == "":
-		return Info{}, fmt.Errorf("github: /repos/%s/releases/latest: no tag_name: %w", repo, ErrMalformed)
+		// A release without a tag is not usable. The languages already
+		// fetched stay, and the project shows no release line.
+		return info, nil
 	}
 	info.LatestRelease = &Release{Tag: rel.Tag, Name: rel.Name, URL: rel.URL, PublishedAt: rel.PublishedAt}
 	return info, nil
@@ -184,14 +198,15 @@ func (c *Client) fetch(ctx context.Context, repo string) (Info, error) {
 
 // get makes one bounded call and decodes a 200 answer into out.
 func (c *Client) get(ctx context.Context, path string, out any) error {
-	if c.limited {
-		return fmt.Errorf("github: get %s: %w", path, ErrRateLimited)
+	if c.stopped != nil {
+		return fmt.Errorf("github: get %s: no further calls: %w", path, c.stopped)
 	}
 	if c.calls >= c.max {
 		return fmt.Errorf("github: get %s: %w", path, ErrCallBudget)
 	}
 	c.calls++
 
+	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
@@ -209,7 +224,12 @@ func (c *Client) get(ctx context.Context, path string, out any) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
 		// The error names the URL and the cause, never a request header.
-		return fmt.Errorf("github: get %s: %w", path, err)
+		err = fmt.Errorf("github: get %s: %w", path, err)
+		if parent.Err() == nil {
+			// Not the caller giving up: the network or GitHub failed.
+			c.stopped = err
+		}
+		return err
 	}
 	defer func() { _ = resp.Body.Close() }() // nothing to do about a failed close of a read body
 
@@ -222,16 +242,26 @@ func (c *Client) get(ctx context.Context, path string, out any) error {
 	case resp.StatusCode == http.StatusNotFound:
 		return fmt.Errorf("github: get %s: %w", path, ErrNotFound)
 	case resp.StatusCode == http.StatusTooManyRequests,
-		resp.StatusCode == http.StatusForbidden && rateLimitHeaders(resp.Header):
-		c.limited = true
+		resp.StatusCode == http.StatusForbidden && (rateLimitHeaders(resp.Header) || bodyNamesRateLimit(resp.Body)):
+		c.stopped = ErrRateLimited
 		return fmt.Errorf("github: get %s: %w", path, ErrRateLimited)
 	default:
 		return fmt.Errorf("github: get %s: %w: %d", path, ErrUnexpectedStatus, resp.StatusCode)
 	}
 }
 
+// bodyNamesRateLimit reports whether a 403 body says "rate limit", which is
+// how GitHub words a secondary limit that carries no header. It reads at most
+// 4 KiB.
+func bodyNamesRateLimit(r io.Reader) bool {
+	b, err := io.ReadAll(io.LimitReader(r, 4096))
+	if err != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(b)), "rate limit")
+}
+
 // rateLimitHeaders reports whether a 403 is a rate limit: the primary limit
 // is spent, or GitHub asks to wait (the secondary limit).
 func rateLimitHeaders(h http.Header) bool {
-	return h.Get("X-RateLimit-Remaining") == "0" || h.Get("Retry-After") != ""
-}
+	return h.Get("X-RateLimit-Remaining") == "0" || h.Get("Retry-After") != ""}
