@@ -29,17 +29,16 @@
 #set text(font: "Go", size: 9.5pt, fill: body-ink, lang: {{s .Lang}})
 #set par(justify: false, leading: 0.65em)
 
-// The Go font draws its hyphen almost as wide as a dash. Every hyphen prints
-// as the hyphen (U+2010) of the embedded Libertinus Serif instead, in the
-// surrounding size and weight. The en dash of a date range is not touched.
-#show "-": text(font: "Libertinus Serif", "\u{2010}")
+// No letter spacing and no hyphen replacement: an applicant tracking system
+// reads the text layer, and tracking splits a heading into fragments while a
+// replaced hyphen no longer matches a search for "E-Mail".
+// TestPDFTextLayer reads the compiled PDF with pdftotext.
 
-// A small uppercase, letter spaced label.
+// A small uppercase label.
 #let caps(body, fill: muted, size: 7.5pt) = text(
   size: size,
   weight: "bold",
   fill: fill,
-  tracking: 0.1em,
   upper(body),
 )
 

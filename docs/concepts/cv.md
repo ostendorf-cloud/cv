@@ -481,8 +481,10 @@ they are changed.
   3-Clause licence in `internal/cv/templates/fonts/LICENSE`. The binary embeds them, and
   `cv render pdf` writes them next to the source and passes `--font-path` and
   `--ignore-system-fonts`, so no text falls back to a font of the machine that renders.
-  Every heading and the body use the same family. The Go hyphen is almost as wide as a dash,
-  so a show rule prints every hyphen as the hyphen of the embedded Libertinus Serif. Inter or
+  Every heading and the body use the same family. The Go hyphen is almost as wide as a dash
+  and prints as it is: a replaced hyphen extracts as U+2010, and a search for `E-Mail` in the
+  text layer misses it. Headings carry no letter spacing for the same reason: an applicant
+  tracking system reads the text layer, and tracking splits a heading into fragments. Inter or
   IBM Plex Sans, both under the SIL OFL, can replace them later: the font file and its
   licence file go into the same directory, and the template names the family.
 - Photo: `assets/portrait.jpg`, 600 by 600 pixels. `cv render pdf --photo` names it;
