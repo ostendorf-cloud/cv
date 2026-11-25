@@ -5,8 +5,8 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Layout
 
-- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate` and
-  `render json` are its commands so far.
+- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
+  and `render readme` are its commands so far.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
@@ -30,7 +30,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   instead of only through a renderer. `render_json.go` renders the public JSON document
   for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
   model holds what LinkedIn holds, except recommendations (third party text) and interests
-  (not CV content).
+  (not CV content). `render_readme.go` renders the block for the GitHub profile README and
+  replaces it between the markers `<!-- cv:begin -->` and `<!-- cv:end -->`. See "Profile
+  README" below.
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
   language, matched by each entry's `id`. Both hold the owner's real, approved career data
   (merged in #38): experience, education, certificates, skills, projects, languages,
@@ -61,18 +63,64 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Scope of this milestone
 
-The CLI compiles and answers `version`, `help`, `validate` and `render json`.
+The CLI compiles and answers `version`, `help`, `validate`, `render json` and
+`render readme`.
 The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
 `DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
 data. Left out, tracked as later milestones:
 
-- `cv`'s other renderers: a PDF and the block for the GitHub profile README. A LinkedIn
-  export is a non goal of the concept. Every renderer calls
+- `cv`'s other renderer: a PDF. A LinkedIn export is a non goal of the concept. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - Feeding the detected stack back into the skills and tools the CV claims. The fetch and
   the merge into project descriptions exist, see "The GitHub token" below.
-- The consumers: `simon-ostendorf.de` rendering the CV page, `ostendorf.dev` rendering
-  projects, skills and tools, and the profile README written from here.
+- The consumers: `simon-ostendorf.de` rendering the CV page and `ostendorf.dev` rendering
+  projects, skills and tools.
+
+## Profile README
+
+`.github/workflows/profile-readme.yaml` runs `scripts/update-profile-readme.sh`, which
+renders the block with `cv render readme` and proposes it to the profile repository as a
+pull request. The owner reads and merges it. Nothing merges it automatically.
+
+- The block holds experience, education, certificates, skills by category, projects and
+  languages, from the English data. It leaves out contact data, references, engagements and
+  tools on purpose. The model has no visibility field ("No visibility" in
+  `docs/concepts/cv.md`), so the renderer's section list is the only gate, and
+  `TestRenderReadmeKeepsPrivateSectionsOut` pins it.
+- The profile repository must already carry both markers once, each on its own. Text outside
+  them is never touched. A missing, duplicated or misordered marker fails the run.
+- The script writes through the contents API to the dedicated branch `cv/readme-block` and
+  refuses a branch equal to the default branch. A block that is unchanged opens no pull
+  request. An open pull request is updated when the block changed and left alone when its
+  branch already carries the block. A leftover branch without an open pull request is reset
+  to the default branch before the next write.
+- A manual run takes the input `dry-run`, default `true`: it prints the diff and writes
+  nothing, and its token asks for read permissions only. A push to `main` that touches the
+  data or the renderer runs with `dry-run` false.
+- It runs only when the variables below are set.
+
+The owner creates these in the infrastructure repository. None exists yet:
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `PROFILE_README_OWNER` | variable | account that owns the profile repository |
+| `PROFILE_README_REPOSITORY` | variable | its name, `<user>` for a user profile README |
+| `PROFILE_README_PATH` | variable, optional | README path, default `README.md` |
+| `PROFILE_README_APP_ID` | variable | the GitHub App's id |
+| `PROFILE_README_APP_PRIVATE_KEY` | secret | the GitHub App's private key |
+
+The App is installed on the profile repository only. Which App it is stays the owner's
+decision: a dedicated one, or the org wide release App with the same permissions. The
+workflow reads `PROFILE_README_*`, not `GH_APP_RELEASE_*`, so it never uses the release App
+by accident. Needed repository permissions:
+
+- Contents: read and write. Writes the dedicated branch through the contents and refs API.
+- Pull requests: read and write. Lists, opens and updates the pull request.
+- Metadata: read, which every App has.
+
+The token is minted per run, scoped to the one repository and, on a dry run, to read.
+A ruleset on the profile repository that protects its default branch and requires a pull
+request stays in force: the App has no bypass.
 
 ## The GitHub token
 
