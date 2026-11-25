@@ -150,6 +150,9 @@ education, certificates, skills, projects and languages. It carries no contact d
   creates, and which App permissions it needs, is in `AGENTS.md`, "Profile README".
 - A manual run starts as a dry run: it prints the diff and opens nothing. Set the input
   `dry-run` to `false` to write.
+- The branch `cv/readme-block` is owned by the workflow. A hand commit on it is discarded.
+- Closing an unmerged pull request does not stick: the next push that touches the data opens
+  a new one. Stop the workflow instead.
 - To stop it, disable the workflow `profile-readme` in the Actions tab, or remove the variable
   `PROFILE_README_REPOSITORY`. An open pull request stays open until it is closed by hand.
 

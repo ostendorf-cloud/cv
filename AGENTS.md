@@ -93,13 +93,27 @@ pull request. The owner reads and merges it. Nothing merges it automatically.
   refuses a branch equal to the default branch. A block that is unchanged opens no pull
   request. An open pull request is updated when the block changed and left alone when its
   branch already carries the block. A leftover branch without an open pull request is reset
-  to the default branch before the next write.
+  to the default branch before the next write, with a forced update of the ref.
+- `cv/readme-block` is owned by the workflow. A hand commit on it is discarded by that
+  reset or overwritten by the next update.
+- When the data changes back to what the default branch carries, an open pull request with
+  an older block is closed with a comment, since merging it would undo the current block. A
+  pull request whose branch equals the default branch stays.
+- Closing an unmerged pull request by hand does not stick: the next push that touches the
+  data or the renderer opens a new one. To stop the proposals, disable the workflow or remove
+  a variable.
+- The renderer refuses text with an HTML comment opener, which would hide the rest of the
+  README, and a project repository that is not `owner/name`.
+- A README with CRLF line endings gets a CRLF block.
 - A manual run takes the input `dry-run`, default `true`: it prints the diff and writes
   nothing, and its token asks for read permissions only. A push to `main` that touches the
   data or the renderer runs with `dry-run` false.
 - It runs only when the variables below are set.
 
-The owner creates these in the infrastructure repository. None exists yet:
+The owner creates these in the infrastructure repository. None exists yet. Create the secret
+first: the job tests only the three variables `PROFILE_README_OWNER`,
+`PROFILE_README_REPOSITORY` and `PROFILE_README_APP_ID`, a secret cannot be tested there, so
+a missing key fails the run once they exist.
 
 | Name | Kind | Value |
 | --- | --- | --- |

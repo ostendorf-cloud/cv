@@ -32,8 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Not configured means not running: without the repository variables the
-    # job is skipped. Removing PROFILE_README_REPOSITORY stops it.
-    if: vars.PROFILE_README_OWNER != '' && vars.PROFILE_README_REPOSITORY != ''
+    # job is skipped. Removing PROFILE_README_REPOSITORY stops it. A secret
+    # cannot be tested here, so create PROFILE_README_APP_PRIVATE_KEY before
+    # the three variables.
+    if: >-
+      vars.PROFILE_README_OWNER != '' &&
+      vars.PROFILE_README_REPOSITORY != '' &&
+      vars.PROFILE_README_APP_ID != ''
     permissions:
       contents: read
     env:
