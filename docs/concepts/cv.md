@@ -346,9 +346,11 @@ contact:
   and the PDFs from `cvd`'s API at runtime, server to server. This replaces the build time
   reading their own concept docs chose. The owner's reasons: no stale artefact sits in a site,
   and he wants to be able to put the CV API behind his firewall.
-- `cvd` answers `GET /api/v1/cv.pdf?lang=de|en` with the PDF the release renders. `cvd` never
-  runs typst: the image build copies `rendered/cv.*.pdf` in, after CI or the publish job ran
-  `task render:pdf`, and `cvd` reads them once at start from `PDF_DIR`.
+- `cvd` answers `GET /api/v1/cv.pdf?lang=de|en` with the PDF the release renders, the same
+  bytes. `cvd` never runs typst: the image build copies `rendered/cv.*.pdf` in, and `cvd`
+  reads them once at start from `PDF_DIR`. The publish job downloads them from the release
+  and checks them against its `SHA256SUMS`. CI's image build renders them with
+  `task render:pdf`.
   - `Content-Type: application/pdf`, `Content-Disposition: inline` with the release asset
     name, a strong `ETag` from the sha256 of the bytes and
     `Cache-Control: public, max-age=60`. A server that polls reuses the PDF for a minute,
@@ -402,8 +404,8 @@ they are changed.
 - The README block is not an artefact of this repository at all: `cv render readme`'s pull
   request against the profile repository is the delivery.
 - `cvd` ships as a container image only, as it does today; it is a service, not a rendered
-  artefact. The image carries the two PDFs of its tag, rendered by the publish job before
-  the image build.
+  artefact. The image carries the two PDFs of its release, downloaded by the publish job
+  before the image build, so they equal the release assets.
 
 ### Validation: one implementation, called from two places
 

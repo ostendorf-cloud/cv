@@ -132,7 +132,8 @@ Decision for issue 8, closing the concept's open question.
   `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
   `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
   `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
-  The image job runs `task render:pdf` before the build, so the image serves the tag's PDFs.
+  The image job downloads the release's two PDFs, checks them against its `SHA256SUMS` and
+  copies them in, so the image serves the release assets byte for byte and needs no typst.
 - The golden test pins the typst source only. The `render-pdf` job in `checks.yaml` compiles
   the template with the real data, checks one to four pages with
   `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look

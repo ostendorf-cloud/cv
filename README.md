@@ -212,7 +212,8 @@ and `linux/arm64`.
 
 The image copies `rendered/cv.de.pdf` and `rendered/cv.en.pdf` when they exist. Run
 `task render:pdf` first to serve the PDFs; without them only the PDF route answers `503`.
-CI and the publish job render them before every image build.
+CI renders them before its image build. The publish job downloads the release's PDFs
+instead, so the published image serves the release assets byte for byte.
 
 ## Development
 

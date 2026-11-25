@@ -18,10 +18,11 @@ COPY internal/ internal/
 
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/cvd ./cmd/cvd
 
-# The PDFs `cv render pdf` wrote into rendered/, when the build context has
-# them. CI and the release run `task render:pdf` before the image build; a
-# local build without typst has none, and cvd then answers 503 on the PDF
-# route only. typst never runs in the image or at container start.
+# The PDFs in rendered/, when the build context has them. CI runs
+# `task render:pdf` before its image build, the publish job downloads the
+# release's PDFs into rendered/ instead. A local build without typst has
+# none, and cvd then answers 503 on the PDF route only. typst never runs in
+# the image or at container start.
 RUN --mount=type=bind,source=.,target=/context \
     mkdir -p /out/pdf \
     && for f in /context/rendered/cv.de.pdf /context/rendered/cv.en.pdf; do \
