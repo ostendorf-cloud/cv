@@ -26,7 +26,7 @@ Usage:
 Commands:
   version    print the version
   validate   validate data/cv.de.yaml and data/cv.en.yaml
-  render     render an artefact, json so far
+  render     render an artefact: json or readme
 
 Every command prints its result on stdout and everything else on stderr.
 `
@@ -44,6 +44,7 @@ It validates both files first and writes nothing when they are invalid.
 
 Usage:
   cv render json [--dir data] [--out rendered] [--no-github] [--github-url URL]
+  cv render readme [--dir data] [--into README.md]
 
 json writes cv.de.json and cv.en.json into --out.
 
@@ -51,6 +52,12 @@ Each project is enriched with its repository's languages and latest release
 from GitHub. A failed or rate limited call logs a warning and the project is
 rendered from its hand written fields. The token comes from GITHUB_TOKEN or the
 file named by GITHUB_TOKEN_FILE and is optional. --no-github skips every call.
+
+readme writes the block for the GitHub profile README, from the English data,
+between the markers "<!-- cv:begin -->" and "<!-- cv:end -->", on stdout. With
+--into it reads that README instead and writes the whole README on stdout with
+the block between its markers replaced. It fails when the README has no
+marker, a duplicated or a misordered one.
 `
 
 func main() {
@@ -103,9 +110,12 @@ func runValidate(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// runRender dispatches "cv render <artefact>". json is the only artefact so
-// far. It validates both data files first and writes nothing when they fail.
+// runRender dispatches "cv render <artefact>": json and readme. It validates
+// both data files first and writes nothing when they fail.
 func runRender(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "readme" {
+		return runRenderReadme(args[1:], stdout, stderr)
+	}
 	if len(args) == 0 || args[0] != "json" {
 		fmt.Fprint(stderr, renderUsage)
 		return 2
