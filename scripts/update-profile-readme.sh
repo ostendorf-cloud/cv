@@ -64,7 +64,8 @@ raw() {
 raw "${default_branch}" >"${workdir}/current.md"
 "${cv_bin}" render readme --dir "${data_dir}" --into "${workdir}/current.md" >"${workdir}/proposed.md"
 
-open_pr="$(gh pr list --repo "${repo}" --head "${branch}" --state open --json number --jq '.[0].number // empty')"
+open_pr="$(gh pr list --repo "${repo}" --head "${branch}" --state open --json number,isCrossRepository \
+  --jq '[.[] | select(.isCrossRepository == false)][0].number // empty')"
 
 if cmp -s "${workdir}/current.md" "${workdir}/proposed.md"; then
   echo "the block in ${repo} is unchanged, no pull request"

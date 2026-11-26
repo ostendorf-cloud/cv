@@ -31,7 +31,16 @@ default="$(cat "${FAKE_DIR}/default_branch")"
 case "${args}" in
   "pr close "*) ;;
   "repo view "*) cat "${FAKE_DIR}/default_branch" ;;
-  "pr list "*) cat "${FAKE_DIR}/open_pr" ;;
+  "pr list "*)
+    # open_pr holds the JSON array gh would print. The script's own --jq filter runs on it.
+    expr=""
+    prev=""
+    for a in "$@"; do
+      [[ "${prev}" == "--jq" ]] && expr="${a}"
+      prev="${a}"
+    done
+    jq -r "${expr}" "${FAKE_DIR}/open_pr"
+    ;;
   "pr create "*) echo "https://example.invalid/pull/1" ;;
   *"--method "*) ;;
   *"git/ref/heads/${default}"*) cat "${FAKE_DIR}/default_sha" ;;
@@ -73,7 +82,7 @@ scenario() {
   echo main >"${fake}/default_branch"
   echo "aaaa1111" >"${fake}/default_sha"
   echo "bbbb2222" >"${fake}/file_sha"
-  : >"${fake}/open_pr"
+  echo '[]' >"${fake}/open_pr"
   cp "${current}" "${fake}/readme_main"
 }
 
@@ -136,7 +145,7 @@ scenario unchanged-open
 cp "${tmp}/fresh.md" "${fake}/readme_main"
 cp "${tmp}/fresh.md" "${fake}/readme_branch"
 echo "cccc3333" >"${fake}/branch_sha"
-echo 7 >"${fake}/open_pr"
+echo '[{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
 run_script PROFILE_REPO=me/me DRY_RUN=false
 expect_status 0
 expect_writes 0
@@ -146,7 +155,7 @@ scenario unchanged-stale
 cp "${tmp}/fresh.md" "${fake}/readme_main"
 printf 'older block\n' >"${fake}/readme_branch"
 echo "cccc3333" >"${fake}/branch_sha"
-echo 7 >"${fake}/open_pr"
+echo '[{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
 run_script PROFILE_REPO=me/me DRY_RUN=false
 expect_status 0
 expect_writes 1
@@ -155,12 +164,35 @@ expect_no_call "--method"
 expect_no_call "pr create"
 expect_out "closed the stale pull request #7"
 
+name="a pull request from a fork with the same head name is ignored"
+scenario fork-pr
+cp "${tmp}/fresh.md" "${fake}/readme_main"
+printf 'older block\n' >"${fake}/readme_branch"
+echo "cccc3333" >"${fake}/branch_sha"
+echo '[{"number":9,"isCrossRepository":true}]' >"${fake}/open_pr"
+run_script PROFILE_REPO=me/me DRY_RUN=false
+expect_status 0
+expect_writes 0
+expect_no_call "pr close"
+expect_no_call "#9"
+
+name="a fork pull request does not stop the own one from being found"
+scenario fork-and-own-pr
+cp "${tmp}/fresh.md" "${fake}/readme_main"
+printf 'older block\n' >"${fake}/readme_branch"
+echo "cccc3333" >"${fake}/branch_sha"
+echo '[{"number":9,"isCrossRepository":true},{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
+run_script PROFILE_REPO=me/me DRY_RUN=false
+expect_status 0
+expect_call "pr close 7 --repo me/me"
+expect_no_call "pr close 9"
+
 name="a dry run warns about a stale pull request and closes nothing"
 scenario unchanged-stale-dry
 cp "${tmp}/fresh.md" "${fake}/readme_main"
 printf 'older block\n' >"${fake}/readme_branch"
 echo "cccc3333" >"${fake}/branch_sha"
-echo 7 >"${fake}/open_pr"
+echo '[{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
 run_script PROFILE_REPO=me/me DRY_RUN=true
 expect_status 0
 expect_writes 0
@@ -201,7 +233,7 @@ expect_no_call "branch=main"
 name="a changed block updates the open pull request without opening another"
 scenario update-open
 echo "cccc3333" >"${fake}/branch_sha"
-echo 7 >"${fake}/open_pr"
+echo '[{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
 printf 'older block\n' >"${fake}/readme_branch"
 run_script PROFILE_REPO=me/me DRY_RUN=false
 expect_status 0
@@ -215,7 +247,7 @@ expect_out "updated pull request #7"
 name="an open pull request that already carries the block is left alone"
 scenario open-current
 echo "cccc3333" >"${fake}/branch_sha"
-echo 7 >"${fake}/open_pr"
+echo '[{"number":7,"isCrossRepository":false}]' >"${fake}/open_pr"
 cp "${tmp}/fresh.md" "${fake}/readme_branch"
 run_script PROFILE_REPO=me/me DRY_RUN=false
 expect_status 0
