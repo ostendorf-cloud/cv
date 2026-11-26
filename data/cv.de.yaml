@@ -1078,6 +1078,66 @@ engagements:
       Kubernetes-Funktionen für Credential Provider. Für die Tests entstand eine eigene Umgebung
       aus Kubernetes-Cluster, Vault und Harbor Registry.
 
-# Die Werkzeuge liegen noch nicht vor. Einträge (id, name, group, description) nur mit echten
-# Daten ergänzen, nie mit Hostname, Adresse oder Port: `cv validate` lehnt diese ab.
-tools: []
+# Werkzeuge nach Klasse, nie mit Produktname, Hostname, Adresse oder Port: `cv validate` lehnt die
+# letzten drei ab. Die beiden Homelab-Gruppen bleiben leer, bis der Inhaber sie liefert.
+tools:
+  - id: development-machine
+    name: Entwicklungsrechner
+    group: workstation
+    description: >
+      Hauptrechner für Entwicklung und Betrieb mit einem Unix-basierten Desktop-Betriebssystem.
+  - id: unix-shell
+    name: Unix-Shell
+    group: editor-shell
+    description: >
+      Interaktive Shell für die tägliche Arbeit im Terminal.
+  - id: version-manager
+    name: Werkzeug-Versionsverwaltung
+    group: command-line
+    description: >
+      Legt alle Werkzeuge eines Repositorys auf eine Version fest, damit lokale Läufe und CI dieselben Werkzeuge nutzen.
+  - id: task-runner
+    name: Task-Runner
+    group: command-line
+    description: >
+      Führt dieselben benannten Build-, Lint- und Test-Ziele lokal und in der CI aus.
+  - id: version-control
+    name: Versionsverwaltung und Forge-Kommandozeile
+    group: command-line
+    description: >
+      Verteilte Versionsverwaltung und die Forge-Kommandozeile für Branches, Pull Requests, Issues und Reviews.
+  - id: linters-formatters
+    name: Linter und Formatierer
+    group: command-line
+    description: >
+      Statische Prüfungen für Go, YAML, Shell, Markdown, Workflows und Dockerfiles.
+  - id: secret-scanner
+    name: Secret-Scanner
+    group: command-line
+    description: >
+      Durchsucht das Repository vor jedem Merge nach eingecheckten Zugangsdaten.
+  - id: kubernetes-chart-tooling
+    name: Kubernetes-Chart-Werkzeuge
+    group: command-line
+    description: >
+      Paketiert, rendert, testet per Unit-Test und prüft Kubernetes-Anwendungspakete gegen ihr Schema.
+  - id: release-builder
+    name: Release-Builder
+    group: command-line
+    description: >
+      Baut Release-Archive für mehrere Plattformen und Prüfsummen aus einem getaggten Commit.
+  - id: language-toolchains
+    name: Toolchains für Programmiersprachen
+    group: command-line
+    description: >
+      Compiler, Laufzeitumgebungen und Paketmanager für Go und für die Web-Frontends.
+  - id: package-manager
+    name: Paketmanager für Desktop-Software
+    group: command-line
+    description: >
+      Installiert Kommandozeilen-Software auf dem Arbeitsrechner und dient als Vertriebsweg für eigene Werkzeuge.
+  - id: ai-coding-agent
+    name: KI-Coding-Agent
+    group: command-line
+    description: >
+      Terminalbasierter Coding-Agent, gesteuert durch Regeln und Skills aus einem Repository.

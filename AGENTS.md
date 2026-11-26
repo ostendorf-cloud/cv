@@ -19,7 +19,7 @@ service that serves it. The baseline rules apply and are not repeated here.
   the `tools` section (`id`, `name`, `group`, `description`; five enumerated groups; `name`
   and `description` are refused when they carry a URL, an e-mail, an IP or MAC address, a
   UNC path, a port or a hostname, see `forbidden.go`; the group must match across the files;
-  the real data files hold `tools: []` until the owner supplies entries),
+  the real data files hold entries for three groups and none for the two homelab groups yet),
   the four skill levels, a duplicate id within a section, a
   skill's evidence checked against the project, experience and certificate ids that
   actually exist, and the two-file drift check between `data/cv.de.yaml` and

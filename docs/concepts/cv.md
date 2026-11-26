@@ -144,7 +144,7 @@
     `workstation`, `editor-shell` (editor and shell), `command-line` (command line tools),
     `homelab-hardware` and `homelab-platform`. An unknown or empty group is refused. A new
     group is a new enum value, so it needs its own versioning decision.
-  - `name` is a product name and is the same in both files in practice. `description` says what
+  - `name` is a class of tool, not a product, and is translated in each file. `description` says what
     the tool is used for: German in `data/cv.de.yaml`, English in `data/cv.en.yaml`. The `id` is
     shared and matched by the drift rule.
   - The homelab is a real network and this repository is public. Validation refuses, in `name`
@@ -227,8 +227,12 @@
     exact version of an exposed service out of an entry is the owner's duty.
   - The two files must agree on the `group` of a tool: the drift check reports a tool whose
     group differs, next to the id check.
-  - The real data files carry `tools: []` until the owner supplies the entries. Example entries
-    live in the test fixtures only.
+  - Entries describe a class of tool, never a product, in every group. A network device in a
+    homelab group is named by its class only: no manufacturer, no model and no address.
+  - Decided by the owner on 2026-11-26: the real data files carry entries for `workstation`,
+    `editor-shell` and `command-line`, drafted from the owner's repositories and struck or
+    extended by the owner. `homelab-hardware` and `homelab-platform` stay empty until the owner
+    supplies them. Example entries with product names live in the test fixtures only.
   - `tools` is the last JSON key, after `skill_categories`, a list of `id`, `name`, `group` and
     `description`, in file order. A new key a consumer can ignore does not raise the schema
     version (policy in `README.md`), so it is additive to version 1, which stays 1 until the

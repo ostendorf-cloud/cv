@@ -1071,6 +1071,66 @@ engagements:
       new Kubernetes features for credential providers. Set up a dedicated test environment with a
       Kubernetes cluster, Vault and a Harbor registry.
 
-# The owner has not supplied the tools yet. Add entries (id, name, group, description) only with
-# real data, and never a hostname, an address or a port: `cv validate` refuses those.
-tools: []
+# Tools by class, never a product name, a hostname, an address or a port: `cv validate` refuses
+# the last three. The two homelab groups stay empty until the owner supplies them.
+tools:
+  - id: development-machine
+    name: Development machine
+    group: workstation
+    description: >
+      Main machine for development and operations work, running a Unix based desktop operating system.
+  - id: unix-shell
+    name: Unix shell
+    group: editor-shell
+    description: >
+      Interactive shell for daily work in the terminal.
+  - id: version-manager
+    name: Tool version manager
+    group: command-line
+    description: >
+      Pins every tool of a repository to one version, so a local run and CI use the same tools.
+  - id: task-runner
+    name: Task runner
+    group: command-line
+    description: >
+      Runs the same named build, lint and test targets locally and in CI.
+  - id: version-control
+    name: Version control and forge command line
+    group: command-line
+    description: >
+      Distributed version control and the forge command line for branches, pull requests, issues and reviews.
+  - id: linters-formatters
+    name: Linters and formatters
+    group: command-line
+    description: >
+      Static checks for Go, YAML, shell, Markdown, workflows and Dockerfiles.
+  - id: secret-scanner
+    name: Secret scanner
+    group: command-line
+    description: >
+      Scans the repository for committed credentials before every merge.
+  - id: kubernetes-chart-tooling
+    name: Kubernetes chart tooling
+    group: command-line
+    description: >
+      Packages, renders, unit tests and schema checks Kubernetes application charts.
+  - id: release-builder
+    name: Release builder
+    group: command-line
+    description: >
+      Builds multi platform release archives and checksums from a tagged commit.
+  - id: language-toolchains
+    name: Programming language toolchains
+    group: command-line
+    description: >
+      Compilers, runtimes and package managers for Go and for the web frontends.
+  - id: package-manager
+    name: Package manager for desktop software
+    group: command-line
+    description: >
+      Installs command line software on the workstation, and serves as the distribution channel for own tools.
+  - id: ai-coding-agent
+    name: AI coding agent
+    group: command-line
+    description: >
+      Terminal based coding agent, steered by rules and skills kept in a repository.
