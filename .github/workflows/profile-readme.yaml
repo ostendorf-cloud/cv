@@ -1,0 +1,76 @@
+name: profile-readme
+
+# Proposes the CV block to the GitHub profile repository as a pull request.
+# It never pushes to that repository's default branch. See AGENTS.md,
+# "Profile README", for the variables, the secret and the App permissions the
+# owner creates, and README.md for how to stop it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - data/**
+      - cmd/cv/**
+      - internal/cv/**
+      - scripts/update-profile-readme.sh
+      - .github/workflows/profile-readme.yaml
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Render and show the diff in the log, open no pull request.
+        type: boolean
+        default: true
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Not configured means not running: without the repository variables the
+    # job is skipped. Removing PROFILE_README_REPOSITORY stops it. A secret
+    # cannot be tested here, so create GH_APP_PROFILE_README_PRIVATE_KEY before
+    # the three variables.
+    if: >-
+      vars.PROFILE_README_OWNER != '' &&
+      vars.PROFILE_README_REPOSITORY != '' &&
+      vars.GH_APP_PROFILE_README_APP_ID != ''
+    permissions:
+      contents: read
+    env:
+      # A push always writes. A manual run writes only when dry-run is false.
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run && 'true' || 'false' }}
+    steps:
+      - name: Mint a token for the profile repository
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
+        with:
+          app-id: ${{ vars.GH_APP_PROFILE_README_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PROFILE_README_PRIVATE_KEY }}
+          owner: ${{ vars.PROFILE_README_OWNER }}
+          repositories: ${{ vars.PROFILE_README_REPOSITORY }}
+          # A dry run only reads the README.
+          permission-contents: ${{ env.DRY_RUN == 'true' && 'read' || 'write' }}
+          permission-pull-requests: ${{ env.DRY_RUN == 'true' && 'read' || 'write' }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78  # v5.3.0
+        with:
+          install_args: go task
+
+      - name: Build cv
+        run: task build:cv
+
+      - name: Render the block and propose it
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PROFILE_REPO: ${{ vars.PROFILE_README_OWNER }}/${{ vars.PROFILE_README_REPOSITORY }}
+          README_PATH: ${{ vars.PROFILE_README_PATH || 'README.md' }}
+        run: ./scripts/update-profile-readme.sh

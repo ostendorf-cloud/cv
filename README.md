@@ -4,8 +4,8 @@ The one source for Simon Ostendorf's curriculum vitae.
 
 ## What it does
 
-- `cv`, a CLI that validates the CV data and renders the website's JSON. A PDF and a
-  GitHub profile README block follow.
+- `cv`, a CLI that validates the CV data and renders the website's JSON and the block
+  for the GitHub profile README. A PDF follows.
 - `cvd`, a small service that serves the same JSON document at `GET /api/v1/cv` inside
   the cluster, and health, readiness and metrics on govue's admin listener.
 
@@ -127,6 +127,34 @@ to the shape, regenerate and review the diff:
 ```sh
 go test ./internal/cv -run TestRenderJSONGolden -update
 ```
+
+## Profile README
+
+`cv render readme` writes a Markdown block from the English data on stdout: experience,
+education, certificates, skills, projects and languages. It carries no contact data.
+
+```sh
+./bin/cv render readme
+./bin/cv render readme --into README.md
+```
+
+- The block sits between `<!-- cv:begin -->` and `<!-- cv:end -->`. With `--into` the block
+  between those markers in the given README is replaced, and the rest of the README stays
+  byte for byte.
+- A README with no marker, a duplicated marker or the end marker first is refused.
+- The workflow `profile-readme.yaml` proposes the block as a pull request, from the branch
+  `cv/readme-block`, against the profile repository named by the variables
+  `PROFILE_README_OWNER` and `PROFILE_README_REPOSITORY`. Nothing is pushed to that
+  repository's default branch and nothing is merged automatically.
+- The workflow is idle until both variables exist. Which variables and secret the owner
+  creates, and which App permissions it needs, is in `AGENTS.md`, "Profile README".
+- A manual run starts as a dry run: it prints the diff and opens nothing. Set the input
+  `dry-run` to `false` to write.
+- The branch `cv/readme-block` is owned by the workflow. A hand commit on it is discarded.
+- Closing an unmerged pull request does not stick: the next push that touches the data opens
+  a new one. Stop the workflow instead.
+- To stop it, disable the workflow `profile-readme` in the Actions tab, or remove the variable
+  `PROFILE_README_REPOSITORY`. An open pull request stays open until it is closed by hand.
 
 ## Configuration
 

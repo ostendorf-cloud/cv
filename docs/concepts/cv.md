@@ -327,9 +327,9 @@ contact:
 ### Three renderers, no fourth
 
 - `cv render pdf`, `cv render json` and `cv render readme` each read both data files and write
-  one artefact. Only `render json` exists today, and it merges in GitHub project data. The
-  other renderers take the same `cv.Enrichment`. No `cv render linkedin`: dropped per the non
-  goals above.
+  one artefact. `render json` and `render readme` exist today, and `render json` merges in
+  GitHub project data. The other renderers take the same `cv.Enrichment`. No
+  `cv render linkedin`: dropped per the non goals above.
 - `cvd` is not a fourth renderer. It serves the JSON document `cv render json` also writes,
   see the next section.
 - The README block is never committed directly to the profile repository. `cv render readme`
