@@ -112,7 +112,7 @@ pull request. The owner reads and merges it. Nothing merges it automatically.
 
 The owner creates these in the infrastructure repository. None exists yet. Create the secret
 first: the job tests only the three variables `PROFILE_README_OWNER`,
-`PROFILE_README_REPOSITORY` and `PROFILE_README_APP_ID`, a secret cannot be tested there, so
+`PROFILE_README_REPOSITORY` and `GH_APP_PROFILE_README_APP_ID`, a secret cannot be tested there, so
 a missing key fails the run once they exist.
 
 | Name | Kind | Value |
@@ -120,13 +120,17 @@ a missing key fails the run once they exist.
 | `PROFILE_README_OWNER` | variable | account that owns the profile repository |
 | `PROFILE_README_REPOSITORY` | variable | its name, `<user>` for a user profile README |
 | `PROFILE_README_PATH` | variable, optional | README path, default `README.md` |
-| `PROFILE_README_APP_ID` | variable | the GitHub App's id |
-| `PROFILE_README_APP_PRIVATE_KEY` | secret | the GitHub App's private key |
+| `GH_APP_PROFILE_README_APP_ID` | organisation variable | the GitHub App's id |
+| `GH_APP_PROFILE_README_PRIVATE_KEY` | organisation secret | the GitHub App's private key |
+
+The first three are repository variables. The two App values live at organisation level,
+scoped to this repository only, and follow the `GH_APP_<NAME>_APP_ID` and
+`GH_APP_<NAME>_PRIVATE_KEY` scheme.
 
 The App is installed on the profile repository only. Which App it is stays the owner's
 decision: a dedicated one, or the org wide release App with the same permissions. The
-workflow reads `PROFILE_README_*`, not `GH_APP_RELEASE_*`, so it never uses the release App
-by accident. Needed repository permissions:
+workflow reads `GH_APP_PROFILE_README_*`, not `GH_APP_RELEASE_*`, so it never uses the
+release App by accident. Needed repository permissions:
 
 - Contents: read and write. Writes the dedicated branch through the contents and refs API.
 - Pull requests: read and write. Lists, opens and updates the pull request.

@@ -33,12 +33,12 @@ jobs:
     timeout-minutes: 10
     # Not configured means not running: without the repository variables the
     # job is skipped. Removing PROFILE_README_REPOSITORY stops it. A secret
-    # cannot be tested here, so create PROFILE_README_APP_PRIVATE_KEY before
+    # cannot be tested here, so create GH_APP_PROFILE_README_PRIVATE_KEY before
     # the three variables.
     if: >-
       vars.PROFILE_README_OWNER != '' &&
       vars.PROFILE_README_REPOSITORY != '' &&
-      vars.PROFILE_README_APP_ID != ''
+      vars.GH_APP_PROFILE_README_APP_ID != ''
     permissions:
       contents: read
     env:
@@ -49,8 +49,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
         with:
-          app-id: ${{ vars.PROFILE_README_APP_ID }}
-          private-key: ${{ secrets.PROFILE_README_APP_PRIVATE_KEY }}
+          app-id: ${{ vars.GH_APP_PROFILE_README_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PROFILE_README_PRIVATE_KEY }}
           owner: ${{ vars.PROFILE_README_OWNER }}
           repositories: ${{ vars.PROFILE_README_REPOSITORY }}
           # A dry run only reads the README.
