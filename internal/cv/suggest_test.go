@@ -121,12 +121,22 @@ func TestSuggestSkillsUsesBothLanguageFiles(t *testing.T) {
 func TestSuggestions_Write(t *testing.T) {
 	t.Parallel()
 
-	var empty bytes.Buffer
-	if err := (Suggestions{}).Write(&empty); err != nil {
-		t.Fatal(err)
+	empties := []struct {
+		name string
+		s    Suggestions
+		want string
+	}{
+		{"compared, nothing to suggest", Suggestions{Compared: 2}, "nothing to suggest"},
+		{"nothing compared", Suggestions{}, "nothing was compared"},
 	}
-	if !strings.Contains(empty.String(), "nothing to suggest") {
-		t.Errorf("empty output = %q", empty.String())
+	for _, tt := range empties {
+		var empty bytes.Buffer
+		if err := tt.s.Write(&empty); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(empty.String(), tt.want) {
+			t.Errorf("%s: output = %q, want %q", tt.name, empty.String(), tt.want)
+		}
 	}
 
 	var b bytes.Buffer

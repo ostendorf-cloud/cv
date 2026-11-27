@@ -116,6 +116,32 @@ func TestRunSuggestSkillsNothingToSuggest(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("code = %d, want 0, stderr = %q", code, stderr.String())
 	}
+	if !strings.Contains(stdout.String(), "nothing was compared") ||
+		strings.Contains(stdout.String(), "nothing to suggest") {
+		t.Errorf("stdout = %q", stdout.String())
+	}
+}
+
+func TestRunSuggestSkillsAllMatch(t *testing.T) {
+	t.Setenv("GITHUB_TOKEN", "")
+	t.Setenv("GITHUB_TOKEN_FILE", "")
+
+	// Both repositories are read and report only Go, which a skill claims.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/example/alpha/languages", "/repos/example/beta/languages":
+			_, _ = w.Write([]byte(`{"Go": 900}`)) // a short write shows up as a failed assertion
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"suggest-skills", "--github-url", srv.URL, "--dir", "testdata/suggest-pair"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want 0, stderr = %q", code, stderr.String())
+	}
 	if !strings.Contains(stdout.String(), "nothing to suggest") {
 		t.Errorf("stdout = %q", stdout.String())
 	}

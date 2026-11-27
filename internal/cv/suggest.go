@@ -29,6 +29,8 @@ type StaleEvidence struct {
 type Suggestions struct {
 	Missing []MissingSkill
 	Stale   []StaleEvidence
+	// Compared is the number of projects that were looked up and took part.
+	Compared int
 }
 
 // Empty reports whether there is nothing to suggest.
@@ -67,6 +69,7 @@ func SuggestSkills(de, en Document, enr Enrichment) Suggestions {
 		if !ok {
 			continue
 		}
+		sugg.Compared++
 		usedBy[p.ID] = map[string]bool{}
 		for _, l := range info.Languages {
 			key := foldName(l.Name)
@@ -119,6 +122,10 @@ func foldName(s string) string {
 // line for a skill to consider adding, a minus line for evidence to review.
 // The owner edits the data file by hand.
 func (s Suggestions) Write(w io.Writer) error {
+	if s.Empty() && s.Compared == 0 {
+		_, err := fmt.Fprintln(w, "cv: no repository could be read, so nothing was compared")
+		return err
+	}
 	if s.Empty() {
 		_, err := fmt.Fprintln(w, "cv: skills match the repositories, nothing to suggest")
 		return err
