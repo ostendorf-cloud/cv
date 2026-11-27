@@ -16,8 +16,10 @@ import (
 	"github.com/ostendorf-cloud/govue/httpserver"
 	"github.com/ostendorf-cloud/govue/logging"
 
+	"github.com/ostendorf-cloud/cv/internal/cv"
 	"github.com/ostendorf-cloud/cv/internal/cvd"
 	"github.com/ostendorf-cloud/cv/internal/cvdconfig"
+	"github.com/ostendorf-cloud/cv/internal/github"
 )
 
 func main() {
@@ -35,7 +37,11 @@ func run() error {
 
 	logger := logging.New(os.Stdout, cfg.LogLevel)
 
-	app := cvd.New(logger)
+	// The token goes to api.github.com only: the client's base URL is its
+	// default and nothing here changes it.
+	app := cvd.New(logger, cvd.WithGitHub(func() cv.RepoSource {
+		return github.New(github.Config{Token: cfg.GitHubToken})
+	}, cfg.GitHubCacheTTL))
 
 	// Read once, before anything listens: invalid data stops the start, so
 	// a half document is never served. The problems are logged one by one,
@@ -64,6 +70,14 @@ func run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	// The first lookup runs before anything listens, so the first answer
+	// already carries the GitHub data. It is bounded and never fails the
+	// start: a GitHub outage serves the documents without those keys until a
+	// later refresh succeeds.
+	logger.Info("loading the github data", "cache_ttl", cfg.GitHubCacheTTL.String())
+	app.Refresh(ctx)
+	go app.RefreshEvery(ctx)
 
 	return httpserver.RunAdmin(ctx, httpserver.Config{
 		Addr:    cfg.Addr,

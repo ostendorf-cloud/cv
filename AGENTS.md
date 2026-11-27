@@ -50,7 +50,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   API routes, and the one govue's admin listener serves, health, readiness and metrics.
   `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
   the bytes; the handler serves them. `App.LoadPDFs` reads the PDFs rendered at image build
-  time from `PDF_DIR`; a missing one answers 503 on the PDF route only. Startup logs
+  time from `PDF_DIR`; a missing one answers 503 on the PDF route only. `App.Refresh`
+  (`github.go`) enriches both documents with the GitHub data and renders them again; see
+  "The GitHub token". Startup logs
   problems with positions, ids and enumerated values; free text excerpts of YAML type
   errors are redacted, best effort.
 - `internal/github/`: a small `net/http` client for a repository's languages and latest
@@ -62,8 +64,8 @@ service that serves it. The baseline rules apply and are not repeated here.
   keyed by repository. It is never written to a data file and a `Document` never holds it.
   A renderer takes it as a parameter and shows a project without an entry from its hand
   written fields alone. `RenderJSONEnriched` is the JSON renderer's use of it, adding
-  `languages` and `latest_release` to a project. `cvd` calls `RenderJSON` and makes no
-  GitHub call, so the document it serves lacks those keys. `cmd/cv/enrich.go` holds the
+  `languages` and `latest_release` to a project. `cvd` uses it through `App.Refresh`, see
+  "The GitHub token". `cmd/cv/enrich.go` holds the
   shared `--no-github` and `--github-url` flags and the token wiring every render
   subcommand reuses.
 - `charts/cv/`: the Helm chart, for `cvd` only. `cv` ships as a release artefact, not a
@@ -112,6 +114,17 @@ Decision for issue 8, closing the concept's open question.
 - Bounds: 10 seconds per call, 60 calls and 60 seconds (`--github-timeout`) per render, which
   covers thirty repositories. The first timeout or transport error, like a rate limit, ends
   all further calls, so a dead upstream costs one timeout.
+- `cvd` loads the same data itself, decided in issue 64 (ostendorf.dev ADR 0001), so the
+  sites make no GitHub call and hold no token. `cmd/cvd` calls `App.Refresh` once before
+  it listens and `App.RefreshEvery` after, every `GITHUB_CACHE_TTL` (default `1h`, `1m` to
+  `7d`). Each refresh builds a fresh `github.Client`, because a client caches for its whole
+  life. A lookup that fails keeps the repository's last good data, so a GitHub failure
+  never fails `GET /api/v1/cv`. A project that never had data omits both keys. A refresh
+  that changes nothing keeps the ETag. The token is optional, read from `GITHUB_TOKEN_FILE`
+  (or `GITHUB_TOKEN`, not both) through govue's `envconf`, and sent to `api.github.com`
+  only. A set but unreadable or empty file stops the start, and no error carries the path
+  or the token. The anonymous limit of 60 calls an hour covers thirty repositories at the
+  default lifetime. The chart sets none of these yet.
 
 ## Skill suggestions
 

@@ -16,7 +16,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ostendorf-cloud/govue/api"
 	"github.com/ostendorf-cloud/govue/health"
@@ -49,15 +51,15 @@ func newRendered(body []byte) rendered {
 	return rendered{body: body, etag: `"` + hex.EncodeToString(sum[:]) + `"`}
 }
 
-// documents is every rendered document by language. It is built once by
-// Load or LoadPDFs and never changed afterwards.
+// documents is every rendered document by language. A map is never changed
+// after it is stored: Load, Refresh and LoadPDFs store a new one.
 type documents map[string]rendered
 
 // App holds every dependency cmd/cvd wires together.
 //
-// The documents it serves are read once by Load, which cmd/cvd calls before
-// it listens. Until Load succeeds, readiness reports unready and the API
-// answers 503.
+// The data is read once by Load, which cmd/cvd calls before it listens. Until
+// Load succeeds, readiness reports unready and the API answers 503. With
+// WithGitHub, Refresh adds the GitHub facts of each project to the JSON.
 type App struct {
 	logger *slog.Logger
 	health *health.Registry
@@ -65,18 +67,33 @@ type App struct {
 	docs atomic.Pointer[documents]
 	pdfs atomic.Pointer[documents]
 
+	// mu guards pair and enr, and serialises Load and Refresh. The handlers
+	// never take it: they read docs and pdfs.
+	mu sync.Mutex
+	// pair is the validated data by language, set by Load.
+	pair map[string]cv.Document
+	// enr is the last good GitHub data by repository.
+	enr cv.Enrichment
+
+	// source and ttl are set by WithGitHub. A nil source means no GitHub call.
+	source SourceFunc
+	ttl    time.Duration
+
 	httpMetrics    *metrics.HTTP
 	metricsHandler http.Handler
 }
 
 // New constructs an App with no documents loaded.
-func New(logger *slog.Logger) *App {
+func New(logger *slog.Logger, opts ...Option) *App {
 	registry := metrics.NewRegistry()
 	a := &App{
 		logger:         logger,
 		health:         health.New(),
 		httpMetrics:    metrics.NewHTTP(registry),
 		metricsHandler: metrics.Handler(registry),
+	}
+	for _, opt := range opts {
+		opt(a)
 	}
 	a.health.Add("cv data", 0, func(context.Context) error {
 		if a.docs.Load() == nil {
@@ -88,9 +105,10 @@ func New(logger *slog.Logger) *App {
 }
 
 // Load reads cv.de.yaml and cv.en.yaml from dir, validates them, renders
-// every language through cv.RenderJSON, the renderer the CLI uses, and only
-// then makes the result available. Any problem leaves the App unloaded and
-// is returned aggregated: a half document is never served.
+// every language through the JSON renderer the CLI uses, without GitHub
+// data, and only then makes the result available. Any problem leaves the App
+// unloaded and is returned aggregated: a half document is never served.
+// Refresh adds the GitHub data afterwards.
 func (a *App) Load(dir string) error {
 	de, en, err := cv.LoadPair(filepath.Join(dir, "cv.de.yaml"), filepath.Join(dir, "cv.en.yaml"))
 	if err != nil {
@@ -98,16 +116,31 @@ func (a *App) Load(dir string) error {
 	}
 
 	byLang := map[string]cv.Document{"de": de, "en": en}
+	docs, err := renderAll(byLang, nil)
+	if err != nil {
+		return err
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.pair = byLang
+	a.enr = nil
+	a.docs.Store(&docs)
+	return nil
+}
+
+// renderAll renders every language through cv.RenderJSONEnriched, the
+// renderer the CLI uses. A nil enr renders what cv.RenderJSON renders.
+func renderAll(byLang map[string]cv.Document, enr cv.Enrichment) (documents, error) {
 	docs := make(documents, len(cv.Languages))
 	for _, lang := range cv.Languages {
-		body, err := cv.RenderJSON(byLang[lang], lang)
+		body, err := cv.RenderJSONEnriched(byLang[lang], lang, enr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		docs[lang] = newRendered(body)
 	}
-	a.docs.Store(&docs)
-	return nil
+	return docs, nil
 }
 
 // pdfMagic starts every PDF file.
@@ -247,9 +280,9 @@ func matches(header, etag string) bool {
 
 // getCV answers the document in the requested language: the bytes `cv render
 // json` writes for it, with a strong ETag. Cache-Control is no-cache, so a
-// client revalidates each time, which costs a 304: the data changes only on
-// a restart, but this route exists to check the current document, and a
-// max-age would show a stale one after a restart.
+// client revalidates each time, which costs a 304: the data changes on a
+// restart and when a refresh brings new GitHub data, but this route exists
+// to check the current document, and a max-age would show a stale one.
 func (a *App) getCV(w http.ResponseWriter, r *http.Request) error {
 	h := w.Header()
 	h.Set("X-Content-Type-Options", "nosniff")
