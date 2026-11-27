@@ -28,7 +28,7 @@
 set -euo pipefail
 
 # renovate: datasource=github-releases depName=typst/typst
-readonly TYPST_VERSION=0.14.2
+readonly TYPST_VERSION=0.15.1
 readonly TYPST_SHA256_X86_64=a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d
 readonly TYPST_SHA256_AARCH64=491b101aa40a3a7ea82a3f8a6232cabb4e6a7e233810082e5ac812d43fdcd47a
 
