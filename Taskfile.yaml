@@ -158,6 +158,7 @@ tasks:
     desc: Unit tests of the shell scripts, with fake binaries and no network
     cmds:
       - scripts/install-typst_test.sh
+      - scripts/check-pdf-pages_test.sh
 
   check:
     desc: Every check, one after another
