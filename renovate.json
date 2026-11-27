@@ -1,4 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>ostendorf-cloud/workflows#v0"]
+  "extends": ["github>ostendorf-cloud/workflows#v0"],
+  "customManagers": [
+    {
+      "description": "scripts/install-typst.sh downloads the typst release of its TYPST_VERSION, which no built-in manager reads. This manager reads the line under its renovate comment. The release tags carry a 'v' prefix, the pin does not. Renovate does not update TYPST_SHA256_X86_64 and TYPST_SHA256_AARCH64: copy them by hand from the asset digests of the new release (GitHub's release API or release page). Until then the script refuses the new archives, so a bump without the hashes fails closed.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/install-typst\\.sh$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nreadonly TYPST_VERSION=(?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ]
 }

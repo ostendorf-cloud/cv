@@ -2,14 +2,17 @@
 package cvd
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -26,15 +29,28 @@ import (
 // DefaultLanguage answers a request that names no language.
 const DefaultLanguage = "en"
 
-// rendered is one language's document: the exact bytes cv.RenderJSON wrote
-// for it, computed once, and the strong ETag derived from them.
+// CodePDFUnavailable is the error code of the PDF route when no PDF was
+// loaded for the requested language.
+const CodePDFUnavailable = "pdf_unavailable"
+
+// pdfCacheControl lets a polling server reuse a PDF for a minute, then
+// revalidate it with If-None-Match, which costs a 304.
+const pdfCacheControl = "public, max-age=60"
+
+// rendered is one language's document: the exact bytes cv.RenderJSON or
+// cv render pdf wrote for it, and the strong ETag derived from them.
 type rendered struct {
 	body []byte
 	etag string
 }
 
+func newRendered(body []byte) rendered {
+	sum := sha256.Sum256(body)
+	return rendered{body: body, etag: `"` + hex.EncodeToString(sum[:]) + `"`}
+}
+
 // documents is every rendered document by language. It is built once by
-// Load and never changed afterwards.
+// Load or LoadPDFs and never changed afterwards.
 type documents map[string]rendered
 
 // App holds every dependency cmd/cvd wires together.
@@ -47,6 +63,7 @@ type App struct {
 	health *health.Registry
 
 	docs atomic.Pointer[documents]
+	pdfs atomic.Pointer[documents]
 
 	httpMetrics    *metrics.HTTP
 	metricsHandler http.Handler
@@ -87,11 +104,39 @@ func (a *App) Load(dir string) error {
 		if err != nil {
 			return err
 		}
-		sum := sha256.Sum256(body)
-		docs[lang] = rendered{body: body, etag: `"` + hex.EncodeToString(sum[:]) + `"`}
+		docs[lang] = newRendered(body)
 	}
 	a.docs.Store(&docs)
 	return nil
+}
+
+// pdfMagic starts every PDF file.
+var pdfMagic = []byte("%PDF-")
+
+// LoadPDFs reads the PDFs cv render pdf wrote, cv.de.pdf and cv.en.pdf, from
+// dir. cvd never runs typst: the image build copies the rendered files in.
+// A missing file is not an error. Its language answers 503 on the PDF route,
+// and missing names it so the caller can log it. A file that is not a PDF,
+// or one that cannot be read, is an error, and no PDF is kept.
+func (a *App) LoadPDFs(dir string) (missing []string, err error) {
+	pdfs := make(documents, len(cv.Languages))
+	for _, lang := range cv.Languages {
+		name := cv.PDFFileName(lang)
+		body, err := os.ReadFile(filepath.Join(dir, name))
+		if errors.Is(err, fs.ErrNotExist) {
+			missing = append(missing, name)
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cvd: read %s: %w", name, err)
+		}
+		if !bytes.HasPrefix(body, pdfMagic) {
+			return nil, fmt.Errorf("cvd: %s is not a PDF", name)
+		}
+		pdfs[lang] = newRendered(body)
+	}
+	a.pdfs.Store(&pdfs)
+	return missing, nil
 }
 
 // backticked matches the value excerpt yaml.v3 puts in a type mismatch
@@ -126,6 +171,7 @@ func (a *App) Handler() http.Handler {
 	// No method in the pattern: the mux's own 405 is plain text, and the
 	// error shape belongs to govue's api package.
 	mux.Handle("/api/v1/cv", api.Handle(a.getCV))
+	mux.Handle("/api/v1/cv.pdf", api.Handle(a.getPDF))
 	mux.Handle("/", api.NotFoundHandler())
 
 	return middleware.Chain(mux,
@@ -149,10 +195,15 @@ func (a *App) AdminHandler() http.Handler {
 	)
 }
 
-// language is the requested language: the single lang query parameter, or
-// DefaultLanguage when the request carries none. Anything else is refused,
-// and the refused value is never echoed back.
-func language(rawQuery string) (string, error) {
+// errUnknownLanguage is what parseLanguage returns for a well formed lang
+// value that names no supported language. Each route decides its status.
+var errUnknownLanguage = errors.New("unknown language")
+
+// parseLanguage is the requested language: the single lang query parameter,
+// or DefaultLanguage when the request carries none. A malformed query or a
+// repeated lang is a 400. An unknown value is errUnknownLanguage. The refused
+// value is never echoed back.
+func parseLanguage(rawQuery string) (string, error) {
 	query, err := url.ParseQuery(rawQuery)
 	if err != nil {
 		return "", api.Invalid("the query string is malformed")
@@ -169,7 +220,16 @@ func language(rawQuery string) (string, error) {
 			return known, nil
 		}
 	}
-	return "", api.Invalid("unknown language").WithDetails(map[string]any{"supported": cv.Languages})
+	return "", errUnknownLanguage
+}
+
+// language is parseLanguage for the JSON route: an unknown language is a 400.
+func language(rawQuery string) (string, error) {
+	lang, err := parseLanguage(rawQuery)
+	if errors.Is(err, errUnknownLanguage) {
+		return "", api.Invalid("unknown language").WithDetails(map[string]any{"supported": cv.Languages})
+	}
+	return lang, err
 }
 
 // matches reports whether an If-None-Match header value names etag. The
@@ -208,11 +268,54 @@ func (a *App) getCV(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	doc := (*docs)[lang]
 
 	h.Set("Content-Type", "application/json; charset=utf-8")
-	h.Set("Content-Language", lang)
 	h.Set("Cache-Control", "no-cache")
+	return write(w, r, lang, (*docs)[lang])
+}
+
+// getPDF answers the PDF in the requested language: the bytes cv render pdf
+// wrote, copied into the image at build time. An unknown language is a 404,
+// a language without a loaded PDF a 503 with CodePDFUnavailable. A polling
+// server may reuse the answer for a minute and then revalidate with its ETag.
+func (a *App) getPDF(w http.ResponseWriter, r *http.Request) error {
+	h := w.Header()
+	h.Set("X-Content-Type-Options", "nosniff")
+
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		h.Set("Allow", "GET, HEAD")
+		return api.New(http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed")
+	}
+
+	lang, err := parseLanguage(r.URL.RawQuery)
+	if errors.Is(err, errUnknownLanguage) {
+		return api.NotFound("no PDF in this language").WithDetails(map[string]any{"supported": cv.Languages})
+	}
+	if err != nil {
+		return err
+	}
+
+	var doc rendered
+	var ok bool
+	if pdfs := a.pdfs.Load(); pdfs != nil {
+		doc, ok = (*pdfs)[lang]
+	}
+	if !ok {
+		return api.New(http.StatusServiceUnavailable, CodePDFUnavailable, "the cv PDF is not available").Exposed()
+	}
+
+	h.Set("Content-Type", "application/pdf")
+	h.Set("Content-Disposition", `inline; filename="`+cv.PDFFileName(lang)+`"`)
+	h.Set("Cache-Control", pdfCacheControl)
+	return write(w, r, lang, doc)
+}
+
+// write answers doc with its language and strong ETag, or a 304 when the
+// request's If-None-Match names the tag. The caller sets Content-Type and
+// Cache-Control.
+func write(w http.ResponseWriter, r *http.Request, lang string, doc rendered) error {
+	h := w.Header()
+	h.Set("Content-Language", lang)
 	h.Set("ETag", doc.etag)
 
 	// Repeated header lines are one comma separated list (RFC 9110).
@@ -226,6 +329,6 @@ func (a *App) getCV(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == http.MethodHead {
 		return nil
 	}
-	_, err = w.Write(doc.body)
+	_, err := w.Write(doc.body)
 	return err
 }

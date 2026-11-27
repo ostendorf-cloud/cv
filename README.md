@@ -4,10 +4,11 @@ The one source for Simon Ostendorf's curriculum vitae.
 
 ## What it does
 
-- `cv`, a CLI that validates the CV data and renders the website's JSON. A PDF and a
-  GitHub profile README block follow.
-- `cvd`, a small service that serves the same JSON document at `GET /api/v1/cv` inside
-  the cluster, and health, readiness and metrics on govue's admin listener.
+- `cv`, a CLI that validates the CV data and renders the website's JSON and a PDF per
+  language. A GitHub profile README block follows.
+- `cvd`, a small service that serves the same JSON document at `GET /api/v1/cv` and the
+  PDF at `GET /api/v1/cv.pdf` inside the cluster, and health, readiness and metrics on
+  govue's admin listener.
 
 See `AGENTS.md` for what each later milestone adds.
 
@@ -28,6 +29,8 @@ task build:cv
 ```sh
 task build:cvd
 DATA_DIR=data ./bin/cvd
+task render:pdf
+DATA_DIR=data PDF_DIR=rendered ./bin/cvd
 ```
 
 `cvd` answers on `:8080` by default, and health, readiness and metrics on `:8081`:
@@ -35,6 +38,7 @@ DATA_DIR=data ./bin/cvd
 ```sh
 curl localhost:8080/api/v1/cv
 curl 'localhost:8080/api/v1/cv?lang=de'
+curl -o cv.de.pdf 'localhost:8080/api/v1/cv.pdf?lang=de'
 curl localhost:8081/healthz
 curl localhost:8081/readyz
 curl localhost:8081/metrics
@@ -58,6 +62,23 @@ bytes, so the same `schema_version`.
   problems with positions, ids and enumerated values. Free text excerpts of YAML type
   errors are redacted (best effort). Reading new data needs a restart.
 - Readiness is unready until the documents are loaded. Liveness does not depend on them.
+
+`GET /api/v1/cv.pdf` answers the PDF `cv render pdf` writes for one language: the same
+bytes. `cvd` never runs typst. It reads `cv.de.pdf` and `cv.en.pdf` once at start from
+`PDF_DIR`, which the image sets to `/pdf`.
+
+- The language is the `lang` query parameter, `de` or `en`. The default is `en`.
+- An unknown or empty `lang` answers `404`. A repeated `lang` or a malformed query answers
+  `400`. Both in govue's error shape.
+- `Content-Type: application/pdf` and `Content-Disposition: inline; filename="cv.de.pdf"`
+  (or `cv.en.pdf`).
+- `ETag` is the strong sha256 of the bytes. `If-None-Match` answers `304`.
+- `Cache-Control: public, max-age=60`: a polling server reuses the PDF for a minute, then
+  revalidates.
+- A language without a PDF answers `503` with the code `pdf_unavailable`. Without `PDF_DIR`
+  or without the files, only this route answers `503`, so `cvd` runs without typst. A file
+  that is not a PDF, or a `PDF_DIR` that does not exist, stops the start.
+- Only `GET` and `HEAD`, like the JSON route.
 
 ## JSON release artefact
 
@@ -128,6 +149,47 @@ to the shape, regenerate and review the diff:
 go test ./internal/cv -run TestRenderJSONGolden -update
 ```
 
+## PDF release artefact
+
+`cv render pdf` validates both data files, fills the typst template
+`internal/cv/templates/cv.typ.tmpl` and runs `typst compile`. It writes `cv.de.pdf` and
+`cv.en.pdf` into `--out` (default `rendered/`). `typst` is pinned in
+`scripts/install-typst.sh`, which checks the archive's sha256: on Linux run
+`scripts/install-typst.sh <dir>` and put `<dir>` on the path. For macOS see `AGENTS.md`.
+
+- It prints what the JSON shows, empty sections and empty skill categories omitted, with
+  a few omissions for the page budget: the repository `projects` list, the volunteering
+  cause, the award summaries and a long location after its first comma. See
+  `docs/concepts/cv.md`, "PDF production".
+- The layout is described in `docs/concepts/cv.md`, "PDF production".
+- The sidebar photo is `--photo`, default `assets/portrait.jpg`. A missing file or one that
+  is not a JPEG fails the render. `--photo ""` renders without a photo.
+- `--typst-timeout`, default `1m`, stops one typst compile that runs longer and fails the
+  render. A compile of the real data takes well under a second.
+- The font is Go Regular and Go Bold, embedded in the binary from
+  `internal/cv/templates/fonts/` (BSD 3-Clause, see the `LICENSE` there).
+- A certificate whose `valid_until` month is before the current month is marked as expired.
+- The footer carries the month of the render.
+- The render fails when the template names a field the model does not hold or a required
+  text is blank. It writes no file unless both languages compile.
+- Every release carries both PDFs and a `SHA256SUMS` asset listing `cv.de.json`,
+  `cv.en.json`, `cv.de.pdf` and `cv.en.pdf`, which the two websites pin.
+
+```sh
+task render:pdf
+```
+
+`internal/cv/testdata/render/*.golden.typ` pins the generated typst source, not the PDF
+bytes. After a deliberate change, regenerate and review the diff:
+
+```sh
+go test ./internal/cv -run TestRenderTypstGolden -update
+```
+
+To look at the PDFs, run `task render:pdf`, or download the `cv-pdf-preview` artefact of
+the `render-pdf` job in the `checks` workflow. That job fails when a PDF has fewer than one
+or more than three pages. With the real data both PDFs have three pages today.
+
 ## Configuration
 
 `cvd` reads the following environment variables; `cv` takes none yet.
@@ -138,6 +200,7 @@ go test ./internal/cv -run TestRenderJSONGolden -update
 | `ADMIN_ADDR` | govue's admin listener: health, readiness and metrics. Empty disables it. | `:8081` | No |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error`. | `info` | No |
 | `DATA_DIR` | Directory holding `cv.de.yaml` and `cv.en.yaml`. The image sets it to `/data`, where it embeds `data/`. | none | Yes |
+| `PDF_DIR` | Directory holding `cv.de.pdf` and `cv.en.pdf`. The image sets it to `/pdf`, where it copies `rendered/cv.*.pdf`. Unset, the PDF route answers `503`. | none | No |
 
 ## Container
 
@@ -150,6 +213,11 @@ container image; see `.goreleaser.yaml`.
 
 The published image `ghcr.io/ostendorf-cloud/cv` is one manifest list for `linux/amd64`
 and `linux/arm64`.
+
+The image copies `rendered/cv.de.pdf` and `rendered/cv.en.pdf` when they exist. Run
+`task render:pdf` first to serve the PDFs; without them only the PDF route answers `503`.
+CI renders them before its image build. The publish job downloads the release's PDFs
+instead, so the published image serves the release assets byte for byte.
 
 ## Development
 

@@ -30,57 +30,57 @@ experience:
       maintenance of the Cluster API provider for OpenStack in Go with contributions to the upstream project,
       development of a Kubelet credential provider, and a proof of concept for DBaaS (database as a service) on
       Kubernetes.
-    location: Städteregion Aachen, North Rhine-Westphalia, Germany, hybrid
+    location: Aachen, North Rhine-Westphalia, Germany, hybrid
     employment_type: Working student
   - id: cancom-internship-semester
     employer: CANCOM
     title: Internship Semester
     start: "2023-03"
     end: "2023-07"
-    location: Städteregion Aachen, North Rhine-Westphalia, Germany, hybrid
+    location: Aachen, North Rhine-Westphalia, Germany, hybrid
     employment_type: Internship
   - id: cancom-working-student-2022
     employer: CANCOM
     title: Working Student
     start: "2022-10"
     end: "2023-02"
-    location: Städteregion Aachen, North Rhine-Westphalia, Germany, hybrid
+    location: Aachen, North Rhine-Westphalia, Germany, hybrid
     employment_type: Working student
   - id: fh-tutor-math-precourse-2022
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor for the mathematic precourse
+    employer: Aachen University of Applied Sciences
+    title: Tutor for the mathematics pre-course
     start: "2022-09"
     end: "2022-09"
   - id: fh-tutor-hoehere-mathematik-2
-    employer: Aachen University of Applied Sciences - FH Aachen
+    employer: Aachen University of Applied Sciences
     title: Tutor of the module "Höhere Mathematik 2"
     start: "2022-04"
     end: "2022-07"
   - id: fh-tutor-informatik-grundlagen
-    employer: Aachen University of Applied Sciences - FH Aachen
+    employer: Aachen University of Applied Sciences
     title: Tutor of the module "Grundlagen der Informatik und höhere Programmiersprachen"
     start: "2021-10"
     end: "2022-01"
   - id: fh-tutor-hoehere-mathematik-1
-    employer: Aachen University of Applied Sciences - FH Aachen
+    employer: Aachen University of Applied Sciences
     title: Tutor of the module "Höhere Mathematik 1"
     start: "2021-10"
     end: "2022-01"
   - id: fh-tutor-math-precourse-2021
-    employer: Aachen University of Applied Sciences - FH Aachen
+    employer: Aachen University of Applied Sciences
     title: Tutor for the mathematics pre-course
     start: "2021-09"
     end: "2021-09"
 
 education:
   - id: fh-aachen-msc-computer-science
-    institution: FH Aachen University of Applied Sciences
+    institution: Aachen University of Applied Sciences
     degree: Master of Science - MS, Computer Science (part-time)
     start: "2024-03"
     end: "2026-02"
     grade: "1,6"
   - id: fh-aachen-bsc-computer-science
-    institution: FH Aachen University of Applied Sciences
+    institution: Aachen University of Applied Sciences
     degree: Bachelor of Science - BS, Computer Science
     start: "2020-09"
     end: "2024-02"
@@ -99,7 +99,7 @@ certificates:
     issued: "2025-12"
   - id: linux-essentials
     name: Linux Essentials certification
-    issuer: FH Aachen University of Applied Sciences
+    issuer: Aachen University of Applied Sciences
     issued: "2022-08"
 
 skill_categories:
@@ -866,7 +866,7 @@ contact:
 
 volunteering:
   - id: studierendenparlament-2025
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Elected member of the student parliament
     cause: Politics
     start: "2025-06"
@@ -874,7 +874,7 @@ volunteering:
     summary: >
       Auditor of the student body's accounts. Chair of the budget committee of the student body.
   - id: studierendenparlament-2024
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Elected member of the student parliament
     cause: Politics
     start: "2024-05"
@@ -882,7 +882,7 @@ volunteering:
     summary: >
       Auditor of the student body's accounts. Deputy chair of the budget committee of the student body.
   - id: studierendenparlament-2023
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Elected member of the student parliament
     cause: Politics
     start: "2023-05"
@@ -890,7 +890,7 @@ volunteering:
     summary: >
       Auditor of the student body's accounts.
   - id: fachschaftsrat-2025
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Elected member of the student council (Fachschaftsrat)
     cause: Politics
     start: "2025-06"
@@ -898,13 +898,13 @@ volunteering:
     summary: >
       Treasurer
   - id: fachschaftsrat-2024
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Voluntary member of the student council (Fachschaftsrat)
     cause: Politics
     start: "2024-05"
     end: "2025-06"
   - id: fachschaftsrat-2023
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Elected member of the student council (Fachschaftsrat)
     cause: Politics
     start: "2023-05"
@@ -912,7 +912,7 @@ volunteering:
     summary: >
       Chair
   - id: fachschaftsrat-2022
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Elected member of the student council (Fachschaftsrat)
     cause: Politics
     start: "2022-05"
@@ -920,7 +920,7 @@ volunteering:
     summary: >
       Chair, treasurer and IT officer
   - id: fachschaftsrat-2021
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Elected member of the student council (Fachschaftsrat)
     cause: Politics
     start: "2021-05"
@@ -928,7 +928,7 @@ volunteering:
     summary: >
       Deputy chair and IT officer
   - id: berufungskommission
-    organisation: Department of Electrical Engineering and Information Technology - FH AACHEN
+    organisation: Department of Electrical Engineering and Information Technology, FH Aachen
     role: Student member of an appointment committee
     start: "2021-12"
     end: "2023-12"
@@ -947,29 +947,29 @@ volunteering:
 awards:
   - id: ehrenplakette-fh-aachen-2024
     title: Honorary plaque of FH Aachen
-    issuer: Fachhochschule Aachen
+    issuer: Aachen University of Applied Sciences
     date: "2024-12"
     summary: >
-      Award for the best 5% of graduates of the class of 2024 of the Fachhochschule Aachen
+      Award for the best 5% of graduates of the class of 2024 of Aachen University of Applied Sciences
   - id: deutschlandstipendium-2024
     title: Scholarship holder of the Deutschlandstipendium of FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | SOPTIM AG
+    issuer: Sponsored by SOPTIM AG
     date: "2024-10"
   - id: deutschlandstipendium-2023
     title: Scholarship holder of the Deutschlandstipendium of FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    issuer: Sponsored by VIA Consulting & Development GmbH
     date: "2023-10"
   - id: deutschlandstipendium-2022
     title: Scholarship holder of the Deutschlandstipendium of FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | Kabelwerk Eupen AG
+    issuer: Sponsored by Kabelwerk Eupen AG
     date: "2022-09"
   - id: deutschlandstipendium-2021
     title: Scholarship holder of the Deutschlandstipendium of FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    issuer: Sponsored by VIA Consulting & Development GmbH
     date: "2021-10"
   - id: hans-riegel-fachpreis-2019
     title: Hans Riegel Fachpreis
-    issuer: WWU Münster und Hans-Riegel Stiftung
+    issuer: WWU Münster and Hans-Riegel-Stiftung
     date: "2019-01"
 
 exam_results:
@@ -978,13 +978,13 @@ exam_results:
     score: "1,0"
     date: "2026-02"
     summary: >
-      FH Aachen University of Applied Sciences
+      Aachen University of Applied Sciences
   - id: bachelor-thesis
     name: "Bachelor Thesis: Konzeption und Realisierung von Workload Identity in Kubernetes für die CANCOM Managed Services GmbH"
     score: "1,0"
     date: "2024-02"
     summary: >
-      FH Aachen University of Applied Sciences
+      Aachen University of Applied Sciences
 
 engagements:
   - id: openstack-private-cloud-platform

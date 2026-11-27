@@ -2,7 +2,7 @@
 #
 # Starts the container image given as $1 and asserts it actually serves
 # a request: health, readiness and metrics on the admin listener, and
-# the one real API route on the public one. Run by the docker-build job
+# the JSON and PDF API routes on the public one. Run by the docker-build job
 # in .github/workflows/checks.yaml right after it builds and loads the
 # image, so this never needs a registry.
 set -euo pipefail
@@ -85,11 +85,17 @@ assert_status "/metrics" "200" "$admin_url"
 # live on the admin listener above.
 assert_status "/metrics" "404"
 
-# cv's one real route; see internal/cvd/cvd.go. The image embeds data/, so
+# cv's JSON route; see internal/cvd/cvd.go. The image embeds data/, so
 # both languages answer, and an unknown one is refused.
 assert_status "/api/v1/cv" "200"
 assert_status "/api/v1/cv?lang=de" "200"
 assert_status "/api/v1/cv?lang=xx" "400"
+
+# The PDFs: the docker-build job renders them before the build, and the
+# image copies them in. An unknown language is a 404 on this route.
+assert_status "/api/v1/cv.pdf?lang=de" "200"
+assert_status "/api/v1/cv.pdf?lang=en" "200"
+assert_status "/api/v1/cv.pdf?lang=xx" "404"
 
 # cv serves no frontend: every other path falls through to the
 # NotFoundHandler.

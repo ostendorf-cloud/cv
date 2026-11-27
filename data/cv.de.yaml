@@ -22,7 +22,7 @@ experience:
     employment_type: Selbstständig
   - id: cancom-working-student
     employer: CANCOM
-    title: Working Student
+    title: Werkstudent
     start: "2023-07"
     end: "2026-02"
     summary: >
@@ -30,58 +30,58 @@ experience:
       und Wartung des Cluster API Providers für OpenStack in Go mit Beiträgen an das Upstream-Projekt,
       Entwicklung eines Kubelet Credential Providers sowie Proof of Concept für DBaaS (Database as a Service) auf
       Kubernetes.
-    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    location: Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
     employment_type: Werkstudium
   - id: cancom-internship-semester
     employer: CANCOM
-    title: Internship Semester
+    title: Praxissemester
     start: "2023-03"
     end: "2023-07"
-    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    location: Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
     employment_type: Praktikum
   - id: cancom-working-student-2022
     employer: CANCOM
-    title: Working Student
+    title: Werkstudent
     start: "2022-10"
     end: "2023-02"
-    location: Städteregion Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
+    location: Aachen, Nordrhein-Westfalen, Deutschland, Hybrid
     employment_type: Werkstudium
   - id: fh-tutor-math-precourse-2022
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor for the mathematic precourse
+    employer: Fachhochschule Aachen
+    title: Tutor im Mathematik-Vorkurs
     start: "2022-09"
     end: "2022-09"
   - id: fh-tutor-hoehere-mathematik-2
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor of the module "Höhere Mathematik 2"
+    employer: Fachhochschule Aachen
+    title: Tutor im Modul "Höhere Mathematik 2"
     start: "2022-04"
     end: "2022-07"
   - id: fh-tutor-informatik-grundlagen
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor of the module "Grundlagen der Informatik und höhere Programmiersprachen"
+    employer: Fachhochschule Aachen
+    title: Tutor im Modul "Grundlagen der Informatik und höhere Programmiersprachen"
     start: "2021-10"
     end: "2022-01"
   - id: fh-tutor-hoehere-mathematik-1
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor of the module "Höhere Mathematik 1"
+    employer: Fachhochschule Aachen
+    title: Tutor im Modul "Höhere Mathematik 1"
     start: "2021-10"
     end: "2022-01"
   - id: fh-tutor-math-precourse-2021
-    employer: Aachen University of Applied Sciences - FH Aachen
-    title: Tutor for the mathematics pre-course
+    employer: Fachhochschule Aachen
+    title: Tutor im Mathematik-Vorkurs
     start: "2021-09"
     end: "2021-09"
 
 education:
   - id: fh-aachen-msc-computer-science
-    institution: FH Aachen University of Applied Sciences
+    institution: Fachhochschule Aachen
     degree: Master of Science - MS, Informatik (Teilzeit)
     start: "2024-03"
     end: "2026-02"
     grade: "1,6"
   - id: fh-aachen-bsc-computer-science
-    institution: FH Aachen University of Applied Sciences
-    degree: Bachelor of Science - BS, Computer Science
+    institution: Fachhochschule Aachen
+    degree: Bachelor of Science - BS, Informatik
     start: "2020-09"
     end: "2024-02"
     grade: "1,3"
@@ -99,7 +99,7 @@ certificates:
     issued: "2025-12"
   - id: linux-essentials
     name: Linux Essentials Zertifizierung
-    issuer: FH Aachen University of Applied Sciences
+    issuer: Fachhochschule Aachen
     issued: "2022-08"
 
 skill_categories:
@@ -870,7 +870,7 @@ contact:
 
 volunteering:
   - id: studierendenparlament-2025
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Gewähltes Mitglied im Studierendenparlament
     cause: Politik
     start: "2025-06"
@@ -878,7 +878,7 @@ volunteering:
     summary: >
       Kassenprüfer der Studierendenschaft. Vorsitzender des Haushaltsausschusses der Studierendenschaft.
   - id: studierendenparlament-2024
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Gewähltes Mitglied im Studierendenparlament
     cause: Politik
     start: "2024-05"
@@ -886,7 +886,7 @@ volunteering:
     summary: >
       Kassenprüfer der Studierendenschaft. Stellvertretender Vorsitzender des Haushaltsausschusses der Studierendenschaft.
   - id: studierendenparlament-2023
-    organisation: FH Aachen University of Applied Sciences
+    organisation: FH Aachen
     role: Gewähltes Mitglied im Studierendenparlament
     cause: Politik
     start: "2023-05"
@@ -894,7 +894,7 @@ volunteering:
     summary: >
       Kassenprüfer der Studierendenschaft.
   - id: fachschaftsrat-2025
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Gewähltes Mitglied im Fachschaftsrat
     cause: Politik
     start: "2025-06"
@@ -902,13 +902,13 @@ volunteering:
     summary: >
       Kassenwart
   - id: fachschaftsrat-2024
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Freiwilliges Mitglied im Fachschaftsrat
     cause: Politik
     start: "2024-05"
     end: "2025-06"
   - id: fachschaftsrat-2023
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Gewähltes Mitglied im Fachschaftsrat
     cause: Politik
     start: "2023-05"
@@ -916,7 +916,7 @@ volunteering:
     summary: >
       Vorsitzender
   - id: fachschaftsrat-2022
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Gewähltes Mitglied im Fachschaftsrat
     cause: Politik
     start: "2022-05"
@@ -924,7 +924,7 @@ volunteering:
     summary: >
       Vorsitzender, Kassenwart und IT-Referent
   - id: fachschaftsrat-2021
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Gewähltes Mitglied im Fachschaftsrat
     cause: Politik
     start: "2021-05"
@@ -932,7 +932,7 @@ volunteering:
     summary: >
       Stellvertretender Vorsitzender und Referent für IT
   - id: berufungskommission
-    organisation: Fachbereich Elektrotechnik und Informationstechnik - FH AACHEN
+    organisation: Fachbereich Elektrotechnik und Informationstechnik, FH Aachen
     role: Studentisches Mitglied in Berufungskommission
     start: "2021-12"
     end: "2023-12"
@@ -943,10 +943,10 @@ volunteering:
     start: "2013-01"
   - id: cncf-community-group-organizer
     organisation: Cloud Native Computing Foundation (CNCF)
-    role: Community Group Organizer
+    role: Organisator einer Community Group
     start: "2025-12"
     summary: >
-      (Co-)Organizer of the Cloud Native Aachen Meetup
+      (Mit-)Organisator des Cloud Native Aachen Meetups
 
 awards:
   - id: ehrenplakette-fh-aachen-2024
@@ -957,19 +957,19 @@ awards:
       Auszeichnung der besten 5% Absolvierenden des Jahrgangs 2024 der Fachhochschule Aachen
   - id: deutschlandstipendium-2024
     title: Stipendiat des Deutschland Stipendiums der FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | SOPTIM AG
+    issuer: Gefördert von SOPTIM AG
     date: "2024-10"
   - id: deutschlandstipendium-2023
     title: Stipendiat des Deutschland Stipendiums der FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    issuer: Gefördert von VIA Consulting & Development GmbH
     date: "2023-10"
   - id: deutschlandstipendium-2022
     title: Stipendiat des Deutschland Stipendiums der FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | Kabelwerk Eupen AG
+    issuer: Gefördert von Kabelwerk Eupen AG
     date: "2022-09"
   - id: deutschlandstipendium-2021
     title: Stipendiat des Deutschland Stipendiums der FH Aachen
-    issuer: Deutschlandstipendium FH-Aachen | VIA Consulting & Development GmbH
+    issuer: Gefördert von VIA Consulting & Development GmbH
     date: "2021-10"
   - id: hans-riegel-fachpreis-2019
     title: Hans Riegel Fachpreis
@@ -978,17 +978,17 @@ awards:
 
 exam_results:
   - id: master-thesis
-    name: "Master Thesis: Strategien aus Provider-Sicht zur Sicherstellung von IT Supply Chain Security in Kubernetes"
+    name: "Masterarbeit: Strategien aus Provider-Sicht zur Sicherstellung von IT Supply Chain Security in Kubernetes"
     score: "1,0"
     date: "2026-02"
     summary: >
-      FH Aachen University of Applied Sciences
+      Fachhochschule Aachen
   - id: bachelor-thesis
-    name: "Bachelor Thesis: Konzeption und Realisierung von Workload Identity in Kubernetes für die CANCOM Managed Services GmbH"
+    name: "Bachelorarbeit: Konzeption und Realisierung von Workload Identity in Kubernetes für die CANCOM Managed Services GmbH"
     score: "1,0"
     date: "2024-02"
     summary: >
-      FH Aachen University of Applied Sciences
+      Fachhochschule Aachen
 
 engagements:
   - id: openstack-private-cloud-platform

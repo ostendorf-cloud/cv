@@ -39,6 +39,33 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: echo "pair=${PLATFORM//\//-}" >> "${GITHUB_OUTPUT}"
 
+      # The image serves the PDFs the release carries, byte for byte, so the
+      # build copies the release assets in instead of rendering again: a
+      # second render would stamp another creation date and could print
+      # another month. release.yaml attaches them before it publishes the
+      # release, so they exist when this event fires. The sums come from the
+      # same release, so a truncated download fails here. cvd never runs typst.
+      - name: Download the release PDFs the image serves
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          # The tag comes from the event payload: only a release tag passes,
+          # and it goes after "--", so it can never read as a flag.
+          if [[ ! ${TAG_NAME} =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "not a release tag: ${TAG_NAME}" >&2
+            exit 1
+          fi
+          gh release download --repo "${GITHUB_REPOSITORY}" --dir rendered \
+            --pattern cv.de.pdf --pattern cv.en.pdf --pattern SHA256SUMS -- "${TAG_NAME}"
+          cd rendered
+          grep -E '  cv\.(de|en)\.pdf$' SHA256SUMS >pdf.sums
+          if [ "$(wc -l <pdf.sums)" -ne 2 ]; then
+            echo "SHA256SUMS of ${TAG_NAME} does not list both PDFs" >&2
+            exit 1
+          fi
+          sha256sum --check --strict pdf.sums
+
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
 
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550  # v4.8.0

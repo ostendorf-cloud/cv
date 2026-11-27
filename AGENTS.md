@@ -5,8 +5,13 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Layout
 
-- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate` and
-  `render json` are its commands so far.
+- `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
+  and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
+  `scripts/install-typst.sh`, see Deviations) on the path, or `--typst <binary>`, and reads
+  the portrait from
+  `assets/portrait.jpg` (`--photo`; a missing file fails, `--photo ""` renders without).
+- `assets/portrait.jpg`: the owner's portrait for the PDF sidebar, 600x600, made from the
+  920 pixel portrait of `ostendorf.tech`.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
@@ -29,6 +34,9 @@ service that serves it. The baseline rules apply and are not repeated here.
   entry point; see `docs/concepts/cv.md`'s "Validation" for why CI also calls it directly
   instead of only through a renderer. `render_json.go` renders the public JSON document
   for the two websites: its shape and `SchemaVersion` are a contract, see `README.md`. The
+  `render_pdf.go` fills `templates/cv.typ.tmpl` (typst) and shells out to `typst compile`
+  with the fonts in `templates/fonts/` (Go fonts, BSD-3-Clause, embedded in the binary);
+  the golden test pins the typst source. The
   model holds what LinkedIn holds, except recommendations (third party text) and interests
   (not CV content).
 - `data/cv.de.yaml` and `data/cv.en.yaml`: the checked in CV data, one file per
@@ -41,8 +49,10 @@ service that serves it. The baseline rules apply and are not repeated here.
 - `internal/cvd/`: builds the two HTTP handlers `cmd/cvd` serves: the public one with the
   API routes, and the one govue's admin listener serves, health, readiness and metrics.
   `App.Load` reads the data pair, renders each language through `cv.RenderJSON` and keeps
-  the bytes; the handler serves them. Startup logs problems with positions, ids and
-  enumerated values; free text excerpts of YAML type errors are redacted, best effort.
+  the bytes; the handler serves them. `App.LoadPDFs` reads the PDFs rendered at image build
+  time from `PDF_DIR`; a missing one answers 503 on the PDF route only. Startup logs
+  problems with positions, ids and enumerated values; free text excerpts of YAML type
+  errors are redacted, best effort.
 - `internal/github/`: a small `net/http` client for a repository's languages and latest
   release, and the token lookup. Each call has a timeout, the client has a call budget, a
   result is cached for the life of the client (a missing repository is asked and reported
@@ -61,13 +71,14 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Scope of this milestone
 
-The CLI compiles and answers `version`, `help`, `validate` and `render json`.
+The CLI compiles and answers `version`, `help`, `validate`, `render json` and `render pdf`.
 The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
-`DATA_DIR`, and its own health, readiness and metrics. It refuses to start on invalid
-data. Left out, tracked as later milestones:
+`DATA_DIR`, `GET /api/v1/cv.pdf` with the PDF from `PDF_DIR`, and its own health,
+readiness and metrics. It refuses to start on invalid data. Left out, tracked as later
+milestones:
 
-- `cv`'s other renderers: a PDF and the block for the GitHub profile README. A LinkedIn
-  export is a non goal of the concept. Every renderer calls
+- `cv`'s other renderer: the block for the GitHub profile README. A LinkedIn export is a
+  non goal of the concept. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
 - Feeding the detected stack back into the skills and tools the CV claims. The fetch and
   the merge into project descriptions exist, see "The GitHub token" below.
@@ -114,12 +125,42 @@ Decision for issue 8, closing the concept's open question.
 - Releases are drafts until their assets attach: `release-me.yaml` sets
   `github-release-draft-until-assets-attach`, and `release.yaml` runs
   `scripts/publish-release-assets.sh` after the release-me step. The script renders the JSON
-  documents in the tag's own worktree (`task render:json:github`, which validates first), builds the
+  documents and the PDFs in the tag's own worktree (`task render:json:github render:pdf`,
+  which validate first), writes `rendered/SHA256SUMS` over the four documents, builds the
   archives with `goreleaser release --skip=announce,validate,publish`, uploads the archives,
-  the checksums and `rendered/cv.*.json` with `gh release upload`, then publishes with
+  the checksums, `rendered/cv.*.json`, `rendered/cv.*.pdf` and `SHA256SUMS` with
+  `gh release upload`, then publishes with
   `gh release edit --draft=false`. goreleaser never touches the GitHub release, so
   `.goreleaser.yaml` has no `release:` block. A failed render leaves an unpublished draft.
   `publish.yaml`'s image and chart jobs still run on the `published` event the last step fires.
+  The image job downloads the release's two PDFs, checks them against its `SHA256SUMS` and
+  copies them in, so the image serves the release assets byte for byte and needs no typst.
+- The golden test pins the typst source only. The `render-pdf` job in `checks.yaml` compiles
+  the template with the real data, checks one to three pages with
+  `scripts/check-pdf-pages.sh` (`scripts/check-pdf-pages_test.sh` covers it with a fake
+  `pdfinfo`) and uploads both PDFs as the `cv-pdf-preview` artefact: look
+  there after a template change, or run `task render:pdf`.
+- typst is not in `mise.toml`. It runs in the release job, which holds a token that can
+  write to the repository, so its archive must be checked, and mise checks an archive only
+  through a `mise.lock`. A `mise.lock` that holds only typst makes the mise action install
+  with `--locked` and fail every other tool, and a full one needs `mise lock` with network.
+  `scripts/install-typst.sh <dir>` is the one typst pin instead: it downloads the linux musl
+  archive for x86_64 or aarch64, checks the pinned sha256 and fails closed otherwise.
+  `scripts/install-typst_test.sh` (`task test:scripts`) covers it with fakes. Renovate
+  moves `TYPST_VERSION` through the regex manager in `renovate.json`, not the checksums: on
+  a bump, copy the new digests from the GitHub release page into the script by hand. Until
+  then the script refuses the new archives. Once the
+  repository has a full `mise.lock`, typst can move back into `mise.toml`.
+- Locally on Linux, run `scripts/install-typst.sh ~/.local/bin` (or any directory on the
+  path). macOS has no pinned archive: install typst at the version
+  `scripts/install-typst.sh --print-version` prints, for example with
+  `mise use -g typst@<version>`, which is not checked against a sha256. `task render:pdf`
+  stops with a hint when typst is missing or another version. A global mise typst shim
+  without a version shadows the binary on the path: pass `--typst <path>` then.
+- poppler (`pdftotext`, `pdfinfo`) is not in `mise.toml` either, so the jobs that do not read
+  a PDF do not install it. The `test` and `render-pdf` jobs install the runner's
+  `poppler-utils` with apt. Locally the real PDF tests skip without `typst` or `pdftotext`.
+  Under `CI` they fail instead.
 - `cv` ships no `web/` frontend: `.yamllint.yaml` drops the two `web/` ignore lines the
   Vue-frontend repositories carry, and `mise.toml` and `Taskfile.yaml` carry no Node or
   pnpm tooling and no `web:*` targets.

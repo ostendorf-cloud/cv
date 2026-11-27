@@ -121,6 +121,23 @@ tasks:
     cmds:
       - go run ./cmd/cv render json --out rendered
 
+  # typst is not in mise.toml: scripts/install-typst.sh holds the pin and the
+  # checksums. The preconditions name the fix instead of failing in typst.
+  render:pdf:
+    desc: Render cv.de.pdf and cv.en.pdf into rendered/ with typst
+    preconditions:
+      - sh: command -v typst
+        msg: "typst is not on PATH. On Linux run scripts/install-typst.sh <dir> and put <dir> on PATH. See AGENTS.md for macOS."
+      - sh: '[ "$(typst --version | cut -d " " -f 2)" = "$(scripts/install-typst.sh --print-version)" ]'
+        msg: "the typst on PATH is not the version scripts/install-typst.sh pins (scripts/install-typst.sh --print-version)"
+    cmds:
+      - go run ./cmd/cv render pdf --out rendered
+
+  validate:pdf:
+    desc: Check that rendered/cv.de.pdf and rendered/cv.en.pdf have one to three pages
+    cmds:
+      - scripts/check-pdf-pages.sh 1 3 rendered/cv.de.pdf rendered/cv.en.pdf
+
   build:release:
     desc: Build a local snapshot release of cv with goreleaser, with the JSON documents
     deps: [render:json]
@@ -137,6 +154,12 @@ tasks:
     cmds:
       - go test -race -count=1 ./...
 
+  test:scripts:
+    desc: Unit tests of the shell scripts, with fake binaries and no network
+    cmds:
+      - scripts/install-typst_test.sh
+      - scripts/check-pdf-pages_test.sh
+
   check:
     desc: Every check, one after another
     cmds:
@@ -150,11 +173,14 @@ tasks:
       - task: lint:secrets
       - task: lint:docker
       - task: lint:shell
+      - task: test:scripts
       - task: lint:goreleaser
       - task: lint:helm
       - task: validate:kubeconform
       - task: validate:cv
       - task: render:json
+      - task: render:pdf
+      - task: validate:pdf
       - task: test:helm
       - task: build:cv
       - task: build:cvd

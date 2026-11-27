@@ -61,7 +61,15 @@ jobs:
         with:
           install_args: go goreleaser task
 
-      # Renders the JSON documents, which fails on invalid data and leaves the
+      # This job holds a token that can write to the repository, so typst
+      # comes from the script that checks the archive's pinned sha256.
+      - name: Install typst
+        if: steps.release-me.outputs.tags != ''
+        run: |
+          scripts/install-typst.sh "${RUNNER_TEMP}/typst"
+          echo "${RUNNER_TEMP}/typst" >> "${GITHUB_PATH}"
+
+      # Renders the JSON documents and the PDFs, which fails on invalid data and leaves the
       # draft unpublished, builds the archives, attaches everything and
       # publishes.
       - name: Render, build, attach and publish the assets for every tag just released

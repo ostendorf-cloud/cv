@@ -1,6 +1,7 @@
 // Command cvd serves the data cmd/cv renders from, over HTTP, reached only
-// from inside the cluster. It answers GET /api/v1/cv on its public listener
-// and health, readiness and metrics on govue's admin listener. See
+// from inside the cluster. It answers GET /api/v1/cv and GET /api/v1/cv.pdf on
+// its public listener and health, readiness and metrics on govue's admin
+// listener. See
 // AGENTS.md's "Scope of this milestone" for what it does not do yet.
 package main
 
@@ -45,6 +46,20 @@ func run() error {
 			logger.Error("cv data is invalid", "problem", problem)
 		}
 		return errors.New("cvd: refusing to start: the cv data is invalid")
+	}
+
+	// The PDFs are rendered at build time, never here. Without them only the
+	// PDF route answers 503, so a local run without typst still works.
+	if cfg.PDFDir == "" {
+		logger.Info("PDF_DIR is not set, the PDF route answers 503")
+	} else {
+		missing, err := app.LoadPDFs(cfg.PDFDir)
+		if err != nil {
+			return fmt.Errorf("cvd: refusing to start: %w", err)
+		}
+		for _, name := range missing {
+			logger.Warn("a PDF is missing, its language answers 503", "file", name, "dir", cfg.PDFDir)
+		}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

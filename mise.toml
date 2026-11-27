@@ -16,6 +16,10 @@ hadolint = "2"
 shellcheck = "0.11"
 shfmt = "3"
 goreleaser = "2"
+# Two tools are deliberately not here. typst is pinned with a sha256 per archive in
+# scripts/install-typst.sh, because mise checks an archive only through a mise.lock, and a
+# partial mise.lock fails every other tool. poppler (pdftotext, pdfinfo) comes from the
+# runner's apt in the jobs that read a PDF, so no other job installs it.
 # Pinned to the 3.x line, not 4.x: the helm-unittest plugin used to verify
 # charts/cv targets Helm 3's plugin API.
 helm = "4.3.2"

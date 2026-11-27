@@ -4,12 +4,13 @@
 
 - The repository holds the data model with its validation, `cv render json`, and `cvd`, which
   serves the JSON document. `cv render json` merges each project's languages and latest release
-  from GitHub. No PDF or README renderer and no skills suggestion exists yet.
+  from GitHub. `cv render pdf` writes the PDFs and `cvd` serves them too. No README renderer
+  and no skills suggestion exists yet.
 - Career, education, skill and project facts exist only as hand written text scattered across an
   old résumé, a GitHub bio and memory, not as one structured source.
 - `ostendorf.dev` and `simon-ostendorf.de` have both already committed, in their own concept
   docs, to consuming this repository's JSON and PDF release artefacts at build time. The owner
-  has since decided they read `cvd`'s API at runtime instead. The PDF does not exist yet.
+  has since decided they read `cvd`'s API at runtime instead.
 - The GitHub profile README is hand maintained and drifts from whatever the actual CV says.
 - A project's GitHub metadata (its real language mix, its latest release) and its hand written
   description live in two places that never compare notes.
@@ -327,11 +328,11 @@ contact:
 ### Three renderers, no fourth
 
 - `cv render pdf`, `cv render json` and `cv render readme` each read both data files and write
-  one artefact. Only `render json` exists today, and it merges in GitHub project data. The
-  other renderers take the same `cv.Enrichment`. No `cv render linkedin`: dropped per the non
-  goals above.
-- `cvd` is not a fourth renderer. It serves the JSON document `cv render json` also writes,
-  see the next section.
+  one artefact. `render json` and `render pdf` exist today. Only `render json` merges in GitHub
+  project data. The other renderers take the same `cv.Enrichment`. No `cv render linkedin`:
+  dropped per the non goals above.
+- `cvd` is not a fourth renderer. It serves the JSON document `cv render json` also writes and
+  the PDFs `cv render pdf` wrote before the image build, see the next section.
 - The README block is never committed directly to the profile repository. `cv render readme`
   writes the block; the release pipeline opens a pull request against the profile repository with
   it, so the owner reads it before it is public.
@@ -345,12 +346,22 @@ contact:
   and the PDFs from `cvd`'s API at runtime, server to server. This replaces the build time
   reading their own concept docs chose. The owner's reasons: no stale artefact sits in a site,
   and he wants to be able to put the CV API behind his firewall.
-- Serving the PDFs from `cvd` does not exist yet; `cvd` serves the JSON only. It is planned
-  together with `cv render pdf`.
+- `cvd` answers `GET /api/v1/cv.pdf?lang=de|en` with the PDF the release renders, the same
+  bytes. `cvd` never runs typst: the image build copies `rendered/cv.*.pdf` in, and `cvd`
+  reads them once at start from `PDF_DIR`. The publish job downloads them from the release
+  and checks them against its `SHA256SUMS`. CI's image build renders them with
+  `task render:pdf`.
+  - `Content-Type: application/pdf`, `Content-Disposition: inline` with the release asset
+    name, a strong `ETag` from the sha256 of the bytes and
+    `Cache-Control: public, max-age=60`. A server that polls reuses the PDF for a minute,
+    then revalidates with `If-None-Match` and gets a `304` while nothing changed.
+  - An unknown language is a `404`. A language without a loaded PDF is a `503` with the code
+    `pdf_unavailable`. Without `PDF_DIR`, or without the files, only this route answers
+    `503`: a local run without typst keeps working. A file that is not a PDF stops the start.
 - The release artefacts stay as the GitHub release for download and audit, and the sites do not
-  read them. On main the release carries the archives, the JSON documents and the checksums
-  file `cv_<version>_checksums.txt` that goreleaser writes. The PDFs and a combined checksum
-  list are planned in the open PDF pull request.
+  read them. The release carries the archives, the checksums file `cv_<version>_checksums.txt`
+  that goreleaser writes, the JSON documents, the PDFs and `SHA256SUMS` over the four
+  documents.
 
 ### How the sites read the data
 
@@ -387,12 +398,14 @@ they are changed.
 
 - The PDF and the JSON document attach to `cv`'s GitHub release as release assets, next to the
   binary archives `.goreleaser.yaml` already builds. goreleaser runs with `--skip=publish` and
-  never touches the release; `scripts/publish-release-assets.sh` attaches the files with
-  `gh release upload`. Only the JSON documents attach today.
+  never touches the release. `scripts/publish-release-assets.sh` renders both, writes a
+  `SHA256SUMS` asset over `cv.de.json`, `cv.en.json`, `cv.de.pdf` and `cv.en.pdf`, and attaches
+  them to the draft release with `gh release upload`.
 - The README block is not an artefact of this repository at all: `cv render readme`'s pull
   request against the profile repository is the delivery.
 - `cvd` ships as a container image only, as it does today; it is a service, not a rendered
-  artefact.
+  artefact. The image carries the two PDFs of its release, downloaded by the publish job
+  before the image build, so they equal the release assets.
 
 ### Validation: one implementation, called from two places
 
@@ -404,10 +417,86 @@ they are changed.
 - CI also calls `cv validate` directly, in its own job, on every push: a change to `data/*.yaml`
   is checked before it is exercised by any render.
 
-### PDF production: typst, through mise
+### PDF production: typst, pinned with a checksum
 
 - `cv render pdf` fills a typst template with the data and shells out to `typst compile`. `typst`
-  is in the mise registry and gets pinned in `mise.toml` like every other tool here.
+  is in the mise registry, but `mise.toml` cannot check its archive without a `mise.lock` for
+  every tool, and the release job that runs it can write to the repository. So
+  `scripts/install-typst.sh` pins the version and the sha256 of each linux archive instead.
+  Once the repository has a full `mise.lock`, typst can move back into `mise.toml`.
+- The template is `internal/cv/templates/cv.typ.tmpl`, one design, one A4 layout for both
+  languages. Go's `text/template` fills it, and every text reaches typst as a string literal
+  argument, never as markup, so data cannot inject typst code. A blank required text or a
+  template field the model lacks fails the render. The golden test pins the generated typst
+  source, not the PDF bytes.
+- The design is the project's own: a sidebar on page one and a timeline in the main column.
+  With the real data both PDFs have three pages, the most the page check allows, as the
+  issue asked (the owner decided 2026-11-27). Colours:
+  a deep ink blue (`#1e3a5f`) for names and headings, a warm orange (`#c2410c`) used
+  sparingly for the timeline dots and the skill category labels, greys for text, and a pale
+  blue grey panel (`#eef2f7`) behind the sidebar. Body text is 9 pt, descriptions 8.5 pt.
+  - Page one is a grid of two columns. The left one, 6 cm wide on the tinted panel, is the
+    sidebar. The right one holds the first section of the main column. Every later section
+    flows below the grid at full width. The sidebar is a flow of separate blocks: when it is
+    taller than page one, it continues on page two instead of overflowing.
+  - Sidebar, top to bottom: the portrait as a circle, the label `LEBENSLAUF` or
+    `CURRICULUM VITAE`, the name in bold, the headline in grey, then labelled blocks for
+    location, email, profiles and languages, then the skills. The name is a constant in
+    `render_pdf.go`: the model has no name field. The model has no headline either, so the
+    headline is the title of the first ongoing position. The model has no phone number, so
+    there is none. A block without data is left out.
+  - Language levels in words: `expert` is `Muttersprache` or `Native`, `proficient`
+    `Fließend` or `Fluent`, `working` `Gute Kenntnisse` or `Good working knowledge`,
+    `familiar` `Grundkenntnisse` or `Basic`.
+  - Skills: grouped under the `skill_categories` in display order, the category label
+    small, uppercase and orange, the names comma separated below it. An empty category is
+    left out. The level is not printed; it orders the skills within a category, highest
+    first.
+  - Main column sections, in this order: experience, engagements, education, certificates,
+    exam results, awards, volunteering, then courses, publications, patents, memberships
+    and references when the data has them. A section heading is a small uppercase label
+    over a thin full width rule. There is no profile text in the model, so no
+    profile section.
+  - Entries are a timeline: a small orange dot in the gutter, the dates small and grey above
+    the title, the title in bold, the organisation (for an engagement the sector and the
+    employer) on its own grey line, a gap, then the description.
+  - A certificate past its `valid_until` month carries an `expired` badge. Engagements keep
+    their full description.
+- If the PDF ever needs more than three pages, the PDF leaves out
+  content, never the data: first the exam results, then the volunteering entries that
+  started before 2022. Neither is cut today.
+- What the PDF leaves out, to stay within the page budget. The data and the JSON keep all
+  of it, and nothing is cut from the data files.
+  - The repository `projects` list. The websites show it with its GitHub data, and on paper
+    it adds a page of repository names. The engagements are the projects that belong to a
+    position, so they stay.
+  - The cause of a volunteering entry, such as `Politik`. A volunteering entry prints role,
+    organisation and its short description.
+  - The summary of an award. An award is one line: title, issuer and date.
+  - Everything of an experience location after its first comma:
+    `Aachen, Nordrhein-Westfalen, Deutschland, Hybrid` prints as `Aachen`. A short location
+    such as `Remote` prints as it is.
+  - A subtitle part that repeats the title or an earlier part, ignoring case: the employer
+    `Selbstständig` with the employment type `Selbstständig` prints once.
+- Footer: the name, `Stand: <month year>` or `As of <month year>` from the render date,
+  and `page / pages`.
+- Font: typst bundles only Libertinus Serif and DejaVu Sans Mono, so the sans font ships
+  in the repository: Go Regular and Go Bold from `golang.org/x/image`, under the BSD
+  3-Clause licence in `internal/cv/templates/fonts/LICENSE`. The binary embeds them, and
+  `cv render pdf` writes them next to the source and passes `--font-path` and
+  `--ignore-system-fonts`, so no text falls back to a font of the machine that renders.
+  Every heading and the body use the same family. The Go hyphen is almost as wide as a dash
+  and prints as it is: a replaced hyphen extracts as U+2010, and a search for `E-Mail` in the
+  text layer misses it. Headings carry no letter spacing for the same reason: an applicant
+  tracking system reads the text layer, and tracking splits a heading into fragments. Inter or
+  IBM Plex Sans, both under the SIL OFL, can replace them later: the font file and its
+  licence file go into the same directory, and the template names the family.
+- Photo: `assets/portrait.jpg`, 600 by 600 pixels. `cv render pdf --photo` names it;
+  the render writes it next to the typst source. A missing file or one that is not a JPEG
+  fails the render with an error naming the path, never an empty frame. `--photo ""`
+  renders the sidebar without a photo.
+- Page count: the `render-pdf` CI job fails when a PDF has fewer than one or more than three
+  pages, and keeps both PDFs as the `cv-pdf-preview` artefact for review.
 - The cost: a second template language next to the Go code that fills it, and a shelled out
   process rather than a pure Go call. Weighed against a pure Go PDF library hand laying out every
   page, typst buys real typesetting, pagination, headings, tables, for a one time template cost
@@ -452,10 +541,8 @@ they are changed.
   token lifts the rate limit. See `AGENTS.md`, "The GitHub token".
 - Does `cv suggest-skills` need to remember an already-declined suggestion, so a repeat run does
   not resurface it? Owner: whoever implements it.
-- The exact typst template and page layout; this document settles the tool, not the design.
-  Owner: whoever implements `cv render pdf`.
-- How `cvd` reloads data without a restart, and how it serves the PDFs, now that the sites read
-  from it. Owner: whoever implements the PDF renderer and the sites' sync.
+- How `cvd` reloads data and PDFs without a restart, now that the sites read from it. Owner:
+  whoever implements the sites' sync.
 - Polling or fetch on request, the interval, the cache lifetime, the PDF handling and the not
   ready behaviour of each site. Owner: whoever specs each site's sync.
 - Where an entry that may not belong on the open web, a postal address, a reference's personal
