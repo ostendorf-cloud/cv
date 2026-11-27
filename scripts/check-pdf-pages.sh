@@ -17,6 +17,10 @@ fi
 
 min="$1"
 max="$2"
+if [[ ! $min =~ ^[0-9]+$ || ! $max =~ ^[0-9]+$ ]]; then
+  echo "${0}: min and max must be whole numbers, got '${min}' and '${max}'" >&2
+  exit 2
+fi
 shift 2
 fail=0
 
