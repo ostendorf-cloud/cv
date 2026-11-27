@@ -161,7 +161,7 @@ jobs:
           pdfinfo -v
       - id: render
         run: task render:pdf
-      - name: Check that each PDF has one to four pages
+      - name: Check that each PDF has one to three pages
         run: task validate:pdf
       # Kept even when the page count check fails: the preview shows why.
       - name: Keep both PDFs as the preview artefact

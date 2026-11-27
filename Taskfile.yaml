@@ -134,9 +134,9 @@ tasks:
       - go run ./cmd/cv render pdf --out rendered
 
   validate:pdf:
-    desc: Check that rendered/cv.de.pdf and rendered/cv.en.pdf have one to four pages
+    desc: Check that rendered/cv.de.pdf and rendered/cv.en.pdf have one to three pages
     cmds:
-      - scripts/check-pdf-pages.sh 1 4 rendered/cv.de.pdf rendered/cv.en.pdf
+      - scripts/check-pdf-pages.sh 1 3rendered/cv.de.pdf rendered/cv.en.pdf
 
   build:release:
     desc: Build a local snapshot release of cv with goreleaser, with the JSON documents

@@ -136,7 +136,7 @@ Decision for issue 8, closing the concept's open question.
   The image job downloads the release's two PDFs, checks them against its `SHA256SUMS` and
   copies them in, so the image serves the release assets byte for byte and needs no typst.
 - The golden test pins the typst source only. The `render-pdf` job in `checks.yaml` compiles
-  the template with the real data, checks one to four pages with
+  the template with the real data, checks one to three pages with
   `scripts/check-pdf-pages.sh` and uploads both PDFs as the `cv-pdf-preview` artefact: look
   there after a template change, or run `task render:pdf`.
 - typst is not in `mise.toml`. It runs in the release job, which holds a token that can

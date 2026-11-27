@@ -430,11 +430,11 @@ they are changed.
   template field the model lacks fails the render. The golden test pins the generated typst
   source, not the PDF bytes.
 - The design is the project's own: a sidebar on page one and a timeline in the main column.
-  With the real data both PDFs have four pages, the most the page check allows. The issue
-  asked for two or three, so the owner decides whether to shorten or to keep four. Colours:
+  With the real data both PDFs have three pages, the most the page check allows, as the
+  issue asked (the owner decided 2026-11-27). Colours:
   a deep ink blue (`#1e3a5f`) for names and headings, a warm orange (`#c2410c`) used
   sparingly for the timeline dots and the skill category labels, greys for text, and a pale
-  blue grey panel (`#eef2f7`) behind the sidebar. Body text is 9.5 pt, descriptions 9 pt.
+  blue grey panel (`#eef2f7`) behind the sidebar. Body text is 9 pt, descriptions 8.5 pt.
   - Page one is a grid of two columns. The left one, 6 cm wide on the tinted panel, is the
     sidebar. The right one holds the first section of the main column. Every later section
     flows below the grid at full width. The sidebar is a flow of separate blocks: when it is
@@ -462,7 +462,7 @@ they are changed.
     employer) on its own grey line, a gap, then the description.
   - A certificate past its `valid_until` month carries an `expired` badge. Engagements keep
     their full description.
-- If the PDF ever needs more than four pages, or the owner wants three, the PDF leaves out
+- If the PDF ever needs more than three pages, the PDF leaves out
   content, never the data: first the exam results, then the volunteering entries that
   started before 2022. Neither is cut today.
 - What the PDF leaves out, to stay within the page budget. The data and the JSON keep all
@@ -495,7 +495,7 @@ they are changed.
   the render writes it next to the typst source. A missing file or one that is not a JPEG
   fails the render with an error naming the path, never an empty frame. `--photo ""`
   renders the sidebar without a photo.
-- Page count: the `render-pdf` CI job fails when a PDF has fewer than one or more than four
+- Page count: the `render-pdf` CI job fails when a PDF has fewer than one or more than three
   pages, and keeps both PDFs as the `cv-pdf-preview` artefact for review.
 - The cost: a second template language next to the Go code that fills it, and a shelled out
   process rather than a pure Go call. Weighed against a pure Go PDF library hand laying out every
