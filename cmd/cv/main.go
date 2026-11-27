@@ -33,6 +33,8 @@ Commands:
   version    print the version
   validate   validate data/cv.de.yaml and data/cv.en.yaml
   render     render an artefact, json or pdf
+  suggest-skills
+             print skills the repositories suggest, as a diff; writes nothing
 
 Every command prints its result on stdout and everything else on stderr.
 `
@@ -84,6 +86,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runValidate(args[1:], stdout, stderr)
 	case "render":
 		return runRender(args[1:], stdout, stderr)
+	case "suggest-skills":
+		return runSuggestSkills(args[1:], stdout, stderr)
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)
 		return 0

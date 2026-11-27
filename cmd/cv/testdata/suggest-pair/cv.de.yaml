@@ -1,0 +1,20 @@
+skill_categories:
+  - id: programming
+    name: Programmierung
+skills:
+  - id: go
+    category: programming
+    name: Go
+    level: working
+    evidence:
+      - {type: project, ref: alpha}
+      - {type: project, ref: beta}
+projects:
+  - id: alpha
+    github_repo: example/alpha
+    description: Das erste Projekt.
+  - id: beta
+    github_repo: example/beta
+    description: Das zweite Projekt.
+contact:
+  email: contact@example.com
