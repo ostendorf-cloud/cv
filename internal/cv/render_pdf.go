@@ -689,6 +689,7 @@ func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]b
 	// to have, such as a runner's Liberation Sans.
 	cmd := exec.CommandContext(ctx, bin, "compile", "--font-path", fontPath, in, out, "--ignore-system-fonts")
 	cmd.Stderr = &stderr
+	cmd.Env = typstEnv(os.Environ())
 	// When ctx ends, the process is killed. A child it started could still
 	// hold stderr open; WaitDelay bounds how long Wait waits for it.
 	cmd.WaitDelay = time.Second
@@ -703,6 +704,29 @@ func CompilePDF(ctx context.Context, typstBin string, source, photo []byte) ([]b
 		return nil, fmt.Errorf("cv: render pdf: %w", err)
 	}
 	return pdf, nil
+}
+
+// typstEnvKeys are the variables typst gets: the search path, the home and
+// cache directories, the temporary directory and the locale. Everything else,
+// such as GITHUB_TOKEN, stays out of the child. The fonts come from
+// --font-path, so no font variable is needed.
+var typstEnvKeys = map[string]bool{
+	"PATH": true, "HOME": true, "TMPDIR": true, "TEMP": true, "TMP": true,
+	"XDG_CACHE_HOME": true, "XDG_DATA_HOME": true, "XDG_CONFIG_HOME": true,
+	"LANG": true, "LANGUAGE": true, "LC_ALL": true, "LC_CTYPE": true,
+	"SYSTEMROOT": true,
+}
+
+// typstEnv returns the entries of environ that typst may see.
+func typstEnv(environ []string) []string {
+	var env []string
+	for _, kv := range environ {
+		key, _, _ := strings.Cut(kv, "=")
+		if typstEnvKeys[key] {
+			env = append(env, kv)
+		}
+	}
+	return env
 }
 
 // writeFonts copies the embedded font files into dir.
