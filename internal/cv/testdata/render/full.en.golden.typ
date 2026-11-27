@@ -15,7 +15,7 @@
 #set document(title: "Curriculum vitae" + " " + "Simon Ostendorf", author: "Simon Ostendorf")
 #set page(
   paper: "a4",
-  margin: (x: 1.6cm, top: 1.5cm, bottom: 1.8cm),
+  margin: (x: 1.5cm, top: 1.2cm, bottom: 1.5cm),
   footer: context {
     set text(size: 7.5pt, fill: muted)
     grid(
@@ -26,8 +26,8 @@
     )
   },
 )
-#set text(font: "Go", size: 9.5pt, fill: body-ink, lang: "en")
-#set par(justify: false, leading: 0.65em)
+#set text(font: "Go", size: 9pt, fill: body-ink, lang: "en")
+#set par(justify: false, leading: 0.55em)
 
 // No letter spacing and no hyphen replacement: an applicant tracking system
 // reads the text layer, and tracking splits a heading into fragments while a
@@ -44,8 +44,8 @@
 
 // A section heading: a small uppercase label over a thin full width rule. It
 // sticks to what follows, so a heading never ends a page alone.
-#let section(title) = block(above: 20pt, below: 11pt, sticky: true, stack(
-  spacing: 5pt,
+#let section(title) = block(above: 11pt, below: 7pt, sticky: true, stack(
+  spacing: 4pt,
   caps(title, fill: ink, size: 8.5pt),
   line(length: 100%, stroke: 0.6pt + rule),
 ))
@@ -58,34 +58,34 @@
   text(size: 6.5pt, weight: "bold", fill: muted, body),
 )
 
-// One timeline entry: a small accent dot in the gutter, then the dates small
-// and muted, the title in bold, the organisation on its own muted line, a
-// gap and the description. It never breaks across a page.
+// One timeline entry: a small accent dot in the gutter, then one line with
+// the dates small and muted before the title in bold, the organisation on its
+// own muted line, a gap and the description. It never breaks across a page.
 #let entry(dates, title, org: none, marker: none, body: none, url: none) = {
   let head = ()
-  if dates != "" {
-    head.push(text(size: 8pt, fill: muted, dates))
-  }
   let name = text(weight: "bold", fill: ink, title)
   if marker != none {
     name = name + h(5pt) + badge(marker)
+  }
+  if dates != "" {
+    name = text(size: 8pt, fill: muted, dates) + h(8pt) + name
   }
   head.push(name)
   if org != none {
     head.push(text(size: 9pt, fill: muted, org))
   }
-  let parts = (stack(spacing: 3.5pt, ..head),)
+  let parts = (stack(spacing: 2.5pt, ..head),)
   if body != none {
-    parts.push(text(size: 9pt, body))
+    parts.push(text(size: 8.5pt, body))
   }
   if url != none {
     parts.push(text(size: 8.5pt, fill: ink, link(url)))
   }
-  block(breakable: false, above: 0pt, below: 13pt, grid(
+  block(breakable: false, above: 0pt, below: 6pt, grid(
     columns: (9pt, 1fr),
     column-gutter: 5pt,
     pad(top: 2.5pt, circle(radius: 2.5pt, fill: warm, stroke: none)),
-    stack(spacing: 6pt, ..parts),
+    stack(spacing: 3pt, ..parts),
   ))
 }
 
