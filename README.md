@@ -140,6 +140,7 @@ bytes. `cvd` never runs typst. It reads `cv.de.pdf` and `cv.en.pdf` once at star
 ```sh
 task render:json         # offline, no GitHub data, what CI runs
 task render:json:github  # with GitHub data, what the release runs
+task suggest:skills      # languages no skill claims, stale evidence; prints, writes nothing
 ```
 
 `internal/cv/testdata/render/*.golden.json` pins the exact output. After a deliberate change

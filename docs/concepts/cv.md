@@ -4,8 +4,8 @@
 
 - The repository holds the data model with its validation, `cv render json`, and `cvd`, which
   serves the JSON document. `cv render json` merges each project's languages and latest release
-  from GitHub. `cv render pdf` writes the PDFs and `cvd` serves them too. No README renderer
-  and no skills suggestion exists yet.
+  from GitHub. `cv render pdf` writes the PDFs and `cvd` serves them too. `cv suggest-skills`
+  prints skill suggestions. No README renderer exists yet.
 - Career, education, skill and project facts exist only as hand written text scattered across an
   old résumé, a GitHub bio and memory, not as one structured source.
 - `ostendorf.dev` and `simon-ostendorf.de` have both already committed, in their own concept
@@ -539,8 +539,8 @@ they are changed.
 
 - Decided in issue 8: no dedicated token for public repositories, the release job's own
   token lifts the rate limit. See `AGENTS.md`, "The GitHub token".
-- Does `cv suggest-skills` need to remember an already-declined suggestion, so a repeat run does
-  not resurface it? Owner: whoever implements it.
+- Decided in issue 9: `cv suggest-skills` does not remember a declined suggestion. See
+  `AGENTS.md`, "Skill suggestions".
 - How `cvd` reloads data and PDFs without a restart, now that the sites read from it. Owner:
   whoever implements the sites' sync.
 - Polling or fetch on request, the interval, the cache lifetime, the PDF handling and the not

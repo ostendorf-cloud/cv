@@ -6,7 +6,7 @@ service that serves it. The baseline rules apply and are not repeated here.
 ## Layout
 
 - `cmd/cv/`: the CLI. Flag parsing and command dispatch only; `validate`, `render json`
-  and `render pdf` are its commands so far. `render pdf` needs `typst` (pinned in
+  `render pdf` and `suggest-skills` are its commands so far. `render pdf` needs `typst` (pinned in
   `scripts/install-typst.sh`, see Deviations) on the path, or `--typst <binary>`, and reads
   the portrait from
   `assets/portrait.jpg` (`--photo`; a missing file fails, `--photo ""` renders without).
@@ -71,7 +71,8 @@ service that serves it. The baseline rules apply and are not repeated here.
 
 ## Scope of this milestone
 
-The CLI compiles and answers `version`, `help`, `validate`, `render json` and `render pdf`.
+The CLI compiles and answers `version`, `help`, `validate`, `render json`, `render pdf`
+and `suggest-skills`.
 The service answers `GET /api/v1/cv` with the JSON document, loaded once at start from
 `DATA_DIR`, `GET /api/v1/cv.pdf` with the PDF from `PDF_DIR`, and its own health,
 readiness and metrics. It refuses to start on invalid data. Left out, tracked as later
@@ -80,8 +81,7 @@ milestones:
 - `cv`'s other renderer: the block for the GitHub profile README. A LinkedIn export is a
   non goal of the concept. Every renderer calls
   `internal/cv`'s validation before it writes anything, the same way `validate` already does.
-- Feeding the detected stack back into the skills and tools the CV claims. The fetch and
-  the merge into project descriptions exist, see "The GitHub token" below.
+- Applying a suggestion. `suggest-skills` only prints, see "Skill suggestions" below.
 - The consumers: `simon-ostendorf.de` rendering the CV page, `ostendorf.dev` rendering
   projects, skills and tools, and the profile README written from here.
 
@@ -112,6 +112,31 @@ Decision for issue 8, closing the concept's open question.
 - Bounds: 10 seconds per call, 60 calls and 60 seconds (`--github-timeout`) per render, which
   covers thirty repositories. The first timeout or transport error, like a rate limit, ends
   all further calls, so a dead upstream costs one timeout.
+
+## Skill suggestions
+
+Decision for issue 9, closing the concept's open question. `internal/cv/suggest.go` holds
+the comparison, `cmd/cv/suggest.go` the command.
+
+- Declined suggestions are not remembered. The command is stateless: it reads `data/`,
+  asks GitHub and prints. A repeat run prints the same suggestion until a skill claims the
+  language. Why: a state file would be a second source of truth beside `data/`, needs its
+  own review and merge, and the command is information only. The cost is a few repeated
+  lines, for example `Shell` or `Dockerfile`. Revisit only if that noise hides real
+  suggestions.
+- The command never writes under `data/`. A test runs it against a read only copy and
+  compares every file before and after.
+- A skill matches a language when its `id` or `name`, in either file, equals the language
+  name ignoring case, spaces, dots and dashes.
+- Missing: a language of a looked up project that no skill matches.
+- Stale: a skill that matches a language reported for some project, whose `project`
+  evidence names a looked up project that does not report it. A skill that matches no
+  reported language, such as "Web development", is never stale. If no project reports a
+  skill's language at all, the command cannot tell it is a language, so it stays silent.
+- A project that could not be looked up is neither missing nor stale. GitHub failures warn
+  on stderr and the exit code stays zero. Invalid data or a bad flag exits non zero.
+- No level is ever suggested, and `--no-github` is refused: without GitHub there is nothing
+  to compare.
 
 ## Deviations
 
