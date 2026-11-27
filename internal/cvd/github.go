@@ -64,13 +64,16 @@ func (a *App) Refresh(ctx context.Context) {
 	a.logger.InfoContext(ctx, "github data refreshed", "fresh", len(fresh), "kept", len(merged)-len(fresh))
 }
 
-// RefreshEvery calls Refresh every ttl until ctx is done. The first call is
-// the caller's: cmd/cvd calls Refresh before it listens. It returns at once
+// RefreshEvery calls Refresh at once and then every ttl until ctx is done.
+// cmd/cvd runs it in a goroutine after the server listens, so a slow GitHub
+// never delays the start: the handlers take no lock and serve the documents
+// Load rendered until the first refresh swaps them. It returns at once
 // without WithGitHub or with a ttl that is not positive.
 func (a *App) RefreshEvery(ctx context.Context) {
 	if a.source == nil || a.ttl <= 0 {
 		return
 	}
+	a.Refresh(ctx)
 	ticker := time.NewTicker(a.ttl)
 	defer ticker.Stop()
 	for {

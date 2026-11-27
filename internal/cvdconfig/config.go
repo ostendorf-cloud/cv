@@ -34,8 +34,9 @@ type Config struct {
 	GitHubCacheTTL time.Duration
 }
 
-// Bounds of GITHUB_CACHE_TTL. The default keeps a thirty repository list well
-// under GitHub's anonymous limit of 60 calls an hour, two calls per repository.
+// Bounds of GITHUB_CACHE_TTL. At two calls per repository, the default of one
+// refresh an hour fits a list of up to thirty repositories into GitHub's
+// anonymous limit of 60 calls an hour, with no room left above that.
 const (
 	DefaultGitHubCacheTTL = time.Hour
 	minGitHubCacheTTL     = time.Minute

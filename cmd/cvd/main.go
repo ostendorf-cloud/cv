@@ -71,12 +71,12 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// The first lookup runs before anything listens, so the first answer
-	// already carries the GitHub data. It is bounded and never fails the
-	// start: a GitHub outage serves the documents without those keys until a
-	// later refresh succeeds.
-	logger.Info("loading the github data", "cache_ttl", cfg.GitHubCacheTTL.String())
-	app.Refresh(ctx)
+	// The first lookup runs in the background, so the server listens at once
+	// and a slow GitHub never trips the liveness probe. Until it finishes
+	// the documents carry no GitHub keys. It is bounded and never fails the
+	// service: a GitHub outage serves the documents without those keys until
+	// a later refresh succeeds.
+	logger.Info("loading the github data in the background", "cache_ttl", cfg.GitHubCacheTTL.String())
 	go app.RefreshEvery(ctx)
 
 	return httpserver.RunAdmin(ctx, httpserver.Config{

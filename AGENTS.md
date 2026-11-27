@@ -115,16 +115,17 @@ Decision for issue 8, closing the concept's open question.
   covers thirty repositories. The first timeout or transport error, like a rate limit, ends
   all further calls, so a dead upstream costs one timeout.
 - `cvd` loads the same data itself, decided in issue 64 (ostendorf.dev ADR 0001), so the
-  sites make no GitHub call and hold no token. `cmd/cvd` calls `App.Refresh` once before
-  it listens and `App.RefreshEvery` after, every `GITHUB_CACHE_TTL` (default `1h`, `1m` to
-  `7d`). Each refresh builds a fresh `github.Client`, because a client caches for its whole
-  life. A lookup that fails keeps the repository's last good data, so a GitHub failure
-  never fails `GET /api/v1/cv`. A project that never had data omits both keys. A refresh
+  sites make no GitHub call and hold no token. `cmd/cvd` runs `App.RefreshEvery` in a
+  goroutine once the server runs: a refresh at once, then every `GITHUB_CACHE_TTL` (default
+  `1h`, `1m` to `7d`). It never runs before listening: a slow GitHub would outlast the
+  chart's liveness probe. Each refresh builds a fresh `github.Client`, because a client
+  caches for its whole life. A lookup that fails keeps the repository's last good data, so a
+  GitHub failure never fails `GET /api/v1/cv`. A project that never had data omits both keys. A refresh
   that changes nothing keeps the ETag. The token is optional, read from `GITHUB_TOKEN_FILE`
   (or `GITHUB_TOKEN`, not both) through govue's `envconf`, and sent to `api.github.com`
   only. A set but unreadable or empty file stops the start, and no error carries the path
-  or the token. The anonymous limit of 60 calls an hour covers thirty repositories at the
-  default lifetime. The chart sets none of these yet.
+  or the token. The anonymous limit of 60 calls an hour fits thirty repositories at two calls
+  each at the default lifetime, with no room above that. The chart sets none of these yet.
 
 ## Skill suggestions
 

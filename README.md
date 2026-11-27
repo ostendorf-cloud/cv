@@ -58,13 +58,14 @@ bytes, so the same `schema_version`.
   refresh of the GitHub data shows at once.
 - Each `projects` entry carries `languages` and `latest_release`, see "JSON release
   artefact". `cvd` loads them from GitHub itself and keeps them for `GITHUB_CACHE_TTL`
-  (default `1h`): it asks before it listens, then again every `GITHUB_CACHE_TTL`. A
+  (default `1h`): it starts asking right after it listens, then again every
+  `GITHUB_CACHE_TTL`. Until the first lookup ends, the documents carry no GitHub keys. A
   consumer makes no GitHub call and holds no token.
 - A GitHub failure never fails this route. A project whose lookup fails keeps its last good
   data. A project that never had data omits both keys. A repository that is gone keeps the
   data from before until a restart. A failed lookup is retried at the next refresh.
-- The start asks GitHub for at most one minute before it listens, so a dead GitHub delays the
-  start by one call timeout (10 seconds) and never stops it.
+- The lookup runs in the background and one refresh takes at most one minute. A dead or slow
+  GitHub never delays the start, the probes or the route.
 - Only `GET` and `HEAD`. Any other method answers `405` with `Allow: GET, HEAD`.
 - `lang` is case sensitive and the name is too: `?LANG=de` is an unknown parameter and
   serves the default. Unknown parameters are ignored.

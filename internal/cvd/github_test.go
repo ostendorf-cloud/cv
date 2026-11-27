@@ -371,8 +371,14 @@ func TestTokenIsSentWhenSetAndNeverLogged(t *testing.T) {
 					t.Errorf("Authorization = %q, want %q", got, tt.wantAuth)
 				}
 			}
-			if strings.Contains(logs.String(), token) {
-				t.Errorf("the log carries the token:\n%s", logs.String())
+			// Without a token there is nothing that could leak.
+			if tt.token == "" {
+				return
+			}
+			for _, secret := range []string{tt.token, "Bearer"} {
+				if strings.Contains(logs.String(), secret) {
+					t.Errorf("the log carries %q:\n%s", secret, logs.String())
+				}
 			}
 		})
 	}
@@ -454,6 +460,162 @@ func TestRefreshEveryRefreshesUntilTheContextEnds(t *testing.T) {
 	if _, ok := projectsIn(t, get(t, app, http.MethodGet, "/api/v1/cv", nil).Body.Bytes())["alpha"]["languages"]; !ok {
 		t.Error("alpha has no languages after the periodic refresh")
 	}
+}
+
+// TestRefreshEveryRefreshesAtOnce pins that the first lookup does not wait a
+// whole ttl: cmd/cvd starts RefreshEvery after the server listens and expects
+// the first data right away.
+func TestRefreshEveryRefreshesAtOnce(t *testing.T) {
+	t.Parallel()
+
+	_, srv := newFakeGitHub(t)
+	app := githubApp(t, srv, "", discardLogger()) // ttl is one hour
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		app.RefreshEvery(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		body := get(t, app, http.MethodGet, "/api/v1/cv", nil).Body.Bytes()
+		if _, ok := projectsIn(t, body)["alpha"]["languages"]; ok {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no GitHub data within 10 seconds, want the first refresh at once")
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+// TestRouteAnswersWhileASlowRefreshRuns pins the startup contract: a GitHub
+// that holds every call and then answers 503 never keeps the route from
+// answering, so the liveness probe of the chart never waits on it.
+func TestRouteAnswersWhileASlowRefreshRuns(t *testing.T) {
+	t.Parallel()
+
+	entered := make(chan struct{}, 1)
+	gate := make(chan struct{})
+	release := sync.OnceFunc(func() { close(gate) })
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
+		select {
+		case <-gate:
+		case <-r.Context().Done():
+		}
+		http.Error(w, "unavailable", http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(srv.Close)
+	t.Cleanup(release) // runs before srv.Close, so no handler outlives the test
+	app := githubApp(t, srv, "", discardLogger())
+	bare := get(t, app, http.MethodGet, "/api/v1/cv", nil).Body.String()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	refreshed := make(chan struct{})
+	go func() {
+		defer close(refreshed)
+		app.RefreshEvery(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		release()
+		<-refreshed
+	})
+
+	select {
+	case <-entered:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the refresh never called GitHub")
+	}
+
+	// The refresh now sits inside a GitHub call. The route must still answer.
+	answered := make(chan *httptest.ResponseRecorder, 1)
+	go func() { answered <- get(t, app, http.MethodGet, "/api/v1/cv", nil) }()
+	select {
+	case rec := <-answered:
+		if rec.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200 while the refresh runs", rec.Code)
+		}
+		if rec.Body.String() != bare {
+			t.Error("the document changed before any GitHub data arrived")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the route did not answer while the refresh was running")
+	}
+
+	// The slow call is still held, so the answer came before the refresh ended.
+	select {
+	case <-refreshed:
+		t.Fatal("the refresh ended before the held GitHub call was released")
+	default:
+	}
+	release()
+	cancel()
+	select {
+	case <-refreshed:
+	case <-time.After(10 * time.Second):
+		t.Fatal("RefreshEvery did not return after the 503 answers")
+	}
+	rec := get(t, app, http.MethodGet, "/api/v1/cv", nil)
+	if rec.Code != http.StatusOK || rec.Body.String() != bare {
+		t.Errorf("after the failed refresh: status = %d, same document = %t, want 200 and true",
+			rec.Code, rec.Body.String() == bare)
+	}
+}
+
+// TestRouteIsRaceFreeDuringRefresh reads the route from several goroutines
+// while refreshes swap the documents. It is meant for -race: the handlers take
+// no lock and Refresh holds one.
+func TestRouteIsRaceFreeDuringRefresh(t *testing.T) {
+	t.Parallel()
+
+	f, srv := newFakeGitHub(t)
+	app := githubApp(t, srv, "", discardLogger())
+
+	var readers sync.WaitGroup
+	stop := make(chan struct{})
+	for range 4 {
+		readers.Add(1)
+		go func() {
+			defer readers.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				rec := get(t, app, http.MethodGet, "/api/v1/cv", nil)
+				if rec.Code != http.StatusOK {
+					t.Errorf("status = %d, want 200 during a refresh", rec.Code)
+					return
+				}
+				if !json.Valid(rec.Body.Bytes()) {
+					t.Error("the body is not valid JSON during a refresh")
+					return
+				}
+			}
+		}()
+	}
+
+	// Each round changes the release, so every refresh really swaps the documents.
+	for i := range 20 {
+		f.set("example/alpha", fakeRepo{
+			languages: map[string]int64{"Go": 900},
+			release:   "v1." + string(rune('0'+i%10)) + ".0",
+		})
+		app.Refresh(t.Context())
+	}
+	close(stop)
+	readers.Wait()
 }
 
 func TestRefreshEveryReturnsAtOnceWithoutASourceOrATTL(t *testing.T) {
