@@ -205,7 +205,8 @@ type TypstOptions struct {
 // out. It fails when the template names something the model does not hold,
 // or when a required text is blank, rather than printing a blank field. Like
 // RenderJSON it does not validate doc; the caller does, through Load or
-// LoadPair, and everything in doc is printed: nothing is filtered.
+// LoadPair. The repository projects are not printed: the PDF has a page
+// budget. Every other printed text comes from doc unfiltered.
 func RenderTypst(doc Document, lang string, opts TypstOptions) ([]byte, error) {
 	return renderTypst(typstTemplate, doc, lang, opts)
 }
