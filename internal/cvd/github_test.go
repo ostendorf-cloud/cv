@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -503,6 +504,7 @@ func TestRouteAnswersWhileASlowRefreshRuns(t *testing.T) {
 	entered := make(chan struct{}, 1)
 	gate := make(chan struct{})
 	release := sync.OnceFunc(func() { close(gate) })
+	var answered503 atomic.Int32 // calls the fake has answered, none while it is held
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
 		case entered <- struct{}{}:
@@ -512,11 +514,22 @@ func TestRouteAnswersWhileASlowRefreshRuns(t *testing.T) {
 		case <-gate:
 		case <-r.Context().Done():
 		}
+		answered503.Add(1)
 		http.Error(w, "unavailable", http.StatusServiceUnavailable)
 	}))
 	t.Cleanup(srv.Close)
 	t.Cleanup(release) // runs before srv.Close, so no handler outlives the test
-	app := githubApp(t, srv, "", discardLogger())
+
+	// A call timeout of a minute keeps the client from ending the held call
+	// before the route's deadline below, so only a route that waits on the
+	// refresh can miss that deadline.
+	source := func() cv.RepoSource {
+		return github.New(github.Config{BaseURL: srv.URL, HTTPClient: srv.Client(), CallTimeout: time.Minute})
+	}
+	app := New(discardLogger(), WithGitHub(source, time.Hour))
+	if err := app.Load(projectsDir); err != nil {
+		t.Fatalf("Load(%s) error = %v", projectsDir, err)
+	}
 	bare := get(t, app, http.MethodGet, "/api/v1/cv", nil).Body.String()
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -548,15 +561,13 @@ func TestRouteAnswersWhileASlowRefreshRuns(t *testing.T) {
 		if rec.Body.String() != bare {
 			t.Error("the document changed before any GitHub data arrived")
 		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("the route did not answer while the refresh was running")
+	case <-time.After(2 * time.Second):
+		t.Fatal("the route did not answer within 2 seconds while the refresh was running")
 	}
 
-	// The slow call is still held, so the answer came before the refresh ended.
-	select {
-	case <-refreshed:
-		t.Fatal("the refresh ended before the held GitHub call was released")
-	default:
+	// The GitHub call is still held, so the answer came before the refresh ended.
+	if n := answered503.Load(); n != 0 {
+		t.Fatalf("the fake GitHub answered %d calls before its release, want 0", n)
 	}
 	release()
 	cancel()
