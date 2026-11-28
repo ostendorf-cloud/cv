@@ -52,15 +52,27 @@ bytes, so the same `schema_version`.
 - The language is the `lang` query parameter, `de` or `en`. The default is `en`.
 - An unknown, empty or repeated `lang` answers `400` in govue's error shape. It never falls
   back to the default. `Accept-Language` is not read.
-- `ETag` is strong and stable for the same data. `If-None-Match` answers `304`.
-- `Cache-Control: no-cache`: a client revalidates each time, so a restart with new data shows
-  at once.
+- `ETag` is strong and stable for the same data. It changes when the GitHub data of a
+  project changes. `If-None-Match` answers `304`.
+- `Cache-Control: no-cache`: a client revalidates each time, so a restart with new data or a
+  refresh of the GitHub data shows at once.
+- Each `projects` entry carries `languages` and `latest_release`, see "JSON release
+  artefact". `cvd` loads them from GitHub itself and keeps them for `GITHUB_CACHE_TTL`
+  (default `1h`): it starts asking right after it listens, then again every
+  `GITHUB_CACHE_TTL`. Until the first lookup ends, the documents carry no GitHub keys. A
+  consumer makes no GitHub call and holds no token.
+- A GitHub failure never fails this route. A project whose lookup fails keeps its last good
+  data. A project that never had data omits both keys. A repository that is gone keeps the
+  data from before until a restart. A failed lookup is retried at the next refresh.
+- The lookup runs in the background and one refresh takes at most one minute. A dead or slow
+  GitHub never delays the start, the probes or the route.
 - Only `GET` and `HEAD`. Any other method answers `405` with `Allow: GET, HEAD`.
 - `lang` is case sensitive and the name is too: `?LANG=de` is an unknown parameter and
   serves the default. Unknown parameters are ignored.
-- The data is read once at start. `cvd` refuses to start when it is invalid, and logs
+- The data file is read once at start. `cvd` refuses to start when it is invalid, and logs
   problems with positions, ids and enumerated values. Free text excerpts of YAML type
-  errors are redacted (best effort). Reading new data needs a restart.
+  errors are redacted (best effort). Reading new data needs a restart. Only the GitHub data
+  refreshes at runtime.
 - Readiness is unready until the documents are loaded. Liveness does not depend on them.
 
 `GET /api/v1/cv.pdf` answers the PDF `cv render pdf` writes for one language: the same
@@ -102,13 +114,13 @@ bytes. `cvd` never runs typst. It reads `cv.de.pdf` and `cv.en.pdf` once at star
   `certificates`, `skills`, `projects`, `references`, `languages`, `contact`, `volunteering`,
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`,
   `engagements`, `skill_categories`, `tools`.
-- A `projects` entry may carry two more keys, merged in from GitHub at render time by
-  `cv render json`: `languages`, a list of `name` and `bytes`, largest first, and
+- A `projects` entry may carry two more keys, merged in from GitHub by `cv render json` and by
+  `cvd`: `languages`, a list of `name` and `bytes`, largest first, and
   `latest_release`, an object with `tag`, `name`, `url` and `published_at` (each but `tag`
   `null` when unset). Both keys are absent, not `null`, when GitHub gave nothing: the
-  lookup failed, the repository has no language or no release, or the document comes from
-  `cvd`, which makes no GitHub call. A consumer must not assume either key. Added without a
-  version bump.
+  lookup failed and no earlier data exists, the repository has no language or no release,
+  or the render ran with `--no-github`. `cvd` serves both keys for both languages, from its
+  own cache. A consumer must not assume either key. Added without a version bump.
 - `tools` is the last key: a list of `id`, `name`, `group` and `description`, in file order.
   `group` is one of `workstation`, `editor-shell`, `command-line`, `homelab-hardware` and
   `homelab-platform`. Added without a version bump.
@@ -193,7 +205,8 @@ or more than three pages. With the real data both PDFs have three pages today.
 
 ## Configuration
 
-`cvd` reads the following environment variables; `cv` takes none yet.
+`cvd` reads the following environment variables. `cv` reads `GITHUB_TOKEN` and
+`GITHUB_TOKEN_FILE` too, see `AGENTS.md`.
 
 | Variable | Purpose | Default | Required |
 | --- | --- | --- | --- |
@@ -202,6 +215,9 @@ or more than three pages. With the real data both PDFs have three pages today.
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error`. | `info` | No |
 | `DATA_DIR` | Directory holding `cv.de.yaml` and `cv.en.yaml`. The image sets it to `/data`, where it embeds `data/`. | none | Yes |
 | `PDF_DIR` | Directory holding `cv.de.pdf` and `cv.en.pdf`. The image sets it to `/pdf`, where it copies `rendered/cv.*.pdf`. Unset, the PDF route answers `503`. | none | No |
+| `GITHUB_TOKEN_FILE` | Path of a file holding a token for the GitHub API. Optional: public repositories work without one, at GitHub's anonymous limit of 60 calls an hour. A set but unreadable or empty file stops the start. The token goes to `api.github.com` only and is never logged. Set this or `GITHUB_TOKEN`, not both. | none | No |
+| `GITHUB_TOKEN` | The token itself, for a local run. Prefer `GITHUB_TOKEN_FILE`. | none | No |
+| `GITHUB_CACHE_TTL` | How long `cvd` keeps the GitHub data of the projects before it asks again. A Go duration or whole days, from `1m` to `7d`. Two calls per repository. | `1h` | No |
 
 ## Container
 
