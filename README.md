@@ -92,6 +92,59 @@ bytes. `cvd` never runs typst. It reads `cv.de.pdf` and `cv.en.pdf` once at star
   that is not a PDF, or a `PDF_DIR` that does not exist, stops the start.
 - Only `GET` and `HEAD`, like the JSON route.
 
+## Go client
+
+The package `client` reads `GET /api/v1/cv` for a Go program in another module, so a site
+does not write its own. It sits at the module root, outside `internal/`, and defines the
+document types itself.
+
+```sh
+go get github.com/ostendorf-cloud/cv
+```
+
+```go
+import "github.com/ostendorf-cloud/cv/client"
+
+c, err := client.New(
+    client.WithBaseURL("https://cv.example.org"),
+    client.WithLanguage("de"),
+    client.WithTimeout(5*time.Second),
+)
+if err != nil {
+    return err
+}
+
+res, err := c.Get(ctx, lastETag)
+switch {
+case err != nil:
+    return err
+case res.NotModified:
+    // The document held for lastETag is current.
+default:
+    doc, lastETag = res.Document, res.ETag
+}
+```
+
+- Options: `WithBaseURL` (required), `WithLanguage` (`de` or `en`, default `en`),
+  `WithHTTPClient` and `WithTimeout` (default 10 seconds).
+- `New` checks every option once. The base URL must be an absolute `http` or `https` URL
+  without credentials, query or fragment.
+- `Get` does one read with the context of the caller. It has no retry and no cache. Both
+  stay with the caller.
+- An empty `etag` reads the document. The `ETag` of the last result as `etag` sends
+  `If-None-Match`. A `304` is a `Result` with `NotModified` set and no `Document`.
+- The client ignores unknown keys.
+- Typed errors, matched with `errors.As`: `*StatusError` for any other status,
+  `*SchemaVersionError` for a `schema_version` other than 1 and `*LanguageError` for a
+  document in another language than the one asked for. `ErrConfig` (from `New`),
+  `ErrInvalidETag`, `ErrDecode`, `ErrTooLarge` and `ErrTransport` match with `errors.Is`.
+- No error message carries the base URL, the ETag or a response body.
+- The client reads at most 4 MiB of a body.
+- `latest_release` and `languages` of a project are nil until `cvd` has looked them up.
+- A test decodes what `RenderJSONEnriched` writes into the client types and encodes it
+  again, so the contract and the types cannot drift apart. A change to the document needs
+  the same change in `client/document.go`.
+
 ## JSON release artefact
 
 `cv render json` validates both data files, then writes one document per language into
