@@ -14,6 +14,7 @@ service that serves it. The baseline rules apply and are not repeated here.
   920 pixel portrait of `ostendorf.tech`.
 - `cmd/cvd/`: the service's entry point: configuration, construction and graceful
   shutdown.
+- `client/`: the public Go client of `GET /api/v1/cv`. Its types follow `render_json.go`, see README.
 - `internal/cv/`: the typed CV data model and its validation: the required fields per
   section, the seven optional sections that hold what LinkedIn holds (`volunteering`,
   `awards`, `exam_results`, `courses`, `publications`, `patents`, `organisations`, with
