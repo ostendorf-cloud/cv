@@ -16,9 +16,8 @@
 # "sha256:" digests GitHub shows for
 # typst-x86_64-unknown-linux-musl.tar.xz and
 # typst-aarch64-unknown-linux-musl.tar.xz on the release page of the new
-# version. Never compute them from a download. The 0.14.2 digests below are
-# the asset digests of GitHub's release API for tag v0.14.2, the same ones
-# solobill's Dockerfile pins.
+# version. Never compute them from a download. The 0.15.1 digests below are
+# the asset digests of GitHub's release API for tag v0.15.1.
 #
 # Fails closed: another system, an unknown architecture, an empty checksum
 # or a checksum mismatch stops before anything is unpacked.
@@ -29,8 +28,8 @@ set -euo pipefail
 
 # renovate: datasource=github-releases depName=typst/typst
 readonly TYPST_VERSION=0.15.1
-readonly TYPST_SHA256_X86_64=a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d
-readonly TYPST_SHA256_AARCH64=491b101aa40a3a7ea82a3f8a6232cabb4e6a7e233810082e5ac812d43fdcd47a
+readonly TYPST_SHA256_X86_64=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
+readonly TYPST_SHA256_AARCH64=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee
 
 if [[ $# -eq 1 && $1 == --print-version ]]; then
   echo "${TYPST_VERSION}"
