@@ -136,8 +136,8 @@ default:
 - The client ignores unknown keys.
 - Typed errors, matched with `errors.As`: `*StatusError` for any other status,
   `*SchemaVersionError` for a `schema_version` other than 1 and `*LanguageError` for a
-  document in another language than the one asked for. `ErrDecode`, `ErrTooLarge` and
-  `ErrTransport` match with `errors.Is`.
+  document in another language than the one asked for. `ErrConfig` (from `New`),
+  `ErrInvalidETag`, `ErrDecode`, `ErrTooLarge` and `ErrTransport` match with `errors.Is`.
 - No error message carries the base URL, the ETag or a response body.
 - The client reads at most 4 MiB of a body.
 - `latest_release` and `languages` of a project are nil until `cvd` has looked them up.
